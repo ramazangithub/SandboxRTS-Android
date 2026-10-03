@@ -10,6 +10,19 @@ import org.libsdl.app.SDLActivity;
  */
 public class GeneralsXZHActivity extends SDLActivity {
     @Override
+    protected void onCreate(android.os.Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                }, 1);
+            }
+        }
+    }
+
+    @Override
     protected String[] getLibraries() {
         return new String[] { "SDL3", "main" };
     }
@@ -18,7 +31,9 @@ public class GeneralsXZHActivity extends SDLActivity {
     protected String[] getArguments() {
         String args = getIntent() != null ? getIntent().getStringExtra("args") : null;
         if (args == null || args.trim().isEmpty()) {
-            return new String[0];
+            return new String[] {
+                "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", "Maps\\Flat.map"
+            };
         }
         return args.trim().split("\\s+");
     }

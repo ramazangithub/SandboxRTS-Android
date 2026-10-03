@@ -5,7 +5,7 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId project.findProperty('GX_APP_ID') ?: 'com.generalsx.generalszh'
-        minSdk 29
+        minSdk 26
         targetSdk 29   // sideload-only: keeps requestLegacyExternalStorage effective
         versionCode 1
         versionName "1.04"

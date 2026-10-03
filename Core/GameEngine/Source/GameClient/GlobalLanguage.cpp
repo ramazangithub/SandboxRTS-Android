@@ -164,7 +164,21 @@ void GlobalLanguage::init()
 		fprintf(stderr, "%s\n", log_buffer);
 
 		INI ini;
-		ini.loadFileDirectory( fname, INI_LOAD_OVERWRITE, nullptr );
+		AsciiString primaryIniWithExt = fname;
+		primaryIniWithExt.concat(".ini");
+		if (TheFileSystem && TheFileSystem->doesFileExist(primaryIniWithExt.str()))
+		{
+			ini.loadFileDirectory( fname, INI_LOAD_OVERWRITE, nullptr );
+		}
+		else
+		{
+			sprintf(log_buffer, "[GX-ISSUE144] GlobalLanguage primary Language.ini not found (%s) - using defaults", primaryIniWithExt.str());
+			fprintf(stderr, "%s\n", log_buffer);
+		}
+		if (m_unicodeFontName.isEmpty())
+		{
+			m_unicodeFontName = "Arial";
+		}
 		sprintf(log_buffer,
 			"[GX-ISSUE144] GlobalLanguage init loaded primary unicodeFont=%s",
 			m_unicodeFontName.isNotEmpty() ? m_unicodeFontName.str() : "<empty>");
