@@ -1,0 +1,107 @@
+# GeneralsX @docs FadiLabib 07/07/2026 - MkDocs Material site with a curated reader
+# journey (Play -> Build -> Porting deep-dives -> Reference -> Dev blog). Internal
+# working documents (docs/WORKDIR, docs/superpowers) are repo-only: excluded from the
+# site, linked from public pages via absolute GitHub URLs. Built and deployed by
+# .github/workflows/docs-pages.yml with --strict (broken internal links fail CI).
+site_name: Generals Zero Hour on Android
+site_description: C&C Generals Zero Hour running natively on Android — Vulkan (Turnip + DXVK), SDL3, OpenAL
+site_url: https://fadi-labib.github.io/Generals-Android/
+repo_url: https://github.com/fadi-labib/Generals-Android
+repo_name: fadi-labib/Generals-Android
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  custom_dir: overrides
+  icon:
+    logo: material/tank
+  favicon: assets/favicon.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  # navigation.tabs: top-level sections as top tabs; the left sidebar then shows the
+  # current section as a proper indented, collapsible tree (navigation.sections made
+  # it look flat - "no actual navigation").
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tilde        # GitHub-style ~~strikethrough~~ (used in ANDROID.md)
+  - pymdownx.tasklist:    # GitHub-style - [ ] checkboxes
+      custom_checkbox: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+
+# Internal working docs stay in the repo but off the public site.
+exclude_docs: |
+  WORKDIR/
+  superpowers/
+
+# Nav convention: each section leads with THIS fork's Android content; pages
+# inherited from the parent lineage (ammaarreshi / fbraz3) sit in a collapsible
+# "Upstream" group per section. Inherited pages stay textually unmodified so
+# syncing from upstream is conflict-free — the grouping lives ONLY in this nav.
+nav:
+  - Home: index.md
+  - FAQ: FAQ.md
+  - The Port:
+      - The Android journey: journey/ANDROID_JOURNEY.md
+      - Bugs & lessons: journey/BUGS_AND_LESSONS.md
+      - Touch controls: port/TOUCH_CONTROLS.md
+      # RELEASE_CHECKLIST.md deliberately NOT on the site: it is upstream's
+      # iOS-product release audit (Apple signing, MoltenVK, iPad issues) and reads
+      # as misinformation on an Android site. Still in the repo, still syncable.
+      - Upstream:
+          - Porting playbook (iOS): port/PORTING_PLAYBOOK.md
+          - Porting patterns: port/PORTING_PATTERNS.md
+  - Build:
+      - Android: BUILD/ANDROID.md
+      - Upstream:
+          - macOS: BUILD/MACOS.md
+          - Linux: BUILD/LINUX.md
+  - Play:
+      - Upstream:
+          - Get the game files: HOWTO/GETTING_THE_GAME_FILES.md
+          - Installation: HOWTO/INSTALLATION.md
+          - Known issues: KNOWN_ISSUES/README.md
+  - Reference:
+      - Upstream:
+          - Command-line parameters: ETC/COMMAND_LINE_PARAMETERS.md
+          - SagePatch: PATCHES/SAGEPATCH.md
+          - SagePatch configuration: HOWTO/SAGEPATCH_CONFIGURATION.md
+          - Russian localization: HOWTO/RUSSIAN_LOCALIZATION.md
+          - HOWTO index: HOWTO/README.md
+          - 'Archive: Linux graphics phase 1': ETC/archive/PHASE01_LINUX_GRAPHICS.md
+  - Dev blog:
+      - 2026-07: DEV_BLOG/2026-07-DIARY.md
+      - Upstream:
+          - 2026-06: DEV_BLOG/2026-06-DIARY.md
+          - 2026-05: DEV_BLOG/2026-05-DIARY.md
+          - 2026-04: DEV_BLOG/2026-04-DIARY.md
+          - 2026-03: DEV_BLOG/2026-03-DIARY.md
+          - 2026-02: DEV_BLOG/2026-02-DIARY.md
