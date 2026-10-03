@@ -314,13 +314,16 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android" OR ANDROID)
   endif()
 
   # Apply Patches/dxvk-android.patch idempotently: skip when the working tree
-  # already carries it (reverse-check passes), fail the configure otherwise so an
-  # unpatched DXVK (portability-subset use sites unguarded) can never build silently.
-  execute_process(
-    COMMAND git -C "${DXVK_LOCAL_FORK_DIR}" apply --reverse --check "${CMAKE_SOURCE_DIR}/Patches/dxvk-android.patch"
-    RESULT_VARIABLE DXVK_ANDROID_PATCH_ALREADY_APPLIED
-    ERROR_QUIET)
-  if(NOT DXVK_ANDROID_PATCH_ALREADY_APPLIED EQUAL 0)
+  # already carries it (or when already committed in upstream fork).
+  set(DXVK_ANDROID_PATCH_NEEDED TRUE)
+  if(EXISTS "${DXVK_LOCAL_FORK_DIR}/src/vulkan/vulkan_loader.cpp")
+    file(READ "${DXVK_LOCAL_FORK_DIR}/src/vulkan/vulkan_loader.cpp" _VULKAN_LOADER_CONTENT)
+    if(_VULKAN_LOADER_CONTENT MATCHES "dxvkAndroidOpenTurnip")
+      set(DXVK_ANDROID_PATCH_NEEDED FALSE)
+    endif()
+  endif()
+
+  if(DXVK_ANDROID_PATCH_NEEDED)
     execute_process(
       COMMAND git -C "${DXVK_LOCAL_FORK_DIR}" apply "${CMAKE_SOURCE_DIR}/Patches/dxvk-android.patch"
       RESULT_VARIABLE DXVK_ANDROID_PATCH_RESULT)
@@ -329,7 +332,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android" OR ANDROID)
     endif()
     message(STATUS "DXVK Android: applied Patches/dxvk-android.patch")
   else()
-    message(STATUS "DXVK Android: Patches/dxvk-android.patch already applied")
+    message(STATUS "DXVK Android: Patches/dxvk-android.patch already present in source")
   endif()
 
   # Generate the meson cross file from the template, filling in the NDK bin dir
