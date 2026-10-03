@@ -2,19 +2,19 @@ FILE_VERSION = 2;
 WINDOW
   WINDOWTYPE = USER;
   SCREENRECT = UPPERLEFT: 0 0, BOTTOMRIGHT: 800 600, CREATIONRESOLUTION: 800 600;
-  NAME = "ControlBarPopupDescription.wnd:StaticTextCost";
-  STATUS = HIDDEN;
+  NAME = "PopupCommunicator.wnd:PopupCommunicatorParent";
+  STATUS = ENABLED;
   CHILD
   WINDOW
-    WINDOWTYPE = STATICTEXT;
+    WINDOWTYPE = PUSHBUTTON;
     SCREENRECT = UPPERLEFT: 0 0, BOTTOMRIGHT: 10 10, CREATIONRESOLUTION: 800 600;
-    NAME = "ControlBarPopupDescription.wnd:StaticTextName";
+    NAME = "PopupCommunicator.wnd:PopupCommunicator";
     STATUS = ENABLED;
   END
   WINDOW
-    WINDOWTYPE = STATICTEXT;
+    WINDOWTYPE = PUSHBUTTON;
     SCREENRECT = UPPERLEFT: 0 0, BOTTOMRIGHT: 10 10, CREATIONRESOLUTION: 800 600;
-    NAME = "ControlBarPopupDescription.wnd:StaticTextDescription";
+    NAME = "PopupCommunicator.wnd:ButtonOk";
     STATUS = ENABLED;
   END
   ENDALLCHILDREN

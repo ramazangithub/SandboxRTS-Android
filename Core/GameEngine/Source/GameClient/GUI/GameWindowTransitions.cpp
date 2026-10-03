@@ -483,6 +483,7 @@ void GameWindowTransitionsHandler::setGroup(AsciiString groupName, Bool immediat
 void GameWindowTransitionsHandler::reverse( AsciiString groupName )
 {
 	TransitionGroup *g = findGroup(groupName);
+	if( g == nullptr ) return; // SandboxRTS-android: null group
 	if( m_currentGroup == g )
 	{
 		m_currentGroup->reverse();
@@ -508,6 +509,7 @@ void GameWindowTransitionsHandler::reverse( AsciiString groupName )
 void GameWindowTransitionsHandler::remove( AsciiString groupName,  Bool skipPending )
 {
 	TransitionGroup *g = findGroup(groupName);
+	if( g == nullptr ) return; // SandboxRTS-android: null group
 	if(m_pendingGroup == g)
 	{
 		if(skipPending)
