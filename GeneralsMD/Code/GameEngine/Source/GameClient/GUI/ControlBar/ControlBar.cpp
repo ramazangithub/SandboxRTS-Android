@@ -93,6 +93,9 @@ const Image* ControlBar::m_rankVeteranIcon	= nullptr;
 const Image* ControlBar::m_rankEliteIcon		= nullptr;
 const Image* ControlBar::m_rankHeroicIcon		= nullptr;
 
+#define SAFE_WIN_HIDE(w, h) do { if ((w) != nullptr) (w)->winHide(h); } while (0)
+#define SAFE_WIN_SET_POS(w, x, y) do { if ((w) != nullptr) (w)->winSetPosition((x), (y)); } while (0)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // CommandButton //////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1093,10 +1096,14 @@ void ControlBar::init()
 		NameKeyType id;
 		id = TheNameKeyGenerator->nameToKey( "ControlBar.wnd:ControlBarParent" );
 		m_contextParent[ CP_MASTER ] = TheWindowManager->winGetWindowFromId( nullptr, id );
-	m_contextParent[ CP_MASTER ]->winGetPosition(&m_defaultControlBarPosition.x, &m_defaultControlBarPosition.y);
+		if (m_contextParent[ CP_MASTER ])
+			m_contextParent[ CP_MASTER ]->winGetPosition(&m_defaultControlBarPosition.x, &m_defaultControlBarPosition.y);
 
 		m_scienceLayout = TheWindowManager->winCreateLayout("GeneralsExpPoints.wnd");
-		m_scienceLayout->hide(TRUE);
+		if (m_scienceLayout)
+		{
+			m_scienceLayout->hide(TRUE);
+		}
 		id = TheNameKeyGenerator->nameToKey( "GeneralsExpPoints.wnd:GenExpParent" );
 
 		m_contextParent[ CP_PURCHASE_SCIENCE ] = TheWindowManager->winGetWindowFromId( nullptr, id );//m_scienceLayout->getFirstWindow();
@@ -1132,8 +1139,8 @@ void ControlBar::init()
 
 			windowName.format( "ControlBar.wnd:ButtonCommand%02d", i + 1 );
 			id = TheNameKeyGenerator->nameToKey( windowName.str() );
-			m_commandWindows[ i ] =
-				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_COMMAND ], id );
+			m_commandWindows[ i ] = m_contextParent[ CP_COMMAND ] ?
+				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_COMMAND ], id ) : nullptr;
 			if (m_commandWindows[ i ])
 			{
 				m_commandWindows[ i ]->winGetPosition(&commandPos.x, &commandPos.y);
@@ -1159,8 +1166,8 @@ void ControlBar::init()
 		{
 			windowName.format( "GeneralsExpPoints.wnd:ButtonRank1Number%d", i );
 			id = TheNameKeyGenerator->nameToKey( windowName.str() );
-			m_sciencePurchaseWindowsRank1[ i ] =
-				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id );
+			m_sciencePurchaseWindowsRank1[ i ] = m_contextParent[ CP_PURCHASE_SCIENCE ] ?
+				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id ) : nullptr;
 			if (m_sciencePurchaseWindowsRank1[ i ] != nullptr)
 				m_sciencePurchaseWindowsRank1[ i ]->winSetStatus( WIN_STATUS_USE_OVERLAY_STATES );
 		}
@@ -1168,8 +1175,8 @@ void ControlBar::init()
 		{
 			windowName.format( "GeneralsExpPoints.wnd:ButtonRank3Number%d", i );
 			id = TheNameKeyGenerator->nameToKey( windowName.str() );
-			m_sciencePurchaseWindowsRank3[ i ] =
-				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id );
+			m_sciencePurchaseWindowsRank3[ i ] = m_contextParent[ CP_PURCHASE_SCIENCE ] ?
+				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id ) : nullptr;
 			if (m_sciencePurchaseWindowsRank3[ i ] != nullptr)
 				m_sciencePurchaseWindowsRank3[ i ]->winSetStatus( WIN_STATUS_USE_OVERLAY_STATES );
 		}
@@ -1178,8 +1185,8 @@ void ControlBar::init()
 		{
 			windowName.format( "GeneralsExpPoints.wnd:ButtonRank8Number%d", i );
 			id = TheNameKeyGenerator->nameToKey( windowName.str() );
-			m_sciencePurchaseWindowsRank8[ i ] =
-				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id );
+			m_sciencePurchaseWindowsRank8[ i ] = m_contextParent[ CP_PURCHASE_SCIENCE ] ?
+				TheWindowManager->winGetWindowFromId( m_contextParent[ CP_PURCHASE_SCIENCE ], id ) : nullptr;
 			if (m_sciencePurchaseWindowsRank8[ i ] != nullptr)
 				m_sciencePurchaseWindowsRank8[ i ]->winSetStatus( WIN_STATUS_USE_OVERLAY_STATES );
 		}
@@ -1197,9 +1204,10 @@ void ControlBar::init()
 		{
 			windowName.format( "ControlBar.wnd:UnitUpgrade%d", i+1 );
 			id = TheNameKeyGenerator->nameToKey( windowName.str() );
-			m_rightHUDUpgradeCameos[ i ] =
-				TheWindowManager->winGetWindowFromId( m_rightHUDWindow, id );
-			m_rightHUDUpgradeCameos[ i ]->winSetStatus( WIN_STATUS_USE_OVERLAY_STATES );
+			m_rightHUDUpgradeCameos[ i ] = m_rightHUDWindow ?
+				TheWindowManager->winGetWindowFromId( m_rightHUDWindow, id ) : nullptr;
+			if (m_rightHUDUpgradeCameos[ i ])
+				m_rightHUDUpgradeCameos[ i ]->winSetStatus( WIN_STATUS_USE_OVERLAY_STATES );
 		}
 
 //		m_transitionHandler = NEW GameWindowTransitionsHandler;
@@ -1209,8 +1217,11 @@ void ControlBar::init()
 		// don't forget about the communicator button CCB
 		id = TheNameKeyGenerator->nameToKey( "ControlBar.wnd:PopupCommunicator" );
 		m_communicatorButton = TheWindowManager->winGetWindowFromId( nullptr, id );
-		setControlCommand(m_communicatorButton, findCommandButton("NonCommand_Communicator") );
-		m_communicatorButton->winSetTooltipFunc(commandButtonTooltip);
+		if (m_communicatorButton)
+		{
+			setControlCommand(m_communicatorButton, findCommandButton("NonCommand_Communicator") );
+			m_communicatorButton->winSetTooltipFunc(commandButtonTooltip);
+		}
 
 		GameWindow *win = TheWindowManager->winGetWindowFromId(nullptr,TheNameKeyGenerator->nameToKey("ControlBar.wnd:ButtonOptions"));
 		if(win)
@@ -1263,9 +1274,11 @@ void ControlBar::init()
 
 
 		win = TheWindowManager->winGetWindowFromId(nullptr,TheNameKeyGenerator->nameToKey( "ControlBar.wnd:BackgroundMarker" ));
-		win->winGetScreenPosition(&m_controlBarForegroundMarkerPos.x, &m_controlBarForegroundMarkerPos.y);
+		if (win)
+			win->winGetScreenPosition(&m_controlBarForegroundMarkerPos.x, &m_controlBarForegroundMarkerPos.y);
 		win = TheWindowManager->winGetWindowFromId(nullptr,TheNameKeyGenerator->nameToKey( "ControlBar.wnd:BackgroundMarker" ));
-		win->winGetScreenPosition(&m_controlBarBackgroundMarkerPos.x,&m_controlBarBackgroundMarkerPos.y);
+		if (win)
+			win->winGetScreenPosition(&m_controlBarBackgroundMarkerPos.x,&m_controlBarBackgroundMarkerPos.y);
 
 		if(!m_videoManager)
 			m_videoManager = NEW WindowVideoManager;
@@ -2179,14 +2192,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-			//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( TRUE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+			//SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 			//Clear any potentially flashing buttons!
 			for( int i = 0; i < MAX_COMMANDS_PER_SET; i++ )
@@ -2230,14 +2243,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-			//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( FALSE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+			//SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], FALSE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 			// fill the specific UI info
 			populateCommand( draw->getObject() );
@@ -2253,7 +2266,7 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 				if( pu && pu->firstProduction() != nullptr )
 				{
 
-					m_contextParent[ CP_BUILD_QUEUE ]->winHide( FALSE );
+					SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], FALSE );
 					populateBuildQueue( obj );
 					setPortraitByObject( nullptr );
 				}
@@ -2273,14 +2286,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-			//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( FALSE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+			//SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], FALSE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 			// fill the specific UI info
 			populateStructureInventory( draw->getObject() );
@@ -2294,14 +2307,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-			//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( TRUE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( FALSE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+			//SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], FALSE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 
 			// fill the specific UI info
@@ -2316,14 +2329,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-			//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( TRUE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( FALSE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+			//SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], FALSE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 			// fill the specific UI info
 			populateUnderConstruction( draw->getObject() );
@@ -2337,14 +2350,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-//			m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( TRUE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( FALSE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+//			SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], FALSE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 			// fill the specific UI info
 			populateOCLTimer( draw->getObject() );
@@ -2358,14 +2371,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-//			m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( FALSE );		// multi select shows common commands
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( TRUE );
+//			SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], FALSE );		// multi select shows common commands
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], TRUE );
 
 
 			// fill the specific UI info
@@ -2378,14 +2391,14 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		{
 
 			// show or hide the right window groups
-//			m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-			m_contextParent[ CP_COMMAND ]->winHide( TRUE );
-			m_contextParent[ CP_BUILD_QUEUE ]->winHide( TRUE );
-			m_contextParent[ CP_BEACON ]->winHide( TRUE );
-			m_contextParent[ CP_UNDER_CONSTRUCTION ]->winHide( TRUE );
-			m_contextParent[ CP_OCL_TIMER ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_INFO ]->winHide( TRUE );
-			m_contextParent[ CP_OBSERVER_LIST ]->winHide( FALSE );
+//			SAFE_WIN_HIDE( m_contextParent[ CP_PURCHASE_SCIENCE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_COMMAND ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BUILD_QUEUE ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_BEACON ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_UNDER_CONSTRUCTION ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OCL_TIMER ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_INFO ], TRUE );
+			SAFE_WIN_HIDE( m_contextParent[ CP_OBSERVER_LIST ], FALSE );
 
 
 			// fill the specific UI info
@@ -2969,7 +2982,7 @@ void ControlBar::showPurchaseScience()
 		return;
 	populatePurchaseScience(ThePlayerList->getLocalPlayer());
 	m_genStarFlash = FALSE;
-	if(!m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
+	if(!m_contextParent[ CP_PURCHASE_SCIENCE ] || !m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
 		return;
 	//switchToContext(CB_CONTEXT_PURCHASE_SCIENCE, nullptr);
 	m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide(FALSE);
@@ -2981,13 +2994,10 @@ void ControlBar::showPurchaseScience()
 
 void ControlBar::hidePurchaseScience()
 {
-	if(m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
+	if(!m_contextParent[ CP_PURCHASE_SCIENCE ] || m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
 		return;
 
-	if( m_contextParent[ CP_PURCHASE_SCIENCE ] )
-	{
-		m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
-	}
+	m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide( TRUE );
 //	if (!TheGlobalData->m_animateWindows)
 //		{
 //			if( m_contextParent[ CP_PURCHASE_SCIENCE ] )
@@ -3006,6 +3016,8 @@ void ControlBar::hidePurchaseScience()
 
 void ControlBar::togglePurchaseScience()
 {
+	if(!m_contextParent[ CP_PURCHASE_SCIENCE ])
+		return;
 	if(m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
 		showPurchaseScience();
 	else
@@ -3052,8 +3064,8 @@ void ControlBar::setDefaultControlBarConfig()
 //	}
 	m_currentControlBarStage = CONTROL_BAR_STAGE_DEFAULT;
 	setScaledViewportHeight();
-	m_contextParent[ CP_MASTER ]->winSetPosition(m_defaultControlBarPosition.x, m_defaultControlBarPosition.y);
-	m_contextParent[ CP_MASTER ]->winHide(FALSE);
+	SAFE_WIN_SET_POS(m_contextParent[ CP_MASTER ], m_defaultControlBarPosition.x, m_defaultControlBarPosition.y);
+	SAFE_WIN_HIDE(m_contextParent[ CP_MASTER ], FALSE);
 	repopulateBuildTooltipLayout();
 	setUpDownImages();
 
@@ -3064,7 +3076,7 @@ void ControlBar::setSquishedControlBarConfig()
 	if(m_currentControlBarStage == CONTROL_BAR_STAGE_SQUISHED)
 		return;
 	m_currentControlBarStage = CONTROL_BAR_STAGE_SQUISHED;
-	m_contextParent[ CP_MASTER ]->winSetPosition(m_defaultControlBarPosition.x, m_defaultControlBarPosition.y);
+	SAFE_WIN_SET_POS(m_contextParent[ CP_MASTER ], m_defaultControlBarPosition.x, m_defaultControlBarPosition.y);
 
 //	m_controlBarResizer->sizeWindowsAlt();
 	repopulateBuildTooltipLayout();
@@ -3085,8 +3097,8 @@ void ControlBar::setLowControlBarConfig()
 	pos.x = m_defaultControlBarPosition.x;
 	pos.y = TheDisplay->getHeight() - .1 * TheDisplay->getHeight();
 	setFullViewportHeight();
-	m_contextParent[ CP_MASTER ]->winSetPosition(pos.x, pos.y);
-	m_contextParent[ CP_MASTER ]->winHide(FALSE);
+	SAFE_WIN_SET_POS(m_contextParent[ CP_MASTER ], pos.x, pos.y);
+	SAFE_WIN_HIDE(m_contextParent[ CP_MASTER ], FALSE);
 	setUpDownImages();
 
 }
@@ -3094,7 +3106,7 @@ void ControlBar::setLowControlBarConfig()
 void ControlBar::setHiddenControlBar()
 {
 	m_currentControlBarStage = CONTROL_BAR_STAGE_HIDDEN;
-	m_contextParent[ CP_MASTER ]->winHide(TRUE);
+	SAFE_WIN_HIDE(m_contextParent[ CP_MASTER ], TRUE);
 }
 // removed from multiplayer test
 //void ControlBar::showCommandMarkers()
@@ -3525,7 +3537,7 @@ void ControlBar::populateSpecialPowerShortcut( Player *player)
 		}
 
 	}
-	if(m_contextParent[ CP_MASTER ] && !m_contextParent[ CP_MASTER ]->winIsHidden() && m_specialPowerShortcutParent->winIsHidden())
+	if(m_contextParent[ CP_MASTER ] && !m_contextParent[ CP_MASTER ]->winIsHidden() && m_specialPowerShortcutParent && m_specialPowerShortcutParent->winIsHidden())
 	{
 		showSpecialPowerShortcut();
 		animateSpecialPowerShortcut(TRUE);
@@ -3610,7 +3622,7 @@ void ControlBar::updateSpecialPowerShortcut()
 		hideSpecialPowerShortcut();
 		return;
 	}
-	if(m_contextParent[ CP_MASTER ] && !m_contextParent[ CP_MASTER ]->winIsHidden() && m_specialPowerShortcutParent->winIsHidden())
+	if(m_contextParent[ CP_MASTER ] && !m_contextParent[ CP_MASTER ]->winIsHidden() && m_specialPowerShortcutParent && m_specialPowerShortcutParent->winIsHidden())
 		showSpecialPowerShortcut();
 
 	for( Int i = 0; i < m_currentlyUsedSpecialPowersButtons; i++ )

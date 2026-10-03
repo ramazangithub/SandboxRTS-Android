@@ -347,7 +347,7 @@ void GameClient::init()
 	TheWindowManager = TheGlobalData->m_headless ? NEW GameWindowManagerDummy : createWindowManager();
 	if( TheWindowManager )
 	{
-
+		fprintf(stderr, "INIT: Subsystem WindowManager...\n"); fflush(stderr);
 		TheWindowManager->init();
  		TheWindowManager->setName("TheWindowManager");
 //		TheWindowManager->initTestGUI();
@@ -358,6 +358,7 @@ void GameClient::init()
 	TheIMEManager = CreateIMEManagerInterface();
 	if ( TheIMEManager )
 	{
+		fprintf(stderr, "INIT: Subsystem IMEManager...\n"); fflush(stderr);
 		TheIMEManager->init();
  		TheIMEManager->setName("TheIMEManager");
 	}
@@ -365,6 +366,7 @@ void GameClient::init()
 	// create the shell
 	TheShell = MSGNEW("GameClientSubsystem") Shell;
 	if( TheShell ) {
+		fprintf(stderr, "INIT: Subsystem Shell...\n"); fflush(stderr);
 		TheShell->init();
  		TheShell->setName("TheShell");
 	}
@@ -372,17 +374,20 @@ void GameClient::init()
 	// instantiate the in-game user interface
 	TheInGameUI = createInGameUI();
 	if( TheInGameUI ) {
+		fprintf(stderr, "INIT: Subsystem InGameUI...\n"); fflush(stderr);
 		TheInGameUI->init();
  		TheInGameUI->setName("TheInGameUI");
 	}
 
  	TheChallengeGenerals = createChallengeGenerals();
  	if( TheChallengeGenerals ) {
+		fprintf(stderr, "INIT: Subsystem ChallengeGenerals...\n"); fflush(stderr);
  		TheChallengeGenerals->init();
  	}
 
 	TheHotKeyManager = MSGNEW("GameClientSubsystem") HotKeyManager;
 	if( TheHotKeyManager ) {
+		fprintf(stderr, "INIT: Subsystem HotKeyManager...\n"); fflush(stderr);
 		TheHotKeyManager->init();
  		TheHotKeyManager->setName("TheHotKeyManager");
 	}
@@ -390,6 +395,7 @@ void GameClient::init()
 	// instantiate the terrain visual display
 	TheTerrainVisual = createTerrainVisual();
 	if( TheTerrainVisual ) {
+		fprintf(stderr, "INIT: Subsystem TerrainVisual...\n"); fflush(stderr);
 		TheTerrainVisual->init();
  		TheTerrainVisual->setName("TheTerrainVisual");
 	}
@@ -397,6 +403,7 @@ void GameClient::init()
 	// allocate the ray effects manager
 	TheRayEffects = MSGNEW("GameClientSubsystem") RayEffectSystem;
 	if( TheRayEffects )	{
+		fprintf(stderr, "INIT: Subsystem RayEffects...\n"); fflush(stderr);
 		TheRayEffects->init();
  		TheRayEffects->setName("TheRayEffects");
 	}
@@ -405,6 +412,7 @@ void GameClient::init()
 	if( TheMouse )
 	{
 		// finish initializing the mouse.
+		fprintf(stderr, "INIT: Subsystem Mouse...\n"); fflush(stderr);
 		TheMouse->init();
 		TheMouse->initCapture();
 		TheMouse->setPosition( 0, 0 );
@@ -416,6 +424,7 @@ void GameClient::init()
 	TheVideoPlayer = createVideoPlayer();
 	if ( TheVideoPlayer )
 	{
+		fprintf(stderr, "INIT: Subsystem VideoPlayer...\n"); fflush(stderr);
 		TheVideoPlayer->init();
  		TheVideoPlayer->setName("TheVideoPlayer");
 	}
@@ -424,14 +433,17 @@ void GameClient::init()
 	TheLanguageFilter = createLanguageFilter();
 	if (TheLanguageFilter)
 	{
+		fprintf(stderr, "INIT: Subsystem LanguageFilter...\n"); fflush(stderr);
 		TheLanguageFilter->init();
  		TheLanguageFilter->setName("TheLanguageFilter");
 	}
 
 	TheCampaignManager = MSGNEW("GameClientSubsystem") CampaignManager;
+	fprintf(stderr, "INIT: Subsystem CampaignManager...\n"); fflush(stderr);
 	TheCampaignManager->init();
 
 	TheEva = MSGNEW("GameClientSubsystem") Eva;
+	fprintf(stderr, "INIT: Subsystem Eva...\n"); fflush(stderr);
 	TheEva->init();
  	TheEva->setName("TheEva");
 
@@ -440,6 +452,7 @@ void GameClient::init()
 	TheSnowManager = createSnowManager();
 	if (TheSnowManager)
 	{
+		fprintf(stderr, "INIT: Subsystem SnowManager...\n"); fflush(stderr);
 		TheSnowManager->init();
 		TheSnowManager->setName("TheSnowManager");
 	}
