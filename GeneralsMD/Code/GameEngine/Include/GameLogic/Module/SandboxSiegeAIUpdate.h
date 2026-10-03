@@ -65,3 +65,6 @@ protected:
 	SandboxSiegeState	m_state;
 	UnsignedInt				m_startFrame;	///< frame the current transition started
 	UnsignedInt				m_doneFrame;	///< frame the current transition ends
+	UnsignedInt				m_noAutoUntil;	///< SandboxRTS autosiege: no auto deploy before this frame (after manual Q pack-up)
+	Bool						m_keepOrder;		///< SandboxRTS autosiege: pack up without dropping the move order
+};

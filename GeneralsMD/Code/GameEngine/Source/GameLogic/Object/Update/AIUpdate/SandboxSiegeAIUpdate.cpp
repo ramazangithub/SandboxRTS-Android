@@ -18,6 +18,8 @@ SandboxSiegeAIUpdate::SandboxSiegeAIUpdate( Thing *thing, const ModuleData* modu
 	m_state = SIEGE_TRAVEL;
 	m_startFrame = 0;
 	m_doneFrame = 0;
+	m_noAutoUntil = 0;	// SandboxRTS autosiege
+	m_keepOrder = FALSE;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -90,7 +92,9 @@ void SandboxSiegeAIUpdate::setSiegeState( SandboxSiegeState s )
 																						MAKE_MODELCONDITION_MASK( MODELCONDITION_DEPLOYED ) );
 			break;
 		case SIEGE_UNDEPLOYING:
-			aiIdle( CMD_FROM_AI );	// drop the current target
+			if( !m_keepOrder )
+				aiIdle( CMD_FROM_AI );	// drop the current target (SandboxRTS autosiege: keep a move order)
+			m_keepOrder = FALSE;
 			holdFire( TRUE );
 			self->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_DEPLOYED ) );
 			self->clearWeaponSetFlag( WEAPONSET_PLAYER_UPGRADE );
@@ -131,35 +135,73 @@ void SandboxSiegeAIUpdate::toggle()
 {
 	if( getObject()->isEffectivelyDead() )
 		return;
+
 	switch( m_state )
 	{
 		case SIEGE_TRAVEL:
-		case SIEGE_UNDEPLOYING:	setSiegeState( SIEGE_DEPLOYING ); break;
+			setSiegeState( SIEGE_DEPLOYING );
+			break;
+		case SIEGE_DEPLOYING:
+			m_noAutoUntil = TheGameLogic->getFrame() + LOGICFRAMES_PER_SECOND * 6;
+			setSiegeState( SIEGE_UNDEPLOYING );
+			break;
 		case SIEGE_DEPLOYED:
-		case SIEGE_DEPLOYING:		setSiegeState( SIEGE_UNDEPLOYING ); break;
+			m_noAutoUntil = TheGameLogic->getFrame() + LOGICFRAMES_PER_SECOND * 6;
+			setSiegeState( SIEGE_UNDEPLOYING );
+			break;
+		case SIEGE_UNDEPLOYING:
+			setSiegeState( SIEGE_DEPLOYING );
+			break;
 	}
 }
 
-//-------------------------------------------------------------------------------------------------
 void SandboxSiegeAIUpdate::enable( Bool enable )
 {
-	if( enable != isOverchargeActive() )
-		toggle();
+	if( enable )
+	{
+		if( m_state == SIEGE_TRAVEL || m_state == SIEGE_UNDEPLOYING )
+			setSiegeState( SIEGE_DEPLOYING );
+	}
+	else
+	{
+		if( m_state == SIEGE_DEPLOYED || m_state == SIEGE_DEPLOYING )
+		{
+			m_noAutoUntil = TheGameLogic->getFrame() + LOGICFRAMES_PER_SECOND * 6;
+			setSiegeState( SIEGE_UNDEPLOYING );
+		}
+	}
 }
 
-//-------------------------------------------------------------------------------------------------
 UpdateSleepTime SandboxSiegeAIUpdate::update()
 {
+	if( getObject()->isEffectivelyDead() )
+		return UPDATE_SLEEP_FOREVER;
+
 	UnsignedInt now = TheGameLogic->getFrame();
 	Bool isTryingToMove = isWaitingForPath() || getPath();
+	// SandboxRTS autosiege: a move order from the player (not an attack / chase)
+	Bool playerMove = isTryingToMove && getLastCommandSource() == CMD_FROM_PLAYER && !isAttacking();
 
 	switch( m_state )
 	{
 		case SIEGE_TRAVEL:
+		{
+			// enemy in sight -> stop and deploy by itself
+			Object *victim = getCurrentVictim();
+			if( !playerMove && now >= m_noAutoUntil && victim && !victim->isEffectivelyDead()
+				&& !getObject()->isEffectivelyDead() )
+				setSiegeState( SIEGE_DEPLOYING );
 			break;
+		}
 		case SIEGE_DEPLOYING:
+			if( playerMove )
+			{
+				m_keepOrder = TRUE;	// right click while unfolding: fold back and go
+				setSiegeState( SIEGE_UNDEPLOYING );
+				break;
+			}
 			if( isTryingToMove )
-				aiIdle( CMD_FROM_AI );	// no driving while deploying / in siege
+				aiIdle( CMD_FROM_AI );	// no driving while deploying
 			getStateMachine()->setTemporaryState( AI_BUSY, UPDATE_SLEEP_NONE );
 			setLocomotorGoalNone();
 			if( now >= m_doneFrame )
@@ -168,8 +210,14 @@ UpdateSleepTime SandboxSiegeAIUpdate::update()
 				showAnimFrame();
 			break;
 		case SIEGE_DEPLOYED:
+			if( playerMove )
+			{
+				m_keepOrder = TRUE;	// right click on the ground: pack up, then drive there
+				setSiegeState( SIEGE_UNDEPLOYING );
+				break;
+			}
 			if( isTryingToMove )
-				aiIdle( CMD_FROM_AI );
+				aiIdle( CMD_FROM_AI );	// AI chase while in siege: ignore
 			setLocomotorGoalNone();
 			showAnimFrame();
 			break;
