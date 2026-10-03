@@ -2631,6 +2631,10 @@ void ControlBar::setPortraitByImage( const Image *image )
 //-------------------------------------------------------------------------------------------------
 void ControlBar::setPortraitByObject( Object *obj )
 {
+	// SandboxRTS-android: null-safe portrait
+	if( m_rightHUDUnitSelectParent == nullptr || m_rightHUDWindow == nullptr || m_rightHUDCameoWindow == nullptr )
+		return;
+
 
 	if( obj )
 	{
@@ -2682,32 +2686,32 @@ void ControlBar::setPortraitByObject( Object *obj )
 			AsciiString upgradeName = thing->getUpgradeCameoName(i);
 			if(upgradeName.isEmpty())
 			{
-				m_rightHUDUpgradeCameos[i]->winHide(TRUE);
+				if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winHide(TRUE);
 				continue;
 			}
 			const UpgradeTemplate *ut =  TheUpgradeCenter->findUpgrade(upgradeName);
 			if(!ut)
 			{
-				m_rightHUDUpgradeCameos[i]->winHide(TRUE);
+				if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winHide(TRUE);
 				continue;
 			}
 
-			m_rightHUDUpgradeCameos[i]->winHide(FALSE);
-			m_rightHUDUpgradeCameos[i]->winSetEnabledImage( 0, ut->getButtonImage() );
+			if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winHide(FALSE);
+			if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winSetEnabledImage( 0, ut->getButtonImage() );
 			if( obj->hasUpgrade(ut) )
 			{
 				//Object level upgrades
-				m_rightHUDUpgradeCameos[i]->winEnable( TRUE );
+				if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winEnable( TRUE );
 			}
 			else if( player && player->hasUpgradeComplete( ut ) )
 			{
 				//Player level upgrades
-				m_rightHUDUpgradeCameos[i]->winEnable( TRUE );
+				if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winEnable( TRUE );
 			}
 			else
 			{
 				//Failure
-				m_rightHUDUpgradeCameos[i]->winEnable( FALSE );
+				if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winEnable( FALSE );
 			}
 		}
 
@@ -2719,7 +2723,7 @@ void ControlBar::setPortraitByObject( Object *obj )
 		m_rightHUDWindow->winSetStatus( WIN_STATUS_IMAGE );
 		m_rightHUDCameoWindow->winClearStatus( WIN_STATUS_IMAGE );
 		for(Int i = 0; i < MAX_UPGRADE_CAMEO_UPGRADES; ++i)
-			m_rightHUDUpgradeCameos[i]->winHide(TRUE);
+			if( m_rightHUDUpgradeCameos[i] ) m_rightHUDUpgradeCameos[i]->winHide(TRUE);
 
 		//Clear any overlay the portrait had on it.
 		GadgetButtonDrawOverlayImage( m_rightHUDCameoWindow, nullptr );

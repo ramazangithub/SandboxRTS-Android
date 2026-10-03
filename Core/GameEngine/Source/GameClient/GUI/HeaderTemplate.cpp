@@ -135,7 +135,8 @@ void HeaderTemplateManager::init()
 		fname.format("Data\\%s\\HeaderTemplate", GetRegistryLanguage().str());
 
 		INI ini;
-		ini.loadFileDirectory( fname, INI_LOAD_OVERWRITE, nullptr );
+		try { ini.loadFileDirectory( fname, INI_LOAD_OVERWRITE, nullptr ); }
+		catch (...) { DEBUG_LOG(("HeaderTemplate: %s missing, using defaults", fname.str())); }
 	}
 
 	populateGameFonts();
