@@ -541,6 +541,9 @@ void DebugCrash(const char *format, ...)
 
 	whackFunnyCharacters(theCrashBuffer);
 
+	fprintf(stderr, "FATAL: DebugCrash: %s\n", theCrashBuffer);
+	fflush(stderr);
+
 	const bool useLogging = theDebugFlags != 0;
 
 	if (useLogging)
@@ -759,6 +762,9 @@ static void TriggerMiniDump()
 
 void ReleaseCrash(const char *reason)
 {
+	fprintf(stderr, "FATAL: ReleaseCrash: %s\n", reason ? reason : "<null>");
+	fflush(stderr);
+
 	/// do additional reporting on the crash, if possible
 
 	if (!DX8Wrapper_IsWindowed) {

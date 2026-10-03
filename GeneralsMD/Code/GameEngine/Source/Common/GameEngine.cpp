@@ -904,21 +904,33 @@ void GameEngine::init()
 	}
 	catch (ErrorCode ec)
 	{
+		fprintf(stderr, "ERROR: GameEngine::init() caught ErrorCode: %d (0x%X)\n", (int)ec, (int)ec);
+		fflush(stderr);
 		if (ec == ERROR_INVALID_D3D)
 		{
 			RELEASE_CRASHLOCALIZED("ERROR:D3DFailurePrompt", "ERROR:D3DFailureMessage");
 		}
 	}
-	catch (INIException e)
+	catch (const INIException& e)
 	{
+		fprintf(stderr, "ERROR: GameEngine::init() caught INIException: %s\n", e.mFailureMessage ? e.mFailureMessage : "<null>");
+		fflush(stderr);
 		if (e.mFailureMessage)
 			RELEASE_CRASH((e.mFailureMessage));
 		else
 			RELEASE_CRASH(("Uncaught Exception during initialization."));
 
 	}
+	catch (const std::exception& e)
+	{
+		fprintf(stderr, "ERROR: GameEngine::init() caught std::exception: %s\n", e.what());
+		fflush(stderr);
+		RELEASE_CRASH((e.what()));
+	}
 	catch (...)
 	{
+		fprintf(stderr, "ERROR: GameEngine::init() caught unknown exception (...)\n");
+		fflush(stderr);
 		RELEASE_CRASH(("Uncaught Exception during initialization."));
 	}
 
@@ -937,10 +949,13 @@ void GameEngine::reset()
 {
 
 	WindowLayout *background = TheWindowManager->winCreateLayout("Menus/BlankWindow.wnd");
-	DEBUG_ASSERTCRASH(background,("We Couldn't Load Menus/BlankWindow.wnd"));
-	background->hide(FALSE);
-	background->bringForward();
-	background->getFirstWindow()->winClearStatus(WIN_STATUS_IMAGE);
+	if (background)
+	{
+		background->hide(FALSE);
+		background->bringForward();
+		if (background->getFirstWindow())
+			background->getFirstWindow()->winClearStatus(WIN_STATUS_IMAGE);
+	}
 	Bool deleteNetwork = false;
 	if (TheGameLogic->isInMultiplayerGame())
 		deleteNetwork = true;

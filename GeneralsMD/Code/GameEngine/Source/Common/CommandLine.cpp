@@ -1312,6 +1312,8 @@ static CommandLineParam paramsForEngineInit[] =
 	{ "-munkee", parseMunkee },
 	{ "-displayDebug", parseDisplayDebug },
 	{ "-file", parseFile },
+	{ "-startmap", parseFile },
+	{ "-map", parseFile },
 
 //	{ "-preload", parsePreload },
 

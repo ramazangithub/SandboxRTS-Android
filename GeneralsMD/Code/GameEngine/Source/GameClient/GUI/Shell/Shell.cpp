@@ -575,9 +575,12 @@ void Shell::showShellMap(Bool useShellMap )
 			m_background = TheWindowManager->winCreateLayout("Menus/BlankWindow.wnd");
 		}
 
-		DEBUG_ASSERTCRASH(m_background,("We Couldn't Load Menus/BlankWindow.wnd"));
-		m_background->getFirstWindow()->winSetStatus(WIN_STATUS_IMAGE);
-		m_background->hide(FALSE);
+		if (m_background)
+		{
+			if (m_background->getFirstWindow())
+				m_background->getFirstWindow()->winSetStatus(WIN_STATUS_IMAGE);
+			m_background->hide(FALSE);
+		}
 		if (top())
 			top()->bringForward();
 		m_shellMapOn = FALSE;
@@ -695,7 +698,12 @@ void Shell::doPush( AsciiString layoutFile )
 	fprintf(stderr, "DEBUG: winCreateLayout returned: %p\n", newScreen);
 	fflush(stderr);
 	
-	DEBUG_ASSERTCRASH( newScreen != nullptr, ("Shell unable to load pending push layout") );
+	if (newScreen == nullptr)
+	{
+		fprintf(stderr, "WARNING: Shell::doPush() - layout '%s' could not be loaded, skipping\n", layoutFile.str());
+		fflush(stderr);
+		return;
+	}
 
 	// link screen to the top
 	linkScreen( newScreen );

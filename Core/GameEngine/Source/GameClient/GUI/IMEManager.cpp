@@ -568,10 +568,10 @@ void IMEManager::init()
 	m_oldContext = ImmGetContext( ApplicationHWnd );
 	m_disabled = 0;
 	m_candidateWindow = TheWindowManager->winCreateFromScript( "IMECandidateWindow.wnd");
-	m_candidateWindow->winSetStatus(WIN_STATUS_ABOVE);
 
 	if ( m_candidateWindow )
 	{
+		m_candidateWindow->winSetStatus(WIN_STATUS_ABOVE);
 		m_candidateWindow->winHide( TRUE );
 
 		// find text area window

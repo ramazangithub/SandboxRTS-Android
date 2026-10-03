@@ -206,11 +206,9 @@ Bool WindowLayout::load( AsciiString filename )
 	target = TheWindowManager->winCreateFromScript( filename, &info );
 	if( target == nullptr )
 	{
-
-		DEBUG_ASSERTCRASH( target, ("WindowLayout::load - Failed to load layout") );
-		DEBUG_LOG(( "WindowLayout::load - Unable to load layout file '%s'", filename.str() ));
+		fprintf(stderr, "WARNING: WindowLayout::load - Unable to load layout file '%s'\n", filename.str());
+		fflush(stderr);
 		return FALSE;
-
 	}
 
 	//

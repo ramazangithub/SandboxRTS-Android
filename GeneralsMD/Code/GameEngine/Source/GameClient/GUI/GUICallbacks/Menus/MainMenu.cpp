@@ -242,12 +242,12 @@ void HandleCanceledDownload( Bool resetDropDown )
 
 static void showSelectiveButtons( Int show )
 {
-	buttonUSARecentSave->winHide(!(show == SHOW_USA ));
-	buttonUSALoadGame->winHide(!(show == SHOW_USA ));
-	buttonGLARecentSave->winHide(!(show == SHOW_GLA ));
-	buttonGLALoadGame->winHide(!(show == SHOW_GLA ));
-	buttonChinaRecentSave->winHide(!(show == SHOW_CHINA ));
-	buttonChinaLoadGame->winHide(!(show == SHOW_CHINA ));
+	if (buttonUSARecentSave) buttonUSARecentSave->winHide(!(show == SHOW_USA ));
+	if (buttonUSALoadGame) buttonUSALoadGame->winHide(!(show == SHOW_USA ));
+	if (buttonGLARecentSave) buttonGLARecentSave->winHide(!(show == SHOW_GLA ));
+	if (buttonGLALoadGame) buttonGLALoadGame->winHide(!(show == SHOW_GLA ));
+	if (buttonChinaRecentSave) buttonChinaRecentSave->winHide(!(show == SHOW_CHINA ));
+	if (buttonChinaLoadGame) buttonChinaLoadGame->winHide(!(show == SHOW_CHINA ));
 }
 
 static void quitCallback()
@@ -572,7 +572,10 @@ void MainMenuInit( WindowLayout *layout, void *userData )
 	dropDownWindows[DROPDOWN_LOADREPLAY] = TheWindowManager->winGetWindowFromId( parentMainMenu, TheNameKeyGenerator->nameToKey( "MainMenu.wnd:MapBorder3" ) );
 	dropDownWindows[DROPDOWN_DIFFICULTY] = TheWindowManager->winGetWindowFromId( parentMainMenu, TheNameKeyGenerator->nameToKey( "MainMenu.wnd:MapBorder4" ) );
 	for(i = 1; i < DROPDOWN_COUNT; ++i)
-		dropDownWindows[i]->winHide(TRUE);
+	{
+		if (dropDownWindows[i])
+			dropDownWindows[i]->winHide(TRUE);
+	}
 
 	initialHide();
 
