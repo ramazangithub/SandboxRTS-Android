@@ -1,12 +1,12 @@
 {
   "round": 2,
-  "turn": "pc_build",
+  "turn": "builder",
   "commit": "d754dd9",
   "release_tag": null,
-  "apk": "C:\\Users\\lbx95\\GeneralsZH-Android.apk (local build)",
+  "apk": null,
   "stubs_changed": false,
-  "status": "ready",
-  "updated_by": "builder",
-  "updated_at": "2026-10-04T00:52:00Z",
-  "mode": "local_pc_build"
+  "status": "blocked",
+  "updated_by": "tester",
+  "updated_at": "2026-10-04T00:54:25Z",
+  "mode": "cloud_release"
 }
