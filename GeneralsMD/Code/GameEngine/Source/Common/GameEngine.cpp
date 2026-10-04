@@ -851,7 +851,9 @@ void GameEngine::init()
 		}
 
 		// load the initial shell screen
-		TheShell->push( "Menus/MainMenu.wnd" );
+		// GeneralsX @android: skip the main menu when a map is started directly (-startmap/-file)
+		if (TheGlobalData->m_initialFile.isEmpty())
+			TheShell->push( "Menus/MainMenu.wnd" );
 
 		// This allows us to run a map from the command line
 		if (TheGlobalData->m_initialFile.isEmpty() == FALSE)

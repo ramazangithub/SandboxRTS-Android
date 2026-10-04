@@ -133,6 +133,13 @@ static Int theFlashCount = 0;
 //**** Start Statistical Dump *************************************************************
 //*****************************************************************************************
 
+// GeneralsX @android r005: temporary red clear colour to verify the swapchain reaches the display
+#if defined(__ANDROID__)
+#define AOW_ANDROID_CLEAR_COLOR Vector3( 1.0f, 0.0f, 0.0f )
+#else
+#define AOW_ANDROID_CLEAR_COLOR Vector3( 0.0f, 0.0f, 0.0f )
+#endif
+
 #ifdef DUMP_PERF_STATS
 
 #include <cstdarg>
@@ -1876,7 +1883,7 @@ void W3DDisplay::calculateTerrainLOD()
 			Int64 startTime64 = getPerformanceCounter();
 			// start render block
 			updateViews();
-			if (WW3D::Begin_Render( true, true, Vector3( 0.0f, 0.0f, 0.0f ) ) == WW3D_ERROR_OK)
+			if (WW3D::Begin_Render( true, true, AOW_ANDROID_CLEAR_COLOR ) == WW3D_ERROR_OK)
 			{	// draw all views of the world
 				drawViews();
 				// render is all done!
@@ -2131,7 +2138,7 @@ AGAIN:
 		{
 			//USE_PERF_TIMER(BigAssRenderLoop)
 			static Bool couldRender = true;
-			if ((TheGlobalData->m_breakTheMovie == FALSE) && (TheGlobalData->m_disableRender == false) && WW3D::Begin_Render( true, true, Vector3( 0.0f, 0.0f, 0.0f ), TheWaterTransparency->m_minWaterOpacity ) == WW3D_ERROR_OK)
+			if ((TheGlobalData->m_breakTheMovie == FALSE) && (TheGlobalData->m_disableRender == false) && WW3D::Begin_Render( true, true, AOW_ANDROID_CLEAR_COLOR, TheWaterTransparency->m_minWaterOpacity ) == WW3D_ERROR_OK)
 			{
 
 				if(TheGlobalData->m_loadScreenRender == TRUE)
