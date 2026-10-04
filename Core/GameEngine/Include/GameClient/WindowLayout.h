@@ -107,14 +107,16 @@ protected:
 };
 
 // INLINING ///////////////////////////////////////////////////////////////////////////////////////
-inline AsciiString WindowLayout::getFilename() const { return m_filenameString; }
-inline GameWindow *WindowLayout::getFirstWindow() const { return m_windowList; }
-inline Bool WindowLayout::isHidden() const { return m_hidden; }
+// SandboxRTS-android: missing layouts come back as nullptr
+static inline bool gxIsNullLayout(const void *p) { return p == nullptr; }
+inline AsciiString WindowLayout::getFilename() const { if (gxIsNullLayout(this)) return AsciiString::TheEmptyString; return m_filenameString; }
+inline GameWindow *WindowLayout::getFirstWindow() const { if (gxIsNullLayout(this)) return nullptr; return m_windowList; }
+inline Bool WindowLayout::isHidden() const { if (gxIsNullLayout(this)) return TRUE; return m_hidden; }
 
-inline void WindowLayout::runInit( void *userData ) { if( m_init ) m_init( this, userData ); }
-inline void WindowLayout::runUpdate( void *userData ) { if( m_update ) m_update( this, userData ); }
-inline void WindowLayout::runShutdown( void *userData ) { if( m_shutdown ) m_shutdown( this, userData ); }
+inline void WindowLayout::runInit( void *userData ) { if (gxIsNullLayout(this)) return; if( m_init ) m_init( this, userData ); }
+inline void WindowLayout::runUpdate( void *userData ) { if (gxIsNullLayout(this)) return; if( m_update ) m_update( this, userData ); }
+inline void WindowLayout::runShutdown( void *userData ) { if (gxIsNullLayout(this)) return; if( m_shutdown ) m_shutdown( this, userData ); }
 
-inline void WindowLayout::setInit( WindowLayoutInitFunc init ) { m_init = init; }
-inline void WindowLayout::setUpdate( WindowLayoutUpdateFunc update ) { m_update = update; }
-inline void WindowLayout::setShutdown( WindowLayoutShutdownFunc shutdown ) {m_shutdown = shutdown;}
+inline void WindowLayout::setInit( WindowLayoutInitFunc init ) { if (gxIsNullLayout(this)) return; m_init = init; }
+inline void WindowLayout::setUpdate( WindowLayoutUpdateFunc update ) { if (gxIsNullLayout(this)) return; m_update = update; }
+inline void WindowLayout::setShutdown( WindowLayoutShutdownFunc shutdown ) { if (gxIsNullLayout(this)) return; m_shutdown = shutdown;}

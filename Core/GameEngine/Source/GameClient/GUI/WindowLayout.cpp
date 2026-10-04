@@ -73,6 +73,7 @@ WindowLayout::~WindowLayout()
 //-------------------------------------------------------------------------------------------------
 void WindowLayout::hide( Bool hide )
 {
+	if (gxIsNullLayout(this)) return; /*gx-null*/
 	GameWindow *window;
 
 	// hide or unhide all windows in this layout
@@ -93,6 +94,7 @@ void WindowLayout::hide( Bool hide )
 //-------------------------------------------------------------------------------------------------
 void WindowLayout::addWindow( GameWindow *window )
 {
+	if (gxIsNullLayout(this)) return; /*gx-null*/
 	GameWindow *win = findWindow( window );
 
 	// only add window if window is not in this layout already
@@ -129,6 +131,7 @@ void WindowLayout::addWindow( GameWindow *window )
 //-------------------------------------------------------------------------------------------------
 void WindowLayout::removeWindow( GameWindow *window )
 {
+	if (gxIsNullLayout(this)) return; /*gx-null*/
 	GameWindow *win = findWindow( window );
 
 	// can't remove window unless it's really part of this layout
@@ -167,6 +170,7 @@ void WindowLayout::removeWindow( GameWindow *window )
 //-------------------------------------------------------------------------------------------------
 void WindowLayout::destroyWindows()
 {
+	if (gxIsNullLayout(this)) return; /*gx-null*/
 	GameWindow *window;
 
 	while( (window = getFirstWindow()) != nullptr )
@@ -188,6 +192,7 @@ void WindowLayout::destroyWindows()
 //-------------------------------------------------------------------------------------------------
 Bool WindowLayout::load( AsciiString filename )
 {
+	if (gxIsNullLayout(this)) return FALSE; /*gx-null*/
 
 	// sanity
 	if( filename.isEmpty() )
@@ -254,6 +259,7 @@ Bool WindowLayout::load( AsciiString filename )
 //-------------------------------------------------------------------------------------------------
 void WindowLayout::bringForward()
 {
+	if (gxIsNullLayout(this)) return; /*gx-null*/
 
 	//
 	// loop through all our windows and bring each of them to the top of
@@ -285,6 +291,7 @@ void WindowLayout::bringForward()
 //-------------------------------------------------------------------------------------------------
 GameWindow *WindowLayout::findWindow( GameWindow *window )
 {
+	if (gxIsNullLayout(this)) return nullptr; /*gx-null*/
 	GameWindow *win;
 
 	for( win = m_windowList; win; win = win->winGetNextInLayout() )
