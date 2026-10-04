@@ -1,0 +1,11 @@
+{
+  "round": 1,
+  "turn": "tester",
+  "commit": "81b9bee",
+  "release_tag": "bridge-r001",
+  "apk": "GeneralsZH-Android-r001.apk",
+  "stubs_changed": false,
+  "status": "ready",
+  "updated_by": "builder",
+  "updated_at": "2026-10-04T00:42:55Z"
+}
