@@ -1,13 +1,12 @@
 {
-  "round": 1,
-  "turn": "builder",
-  "commit": "81b9bee",
-  "release_tag": "bridge-r001",
-  "apk": "GeneralsZH-Android-r001.apk",
+  "round": 2,
+  "turn": "pc_build",
+  "commit": "d754dd9",
+  "release_tag": null,
+  "apk": "C:\\Users\\lbx95\\GeneralsZH-Android.apk (local build)",
   "stubs_changed": false,
-  "status": "blocked_ci_billing",
+  "status": "ready",
   "updated_by": "builder",
-  "updated_at": "2026-10-04T00:48:56Z",
-  "next_commit": "d754dd9",
-  "note": "GitHub Actions не стартует: биллинг/лимит минут аккаунта. Фикс r002 (null-safe GameWindow/Gadget) уже в main d754dd9. TESTER: ничего не делать, ждать turn=tester."
+  "updated_at": "2026-10-04T00:52:00Z",
+  "mode": "local_pc_build"
 }
