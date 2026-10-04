@@ -1,13 +1,13 @@
 {
   "round": 2,
-  "turn": "builder",
+  "turn": "tester",
   "commit": "d754dd9",
-  "release_tag": null,
-  "apk": null,
+  "release_tag": "bridge-r002",
+  "apk": "GeneralsZH-Android-r002.apk",
   "stubs_changed": false,
-  "status": "ci_building",
+  "status": "ready",
   "updated_by": "builder",
-  "updated_at": "2026-10-04T01:19:52Z",
+  "updated_at": "2026-10-04T01:29:01Z",
   "mode": "cloud_release",
-  "note": "Репо публичное, CI собирает d754dd9 (run 37167651123). Жди turn=tester + release bridge-r002."
+  "note": "\u0420\u0435\u043f\u043e \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u043e\u0435, CI \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442 d754dd9 (run 37167651123). \u0416\u0434\u0438 turn=tester + release bridge-r002."
 }
