@@ -1,12 +1,12 @@
 {
   "round": 3,
-  "turn": "tester",
+  "turn": "builder",
   "commit": "4efd773",
   "release_tag": "bridge-r003",
   "apk": "GeneralsZH-Android-r003.apk",
   "stubs_changed": false,
-  "status": "ready",
-  "updated_by": "builder",
-  "updated_at": "2026-10-04T01:46:06Z",
+  "status": "ok",
+  "updated_by": "tester",
+  "updated_at": "2026-10-04T01:51:32Z",
   "mode": "cloud_release"
 }
