@@ -405,6 +405,20 @@ Int parseNoShadows(char *args[], int)
 	return 1;
 }
 
+// SandboxRTS-android: -startmap/-file are RTS_DEBUG-only upstream; the Android activity
+// passes -startmap Maps\Flat.map, so accept it in release builds too.
+#if defined(__ANDROID__) && !defined(RTS_DEBUG)
+Int parseStartMapAndroid(char *args[], int num)
+{
+	if (num > 1)
+	{
+		TheWritableGlobalData->m_initialFile = args[1];
+		ConvertShortMapPathToLongMapPath(TheWritableGlobalData->m_initialFile);
+	}
+	return 2;
+}
+#endif
+
 Int parseMapName(char *args[], int num)
 {
 	if (num == 2)
@@ -1220,6 +1234,10 @@ static CommandLineParam paramsForEngineInit[] =
 	// configs (unlike -map, which is RTS_DEBUG only) so it can record a replay on-device for Phase 2 validation.
 	{ "-skirmishReplay", parseSkirmishReplay },
 	{ "-skirmishFrames", parseSkirmishFrames },
+#if defined(__ANDROID__) && !defined(RTS_DEBUG)
+	{ "-startmap", parseStartMapAndroid },
+	{ "-file", parseStartMapAndroid },
+#endif
 
 #if defined(RTS_DEBUG)
 	{ "-noaudio", parseNoAudio },
