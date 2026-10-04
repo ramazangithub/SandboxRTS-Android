@@ -44,6 +44,12 @@ endif()
 # launcher is registered before CMake finalizes the compiler selection.
 include(cmake/ccache.cmake)
 
+# SandboxRTS-android: keep null-window guards (missing .wnd stubs)
+if(ANDROID)
+  add_compile_options(-fno-delete-null-pointer-checks -Wno-tautological-undefined-compare -Wno-undefined-bool-conversion)
+endif()
+
+
 # This file handles extra settings wanted/needed for different compilers.
 include(cmake/compilers.cmake)
 

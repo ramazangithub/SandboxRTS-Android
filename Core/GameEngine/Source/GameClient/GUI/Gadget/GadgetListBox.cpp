@@ -63,6 +63,9 @@
 #include "GameClient/GameWindowGlobal.h"
 #include "GameClient/Keyboard.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 
 // DEFINES ////////////////////////////////////////////////////////////////////
 // Sets up the user's OS set doubleclick time so if they don't like it... they can
@@ -94,6 +97,7 @@ typedef struct _TextAndColor
 
 static void doAudioFeedback(GameWindow *window)
 {
+	if (gxIsNullWin(window)) return; /*gx-null*/
 	if (!window)
 		return;
 
@@ -114,6 +118,7 @@ static void doAudioFeedback(GameWindow *window)
 
 static Int getListboxEntryBasedOnCoord(GameWindow *window, Int x, Int y, Int &row, Int &column)
 {
+	if (gxIsNullWin(window)) return 0; /*gx-null*/
 	Int pos;
 	Int winx, winy, i;
 	WinInstanceData *instData = window->winGetInstanceData();
@@ -168,6 +173,7 @@ static Int getListboxEntryBasedOnCoord(GameWindow *window, Int x, Int y, Int &ro
 
 Int GadgetListBoxGetEntryBasedOnXY( GameWindow *listbox, Int x, Int y, Int &row, Int &column)
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	return getListboxEntryBasedOnCoord( listbox, x, y, row, column  );
 
 }
@@ -285,6 +291,7 @@ static void adjustDisplay( GameWindow *window, Int adjustment,
 //=============================================================================
 static void computeTotalHeight( GameWindow *window )
 {
+	if (gxIsNullWin(window)) return; /*gx-null*/
 	Int i, height = 0;
 	Int tempHeight;
 	ListboxData *list = (ListboxData *)window->winGetUserData();
@@ -2166,6 +2173,7 @@ void GadgetListBoxSetColors( GameWindow *listbox,
 //=============================================================================
 UnicodeString GadgetListBoxGetText( GameWindow *listbox, Int row, Int column)
 {
+	if (gxIsNullWin(listbox)) return UnicodeString::TheEmptyString; /*gx-null*/
 	Color color;
 	return GadgetListBoxGetTextAndColor( listbox,&color,row,column );
 }
@@ -2175,6 +2183,7 @@ UnicodeString GadgetListBoxGetText( GameWindow *listbox, Int row, Int column)
 //=============================================================================
 UnicodeString GadgetListBoxGetTextAndColor( GameWindow *listbox, Color *color, Int row, Int column)
 {
+	if (gxIsNullWin(listbox)) return UnicodeString::TheEmptyString; /*gx-null*/
 	*color = 0;
 	// sanity
 	if( listbox == nullptr  || row == -1 || column == -1)
@@ -2275,6 +2284,7 @@ Int GadgetListBoxAddEntryImage( GameWindow *listbox, const Image *image,
 //=============================================================================
 void GadgetListBoxSetFont( GameWindow *g, GameFont *font )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	ListboxData *listData = (ListboxData *)g->winGetUserData();
 	DisplayString *dString;
 
@@ -2308,6 +2318,7 @@ void GadgetListBoxSetFont( GameWindow *g, GameFont *font )
 //=============================================================================
 void GadgetListboxCreateScrollbar( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	ListboxData *listData = (ListboxData *)listbox->winGetUserData();
 	WinInstanceData winInstData;
 	SliderData sData = { 0 };
@@ -2425,6 +2436,7 @@ void GadgetListboxCreateScrollbar( GameWindow *listbox )
 //=============================================================================
 void GadgetListBoxAddMultiSelect( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
 
 	DEBUG_ASSERTCRASH(listboxData && listboxData->selections == nullptr, ("selections is not null"));
@@ -2458,6 +2470,7 @@ void GadgetListBoxAddMultiSelect( GameWindow *listbox )
 //=============================================================================
 void GadgetListBoxRemoveMultiSelect( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	ListboxData *listData = (ListboxData *)listbox->winGetUserData();
 
 	delete[]( listData->selections );
@@ -2478,6 +2491,7 @@ void GadgetListBoxRemoveMultiSelect( GameWindow *listbox )
 //=============================================================================
 void GadgetListBoxSetListLength( GameWindow *listbox, Int newLength )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
 
 
@@ -2582,6 +2596,7 @@ void GadgetListBoxSetListLength( GameWindow *listbox, Int newLength )
 //=============================================================================
 Int GadgetListBoxGetListLength( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
 	if (listboxData)
 		return listboxData->listLength;
@@ -2592,6 +2607,7 @@ Int GadgetListBoxGetListLength( GameWindow *listbox )
 //=============================================================================
 Int GadgetListBoxGetMaxSelectedLength( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
 	if (listboxData)
 		return listboxData->multiSelect ? listboxData->listLength : 1;
@@ -2605,6 +2621,7 @@ Int GadgetListBoxGetMaxSelectedLength( GameWindow *listbox )
 //=============================================================================
 Int GadgetListBoxGetNumEntries( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	if (!listbox)
 		return 0;
 
@@ -2624,6 +2641,7 @@ Int GadgetListBoxGetNumEntries( GameWindow *listbox )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxGetSelected( GameWindow *listbox, Int *selectList )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 
 	// sanity
 	if( listbox == nullptr )
@@ -2640,6 +2658,7 @@ void GadgetListBoxGetSelected( GameWindow *listbox, Int *selectList )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetSelected( GameWindow *listbox, Int selectIndex )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 
 	// sanity
 	if( listbox == nullptr )
@@ -2655,6 +2674,7 @@ void GadgetListBoxSetSelected( GameWindow *listbox, Int selectIndex )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetSelected( GameWindow *listbox, const Int *selectList, Int selectCount )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	// sanity
 	if( listbox == nullptr )
 		return;
@@ -2667,6 +2687,7 @@ void GadgetListBoxSetSelected( GameWindow *listbox, const Int *selectList, Int s
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxReset( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 
 	// sanity
 	if( listbox == nullptr )
@@ -2681,6 +2702,7 @@ void GadgetListBoxReset( GameWindow *listbox )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetItemData( GameWindow *listbox, void *data, Int row, Int column )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	ICoord2D pos;
 	pos.x = column;
 	pos.y = row;
@@ -2694,6 +2716,7 @@ void GadgetListBoxSetItemData( GameWindow *listbox, void *data, Int row, Int col
 //-------------------------------------------------------------------------------------------------
 void *GadgetListBoxGetItemData( GameWindow *listbox, Int row, Int column)
 {
+	if (gxIsNullWin(listbox)) return nullptr; /*gx-null*/
 	void *data = nullptr;
 	ICoord2D pos;
 	pos.x = column;
@@ -2711,6 +2734,7 @@ void *GadgetListBoxGetItemData( GameWindow *listbox, Int row, Int column)
 //-------------------------------------------------------------------------------------------------
 Int GadgetListBoxGetBottomVisibleEntry( GameWindow *window )
 {
+	if (gxIsNullWin(window)) return 0; /*gx-null*/
 	if (!window)
 		return 0;
 
@@ -2743,6 +2767,7 @@ bool GadgetListBoxIsFull(GameWindow *window)
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetBottomVisibleEntry( GameWindow *window, Int newPos )
 {
+	if (gxIsNullWin(window)) return; /*gx-null*/
 	if (!window)
 		return;
 
@@ -2759,6 +2784,7 @@ void GadgetListBoxSetBottomVisibleEntry( GameWindow *window, Int newPos )
 //-------------------------------------------------------------------------------------------------
 Int GadgetListBoxGetTopVisibleEntry( GameWindow *window )
 {
+	if (gxIsNullWin(window)) return 0; /*gx-null*/
 	if (!window)
 		return 0;
 
@@ -2773,6 +2799,7 @@ Int GadgetListBoxGetTopVisibleEntry( GameWindow *window )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetTopVisibleEntry( GameWindow *window, Int newPos )
 {
+	if (gxIsNullWin(window)) return; /*gx-null*/
 	if (!window)
 		return;
 
@@ -2789,6 +2816,7 @@ void GadgetListBoxSetTopVisibleEntry( GameWindow *window, Int newPos )
 //-------------------------------------------------------------------------------------------------
 void GadgetListBoxSetAudioFeedback( GameWindow *listbox, Bool enable )
 {
+	if (gxIsNullWin(listbox)) return; /*gx-null*/
 	if (!listbox)
 		return;
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
@@ -2802,6 +2830,7 @@ void GadgetListBoxSetAudioFeedback( GameWindow *listbox, Bool enable )
 //-------------------------------------------------------------------------------------------------
 Int GadgetListBoxGetNumColumns( GameWindow *listbox )
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	if (!listbox)
 		return 0;
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();
@@ -2815,6 +2844,7 @@ Int GadgetListBoxGetNumColumns( GameWindow *listbox )
 //-------------------------------------------------------------------------------------------------
 Int GadgetListBoxGetColumnWidth( GameWindow *listbox, Int column )
 {
+	if (gxIsNullWin(listbox)) return 0; /*gx-null*/
 	if (!listbox)
 		return 0;
 	ListboxData *listboxData = (ListboxData *)listbox->winGetUserData();

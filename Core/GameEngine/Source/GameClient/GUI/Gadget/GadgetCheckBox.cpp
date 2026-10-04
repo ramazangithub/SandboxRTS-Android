@@ -52,6 +52,9 @@
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/Keyboard.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -314,6 +317,7 @@ WindowMsgHandledType GadgetCheckBoxSystem( GameWindow *window, UnsignedInt msg,
 //=============================================================================
 void GadgetCheckBoxSetText( GameWindow *g, UnicodeString text )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -329,6 +333,7 @@ void GadgetCheckBoxSetText( GameWindow *g, UnicodeString text )
 //=============================================================================
 void GadgetCheckBoxSetChecked( GameWindow *g, Bool isChecked)
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	WinInstanceData *instData = g->winGetInstanceData();
 	if (isChecked)
 	{
@@ -350,6 +355,7 @@ void GadgetCheckBoxSetChecked( GameWindow *g, Bool isChecked)
 //=============================================================================
 void GadgetCheckBoxToggle( GameWindow *g)
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	WinInstanceData *instData = g->winGetInstanceData();
 	Bool isChecked = BitIsSet(instData->m_state, WIN_STATE_SELECTED);
 	if (isChecked)
@@ -371,6 +377,7 @@ void GadgetCheckBoxToggle( GameWindow *g)
 //=============================================================================
 Bool GadgetCheckBoxIsChecked( GameWindow *g )
 {
+	if (gxIsNullWin(g)) return FALSE; /*gx-null*/
 	WinInstanceData *instData = g->winGetInstanceData();
 	return (BitIsSet(instData->m_state, WIN_STATE_SELECTED));
 }

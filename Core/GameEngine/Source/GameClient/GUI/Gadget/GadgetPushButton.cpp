@@ -54,6 +54,9 @@
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/InGameUI.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -68,6 +71,7 @@
 
 static Bool buttonTriggersOnMouseDown(GameWindow *window)
 {
+	if (gxIsNullWin(window)) return FALSE; /*gx-null*/
 	// Buttons with the on down status set trigger on mouse down. jba. [8/6/2003]
 	Bool onDown = BitIsSet( window->winGetStatus(), WIN_STATUS_ON_MOUSE_DOWN);
 
@@ -536,6 +540,7 @@ WindowMsgHandledType GadgetPushButtonSystem( GameWindow *window, UnsignedInt msg
 // ------------------------------------------------------------------------------------------------
 void GadgetCheckLikeButtonSetVisualCheck( GameWindow *g, Bool checked )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -572,6 +577,7 @@ void GadgetCheckLikeButtonSetVisualCheck( GameWindow *g, Bool checked )
 // ------------------------------------------------------------------------------------------------
 Bool GadgetCheckLikeButtonIsChecked( GameWindow *g )
 {
+	if (gxIsNullWin(g)) return FALSE; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -591,6 +597,7 @@ Bool GadgetCheckLikeButtonIsChecked( GameWindow *g )
 // ------------------------------------------------------------------------------------------------
 void GadgetButtonEnableCheckLike( GameWindow *g, Bool makeCheckLike, Bool initiallyChecked )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -620,6 +627,7 @@ void GadgetButtonEnableCheckLike( GameWindow *g, Bool makeCheckLike, Bool initia
 //=============================================================================
 void GadgetButtonSetText( GameWindow *g, UnicodeString text )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -647,6 +655,7 @@ PushButtonData * getNewPushButtonData()
 //=============================================================================
 void GadgetButtonSetBorder( GameWindow *g, Color color, Bool drawBorder = TRUE )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if( g == nullptr )
 		return;
 
@@ -665,6 +674,7 @@ void GadgetButtonSetBorder( GameWindow *g, Color color, Bool drawBorder = TRUE )
 //=============================================================================
 void GadgetButtonDrawClock( GameWindow *g, Int percent, Color color )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	if( g == nullptr )
 		return;
@@ -686,6 +696,7 @@ void GadgetButtonDrawClock( GameWindow *g, Int percent, Color color )
 //=============================================================================
 void GadgetButtonDrawInverseClock( GameWindow *g, Int percent, Color color )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	if( g == nullptr )
 		return;
@@ -704,6 +715,7 @@ void GadgetButtonDrawInverseClock( GameWindow *g, Int percent, Color color )
 
 void GadgetButtonDrawOverlayImage( GameWindow *g, const Image *image )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if( g == nullptr )
 		return;
 
@@ -722,6 +734,7 @@ void GadgetButtonDrawOverlayImage( GameWindow *g, const Image *image )
 //=============================================================================
 void GadgetButtonSetData(GameWindow *g, void *data)
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if( g == nullptr )
 		return;
 
@@ -739,6 +752,7 @@ void GadgetButtonSetData(GameWindow *g, void *data)
 //=============================================================================
 void *GadgetButtonGetData(GameWindow *g)
 {
+	if (gxIsNullWin(g)) return nullptr; /*gx-null*/
 	if( g == nullptr )
 		return nullptr;
 
@@ -752,6 +766,7 @@ void *GadgetButtonGetData(GameWindow *g)
 
 void GadgetButtonSetAltSound(GameWindow *g, AsciiString altSound )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if(!g)
 		return;
 	PushButtonData *pData = (PushButtonData *)g->winGetUserData();

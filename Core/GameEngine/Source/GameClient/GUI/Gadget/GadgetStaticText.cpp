@@ -53,6 +53,9 @@
 #include "GameClient/Gadget.h"
 #include "GameClient/GameWindowManager.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -179,6 +182,7 @@ WindowMsgHandledType GadgetStaticTextSystem( GameWindow *window, UnsignedInt msg
 //=============================================================================
 void GadgetStaticTextSetText( GameWindow *window, UnicodeString text )
 {
+	if (gxIsNullWin(window)) return; /*gx-null*/
 	if(!window)
 		return;
 	TheWindowManager->winSendSystemMsg( window, GGM_SET_LABEL, (WindowMsgData)&text, 0 );
@@ -187,6 +191,7 @@ void GadgetStaticTextSetText( GameWindow *window, UnicodeString text )
 
 UnicodeString GadgetStaticTextGetText( GameWindow *window )
 {
+	if (gxIsNullWin(window)) return UnicodeString::TheEmptyString; /*gx-null*/
 	if(!window)
 		return UnicodeString::TheEmptyString;
 	TextData *tData = (TextData *)window->winGetUserData();
@@ -202,6 +207,7 @@ UnicodeString GadgetStaticTextGetText( GameWindow *window )
 //=============================================================================
 void GadgetStaticTextSetFont( GameWindow *g, GameFont *font )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	TextData *textData = (TextData *)g->winGetUserData();
 	DisplayString *dString;
 

@@ -63,6 +63,9 @@
 #include "GameClient/SelectionXlat.h"
 #include "GameClient/GameWindowTransitions.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -138,6 +141,7 @@ GameWindow::~GameWindow()
 //=============================================================================
 void GameWindow::linkTransitionWindow( TransitionWindow* transitionWindow )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_transitionWindows.push_back(transitionWindow);
 
@@ -147,6 +151,7 @@ void GameWindow::linkTransitionWindow( TransitionWindow* transitionWindow )
 //=============================================================================
 void GameWindow::unlinkTransitionWindow( TransitionWindow* transitionWindow )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	std::vector<TransitionWindow*>::iterator it = m_transitionWindows.begin();
 	while ( it != m_transitionWindows.end() )
@@ -166,6 +171,7 @@ void GameWindow::unlinkTransitionWindow( TransitionWindow* transitionWindow )
 //=============================================================================
 void GameWindow::unlinkFromTransitionWindows()
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	while ( !m_transitionWindows.empty() )
 	{
@@ -180,6 +186,7 @@ void GameWindow::unlinkFromTransitionWindows()
 //=============================================================================
 void GameWindow::normalizeWindowRegion()
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 	Int temp;
 
 	if( m_region.lo.x > m_region.hi.x)
@@ -207,6 +214,7 @@ void GameWindow::normalizeWindowRegion()
 //=============================================================================
 GameWindow *GameWindow::findFirstLeaf()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *leaf = this;
 
 	// Find the root of this branch
@@ -226,6 +234,7 @@ GameWindow *GameWindow::findFirstLeaf()
 //=============================================================================
 GameWindow *GameWindow::findLastLeaf()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *leaf = this;
 
 	// Find the root of this branch
@@ -252,6 +261,7 @@ GameWindow *GameWindow::findLastLeaf()
 //=============================================================================
 GameWindow *GameWindow::findPrevLeaf()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *leaf = this;
 
 	if( leaf->m_prev )
@@ -319,6 +329,7 @@ GameWindow *GameWindow::findPrevLeaf()
 //=============================================================================
 GameWindow *GameWindow::findNextLeaf()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *leaf = this;
 
 	if( leaf->m_next )
@@ -369,6 +380,7 @@ GameWindow *GameWindow::findNextLeaf()
 //=============================================================================
 Int GameWindow::winNextTab()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 /*
 	GameWindow *newTab = this;
 	Bool firstTry = TRUE;
@@ -404,6 +416,7 @@ Int GameWindow::winNextTab()
 //=============================================================================
 Int GameWindow::winPrevTab()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 /*
 	GameWindow *newTab = this;
 	Bool firstTry = TRUE;
@@ -442,6 +455,7 @@ Int GameWindow::winPrevTab()
 //=============================================================================
 Int GameWindow::winBringToTop()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	GameWindow *current;
 	GameWindow *parent = winGetParent();
 
@@ -497,6 +511,7 @@ Int GameWindow::winBringToTop()
 //=============================================================================
 Int GameWindow::winActivate()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	Int returnCode;
 
 	// bring window to top
@@ -517,6 +532,7 @@ Int GameWindow::winActivate()
 //=============================================================================
 Int GameWindow::winSetPosition( Int x, Int y )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	m_region.lo.x = x;
 	m_region.lo.y = y;
@@ -535,6 +551,7 @@ Int GameWindow::winSetPosition( Int x, Int y )
 //=============================================================================
 Int GameWindow::winGetPosition( Int *x, Int *y )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( x == nullptr || y == nullptr )
@@ -552,6 +569,7 @@ Int GameWindow::winGetPosition( Int *x, Int *y )
 //=============================================================================
 Int GameWindow::winSetCursorPosition( Int x, Int y )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	m_cursorX = x;
 	m_cursorY = y;
 
@@ -564,6 +582,7 @@ Int GameWindow::winSetCursorPosition( Int x, Int y )
 //=============================================================================
 Int GameWindow::winGetCursorPosition( Int *x, Int *y )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	if ( x )
 	{
 		*x = m_cursorX;
@@ -583,6 +602,7 @@ Int GameWindow::winGetCursorPosition( Int *x, Int *y )
 //=============================================================================
 Int GameWindow::winGetScreenPosition( Int *x, Int *y )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	GameWindow *parent = m_parent;
 
 	*x = m_region.lo.x;
@@ -606,6 +626,7 @@ Int GameWindow::winGetScreenPosition( Int *x, Int *y )
 //=============================================================================
 Int GameWindow::winGetRegion( IRegion2D *region )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( region )
 		*region = m_region;
@@ -620,6 +641,7 @@ Int GameWindow::winGetRegion( IRegion2D *region )
 //=============================================================================
 Bool GameWindow::winPointInWindow( Int x, Int y )
 {
+	if (gxIsNullWin(this)) return FALSE; /*gx-null*/
 	Int winX, winY, width, height;
 
 	winGetScreenPosition( &winX, &winY );
@@ -638,6 +660,7 @@ Bool GameWindow::winPointInWindow( Int x, Int y )
 //=============================================================================
 Int GameWindow::winSetSize( Int width, Int height )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	m_size.x = width;
 	m_size.y = height;
@@ -658,6 +681,7 @@ Int GameWindow::winSetSize( Int width, Int height )
 //=============================================================================
 Int GameWindow::winGetSize( Int *width, Int *height )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( width == nullptr || height == nullptr )
@@ -676,6 +700,7 @@ Int GameWindow::winGetSize( Int *width, Int *height )
 //=============================================================================
 Int GameWindow::winEnable( Bool enable )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	GameWindow *child;
 
 	if( enable )
@@ -701,6 +726,7 @@ Int GameWindow::winEnable( Bool enable )
 //=============================================================================
 Bool GameWindow::winGetEnabled()
 {
+	if (gxIsNullWin(this)) return FALSE; /*gx-null*/
   return BitIsSet( m_status, WIN_STATUS_ENABLED );
 
 }
@@ -711,6 +737,7 @@ Bool GameWindow::winGetEnabled()
 //=============================================================================
 Int GameWindow::winHide( Bool hide )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( hide )
 	{
@@ -745,6 +772,7 @@ Int GameWindow::winHide( Bool hide )
 //=============================================================================
 Bool GameWindow::winIsHidden()
 {
+	if (gxIsNullWin(this)) return FALSE; /*gx-null*/
 
 	return BitIsSet( m_status, WIN_STATUS_HIDDEN );
 
@@ -755,6 +783,7 @@ Bool GameWindow::winIsHidden()
 //=============================================================================
 UnsignedInt GameWindow::winSetStatus( UnsignedInt status )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	UnsignedInt oldStatus;
 
 	oldStatus = m_status;
@@ -770,6 +799,7 @@ UnsignedInt GameWindow::winSetStatus( UnsignedInt status )
 //=============================================================================
 UnsignedInt GameWindow::winClearStatus( UnsignedInt status )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	UnsignedInt oldStatus;
 
 	oldStatus = m_status;
@@ -784,6 +814,7 @@ UnsignedInt GameWindow::winClearStatus( UnsignedInt status )
 //=============================================================================
 UnsignedInt GameWindow::winGetStatus()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_status;
 
@@ -794,6 +825,7 @@ UnsignedInt GameWindow::winGetStatus()
 //=============================================================================
 UnsignedInt GameWindow::winGetStyle()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_style;
 
@@ -804,6 +836,7 @@ UnsignedInt GameWindow::winGetStyle()
 //=============================================================================
 void GameWindow::winSetHiliteState( Bool state )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	if( state )
 		BitSet( m_instData.m_state, WIN_STATE_HILITED );
@@ -817,6 +850,7 @@ void GameWindow::winSetHiliteState( Bool state )
 //=============================================================================
 void GameWindow::winSetDrawOffset( Int x, Int y )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_instData.m_imageOffset.x = x;
 	m_instData.m_imageOffset.y = y;
@@ -828,6 +862,7 @@ void GameWindow::winSetDrawOffset( Int x, Int y )
 //=============================================================================
 void GameWindow::winGetDrawOffset( Int *x, Int *y )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	// sanity
 	if( x == nullptr || y == nullptr )
@@ -843,6 +878,7 @@ void GameWindow::winGetDrawOffset( Int *x, Int *y )
 //=============================================================================
 Int GameWindow::winSetText( UnicodeString newText )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	// copy text over
 	m_instData.setText( newText );
 
@@ -856,6 +892,7 @@ Int GameWindow::winSetText( UnicodeString newText )
 //=============================================================================
 UnicodeString GameWindow::winGetText()
 {
+	if (gxIsNullWin(this)) return UnicodeString::TheEmptyString; /*gx-null*/
 	// return the contents of our text field
 	return m_instData.getText();
 
@@ -865,6 +902,7 @@ UnicodeString GameWindow::winGetText()
 //=============================================================================
 Int GameWindow::winGetTextLength()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	// return the contents of our text field
 	return m_instData.getTextLength();
 
@@ -875,6 +913,7 @@ Int GameWindow::winGetTextLength()
 //=============================================================================
 GameFont *GameWindow::winGetFont()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_instData.getFont();
 
@@ -885,6 +924,7 @@ GameFont *GameWindow::winGetFont()
 //=============================================================================
 void GameWindow::winSetFont( GameFont *font )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	// set font in window member
 	m_instData.m_font = font;
@@ -919,6 +959,7 @@ void GameWindow::winSetFont( GameFont *font )
 //=============================================================================
 void GameWindow::winSetEnabledTextColors( Color color, Color borderColor )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 	m_instData.m_enabledText.color = color;
 	m_instData.m_enabledText.borderColor = borderColor;
 
@@ -933,6 +974,7 @@ void GameWindow::winSetEnabledTextColors( Color color, Color borderColor )
 //=============================================================================
 void GameWindow::winSetDisabledTextColors( Color color, Color borderColor )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_instData.m_disabledText.color = color;
 	m_instData.m_disabledText.borderColor = borderColor;
@@ -947,6 +989,7 @@ void GameWindow::winSetDisabledTextColors( Color color, Color borderColor )
 //=============================================================================
 void GameWindow::winSetHiliteTextColors( Color color, Color borderColor )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_instData.m_hiliteText.color = color;
 	m_instData.m_hiliteText.borderColor = borderColor;
@@ -961,6 +1004,7 @@ void GameWindow::winSetHiliteTextColors( Color color, Color borderColor )
 //=============================================================================
 void GameWindow::winSetIMECompositeTextColors( Color color, Color borderColor )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_instData.m_imeCompositeText.color = color;
 	m_instData.m_imeCompositeText.borderColor = borderColor;
@@ -974,6 +1018,7 @@ void GameWindow::winSetIMECompositeTextColors( Color color, Color borderColor )
 //=============================================================================
 Color GameWindow::winGetEnabledTextColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_enabledText.color;
 
@@ -984,6 +1029,7 @@ Color GameWindow::winGetEnabledTextColor()
 //=============================================================================
 Color GameWindow::winGetEnabledTextBorderColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_enabledText.borderColor;
 
@@ -994,6 +1040,7 @@ Color GameWindow::winGetEnabledTextBorderColor()
 //=============================================================================
 Color GameWindow::winGetDisabledTextColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_disabledText.color;
 
@@ -1004,6 +1051,7 @@ Color GameWindow::winGetDisabledTextColor()
 //=============================================================================
 Color GameWindow::winGetDisabledTextBorderColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_disabledText.borderColor;
 
@@ -1014,6 +1062,7 @@ Color GameWindow::winGetDisabledTextBorderColor()
 //=============================================================================
 Color GameWindow::winGetIMECompositeTextColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_imeCompositeText.color;
 
@@ -1024,6 +1073,7 @@ Color GameWindow::winGetIMECompositeTextColor()
 //=============================================================================
 Color GameWindow::winGetIMECompositeBorderColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_imeCompositeText.borderColor;
 
@@ -1034,6 +1084,7 @@ Color GameWindow::winGetIMECompositeBorderColor()
 //=============================================================================
 Color GameWindow::winGetHiliteTextColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_hiliteText.color;
 
@@ -1044,6 +1095,7 @@ Color GameWindow::winGetHiliteTextColor()
 //=============================================================================
 Color GameWindow::winGetHiliteTextBorderColor()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_hiliteText.borderColor;
 
@@ -1055,6 +1107,7 @@ Color GameWindow::winGetHiliteTextBorderColor()
 //=============================================================================
 Int GameWindow::winSetInstanceData( WinInstanceData *data )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	DisplayString *text, *tooltipText;
 
 	// save our own instance of text and tooltip text display strings
@@ -1088,6 +1141,7 @@ Int GameWindow::winSetInstanceData( WinInstanceData *data )
 //=============================================================================
 WinInstanceData *GameWindow::winGetInstanceData()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return &m_instData;
 
@@ -1098,6 +1152,7 @@ WinInstanceData *GameWindow::winGetInstanceData()
 //=============================================================================
 void *GameWindow::winGetUserData()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_userData;
 
@@ -1108,6 +1163,7 @@ void *GameWindow::winGetUserData()
 //=============================================================================
 void GameWindow::winSetUserData( void *data )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_userData = data;
 
@@ -1118,6 +1174,7 @@ void GameWindow::winSetUserData( void *data )
 //=============================================================================
 void GameWindow::winSetTooltip( UnicodeString tip )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_instData.setTooltipText( tip );
 
@@ -1128,6 +1185,7 @@ void GameWindow::winSetTooltip( UnicodeString tip )
 //=============================================================================
 Int GameWindow::winSetWindowId( Int id )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	m_instData.m_id = id;
 
@@ -1140,6 +1198,7 @@ Int GameWindow::winSetWindowId( Int id )
 //=============================================================================
 Int GameWindow::winGetWindowId()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	return m_instData.m_id;
 
@@ -1150,6 +1209,7 @@ Int GameWindow::winGetWindowId()
 //=============================================================================
 Int GameWindow::winSetParent( GameWindow *parent )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( m_parent == nullptr)
 	{
@@ -1187,6 +1247,7 @@ Int GameWindow::winSetParent( GameWindow *parent )
 //=============================================================================
 GameWindow *GameWindow::winGetParent()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_parent;
 
@@ -1197,6 +1258,7 @@ GameWindow *GameWindow::winGetParent()
 //=============================================================================
 Bool GameWindow::winIsChild( GameWindow *child )
 {
+	if (gxIsNullWin(this)) return FALSE; /*gx-null*/
 
 	while( child )
 	{
@@ -1218,6 +1280,7 @@ Bool GameWindow::winIsChild( GameWindow *child )
 //=============================================================================
 GameWindow *GameWindow::winGetChild()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_child;
 
@@ -1228,6 +1291,7 @@ GameWindow *GameWindow::winGetChild()
 //=============================================================================
 Int GameWindow::winSetOwner( GameWindow *owner )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( owner == nullptr )
 		m_instData.m_owner = this;
@@ -1243,6 +1307,7 @@ Int GameWindow::winSetOwner( GameWindow *owner )
 //=============================================================================
 GameWindow *GameWindow::winGetOwner()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_instData.getOwner();
 
@@ -1253,6 +1318,7 @@ GameWindow *GameWindow::winGetOwner()
 //=============================================================================
 void GameWindow::winSetNext( GameWindow *next )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_next = next;
 
@@ -1263,6 +1329,7 @@ void GameWindow::winSetNext( GameWindow *next )
 //=============================================================================
 GameWindow *GameWindow::winGetNext()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_next;
 
@@ -1273,6 +1340,7 @@ GameWindow *GameWindow::winGetNext()
 //=============================================================================
 void GameWindow::winSetPrev( GameWindow *prev )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_prev = prev;
 
@@ -1283,6 +1351,7 @@ void GameWindow::winSetPrev( GameWindow *prev )
 //=============================================================================
 GameWindow *GameWindow::winGetPrev()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_prev;
 
@@ -1293,6 +1362,7 @@ GameWindow *GameWindow::winGetPrev()
 //=============================================================================
 void GameWindow::winSetNextInLayout( GameWindow *next )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 	m_nextLayout = next;
 }
 
@@ -1301,6 +1371,7 @@ void GameWindow::winSetNextInLayout( GameWindow *next )
 //=============================================================================
 void GameWindow::winSetPrevInLayout( GameWindow *prev )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 	m_prevLayout = prev;
 }
 
@@ -1309,6 +1380,7 @@ void GameWindow::winSetPrevInLayout( GameWindow *prev )
 //=============================================================================
 void GameWindow::winSetLayout( WindowLayout *layout )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 	m_layout = layout;
 }
 
@@ -1317,6 +1389,7 @@ void GameWindow::winSetLayout( WindowLayout *layout )
 //=============================================================================
 WindowLayout *GameWindow::winGetLayout()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	return m_layout;
 }
 
@@ -1325,6 +1398,7 @@ WindowLayout *GameWindow::winGetLayout()
 //=============================================================================
 GameWindow *GameWindow::winGetNextInLayout()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	return m_nextLayout;
 }
 
@@ -1333,6 +1407,7 @@ GameWindow *GameWindow::winGetNextInLayout()
 //=============================================================================
 GameWindow *GameWindow::winGetPrevInLayout()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	return m_prevLayout;
 }
 
@@ -1341,6 +1416,7 @@ GameWindow *GameWindow::winGetPrevInLayout()
 //=============================================================================
 Int GameWindow::winSetSystemFunc( GameWinSystemFunc system )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 	if( system )
 		m_system = system;
 	else
@@ -1355,6 +1431,7 @@ Int GameWindow::winSetSystemFunc( GameWinSystemFunc system )
 //=============================================================================
 Int GameWindow::winSetInputFunc( GameWinInputFunc input )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( input )
 		m_input = input;
@@ -1370,6 +1447,7 @@ Int GameWindow::winSetInputFunc( GameWinInputFunc input )
 //=============================================================================
 Int GameWindow::winSetDrawFunc( GameWinDrawFunc draw )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( draw )
 		m_draw = draw;
@@ -1385,6 +1463,7 @@ Int GameWindow::winSetDrawFunc( GameWinDrawFunc draw )
 //=============================================================================
 Int GameWindow::winSetTooltipFunc( GameWinTooltipFunc tooltip )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	m_tooltip = tooltip;
 
@@ -1413,6 +1492,7 @@ Int GameWindow::winSetCallbacks( GameWinInputFunc input,
 //=============================================================================
 Int GameWindow::winDrawWindow()
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	if( BitIsSet( m_status, WIN_STATUS_HIDDEN ) == FALSE && m_draw )
 		m_draw( this, &m_instData );
@@ -1428,6 +1508,7 @@ Int GameWindow::winDrawWindow()
 //=============================================================================
 GameWindow *GameWindow::winPointInChild( Int x, Int y, Bool ignoreEnableCheck, Bool playDisabledSound )
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *parent;
 	GameWindow *child;
 	ICoord2D origin;
@@ -1482,6 +1563,7 @@ GameWindow *GameWindow::winPointInChild( Int x, Int y, Bool ignoreEnableCheck, B
 //=============================================================================
 GameWindow *GameWindow::winPointInAnyChild( Int x, Int y, Bool ignoreHidden, Bool ignoreEnableCheck )
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 	GameWindow *parent;
 	GameWindow *child;
 	ICoord2D origin;
@@ -1595,6 +1677,7 @@ void GameWinDefaultDraw( GameWindow *window, WinInstanceData *instData )
 //=============================================================================
 Int GameWindow::winSetEnabledImage( Int index, const Image *image )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1616,6 +1699,7 @@ Int GameWindow::winSetEnabledImage( Int index, const Image *image )
 //=============================================================================
 Int GameWindow::winSetEnabledColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1637,6 +1721,7 @@ Int GameWindow::winSetEnabledColor( Int index, Color color )
 //=============================================================================
 Int GameWindow::winSetEnabledBorderColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1658,6 +1743,7 @@ Int GameWindow::winSetEnabledBorderColor( Int index, Color color )
 //=============================================================================
 Int GameWindow::winSetDisabledImage( Int index, const Image *image )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1679,6 +1765,7 @@ Int GameWindow::winSetDisabledImage( Int index, const Image *image )
 //=============================================================================
 Int GameWindow::winSetDisabledColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1700,6 +1787,7 @@ Int GameWindow::winSetDisabledColor( Int index, Color color )
 //=============================================================================
 Int GameWindow::winSetDisabledBorderColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1721,6 +1809,7 @@ Int GameWindow::winSetDisabledBorderColor( Int index, Color color )
 //=============================================================================
 Int GameWindow::winSetHiliteImage( Int index, const Image *image )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1742,6 +1831,7 @@ Int GameWindow::winSetHiliteImage( Int index, const Image *image )
 //=============================================================================
 Int GameWindow::winSetHiliteColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1763,6 +1853,7 @@ Int GameWindow::winSetHiliteColor( Int index, Color color )
 //=============================================================================
 Int GameWindow::winSetHiliteBorderColor( Int index, Color color )
 {
+	if (gxIsNullWin(this)) return 0; /*gx-null*/
 
 	// sanity
 	if( index < 0 || index >= MAX_DRAW_DATA )
@@ -1783,6 +1874,7 @@ Int GameWindow::winSetHiliteBorderColor( Int index, Color color )
 //=============================================================================
 GameWinInputFunc GameWindow::winGetInputFunc()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_input;
 
@@ -1792,6 +1884,7 @@ GameWinInputFunc GameWindow::winGetInputFunc()
 //=============================================================================
 GameWinSystemFunc GameWindow::winGetSystemFunc()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_system;
 
@@ -1801,6 +1894,7 @@ GameWinSystemFunc GameWindow::winGetSystemFunc()
 //=============================================================================
 GameWinTooltipFunc GameWindow::winGetTooltipFunc()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_tooltip;
 
@@ -1810,6 +1904,7 @@ GameWinTooltipFunc GameWindow::winGetTooltipFunc()
 //=============================================================================
 GameWinDrawFunc GameWindow::winGetDrawFunc()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_draw;
 
@@ -1819,6 +1914,7 @@ GameWinDrawFunc GameWindow::winGetDrawFunc()
 //=============================================================================
 void GameWindow::winSetEditData( GameWindowEditData *editData )
 {
+	if (gxIsNullWin(this)) return; /*gx-null*/
 
 	m_editData = editData;
 
@@ -1828,6 +1924,7 @@ void GameWindow::winSetEditData( GameWindowEditData *editData )
 //=============================================================================
 GameWindowEditData *GameWindow::winGetEditData()
 {
+	if (gxIsNullWin(this)) return nullptr; /*gx-null*/
 
 	return m_editData;
 

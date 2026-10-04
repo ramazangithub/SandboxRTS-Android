@@ -51,6 +51,9 @@
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/Gadget.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -409,6 +412,7 @@ WindowMsgHandledType GadgetRadioButtonSystem( GameWindow *window, UnsignedInt ms
 //=============================================================================
 void GadgetRadioSetText( GameWindow *g, UnicodeString text )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )
@@ -424,6 +428,7 @@ void GadgetRadioSetText( GameWindow *g, UnicodeString text )
 //=============================================================================
 void GadgetRadioSetGroup( GameWindow *g, Int group, Int screen )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	RadioButtonData *radioData = (RadioButtonData *)g->winGetUserData();
 
 	radioData->group = group;
@@ -437,6 +442,7 @@ void GadgetRadioSetGroup( GameWindow *g, Int group, Int screen )
 //=============================================================================
 void GadgetRadioSetSelection( GameWindow *g, Bool sendMsg )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 
 	// sanity
 	if( g == nullptr )

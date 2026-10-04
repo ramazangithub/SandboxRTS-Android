@@ -52,6 +52,9 @@
 #include "GameClient/Gadget.h"
 #include "GameClient/GadgetTabControl.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -250,6 +253,7 @@ void GadgetTabControlComputeTabRegion( GameWindow *tabControl )///< Recalc the t
 
 void GadgetTabControlComputeSubPaneSize( GameWindow *tabControl, Int *width, Int *height, Int *x, Int *y )
 {
+	if (gxIsNullWin(tabControl)) return; /*gx-null*/
 	Int winWidth, winHeight;
 	tabControl->winGetSize( &winWidth, &winHeight );
 
@@ -278,6 +282,7 @@ void GadgetTabControlComputeSubPaneSize( GameWindow *tabControl, Int *width, Int
 
 void GadgetTabControlShowSubPane( GameWindow *tabControl, Int whichPane)
 {
+	if (gxIsNullWin(tabControl)) return; /*gx-null*/
 	TabControlData *tabData = (TabControlData *)tabControl->winGetUserData();
 
 	for( Int paneIndex = 0; paneIndex < NUM_TAB_PANES; paneIndex++ )
@@ -330,6 +335,7 @@ void GadgetTabControlCreateSubPanes( GameWindow *tabControl )///< Create User Wi
 
 void GadgetTabControlResizeSubPanes( GameWindow *tabControl )
 {
+	if (gxIsNullWin(tabControl)) return; /*gx-null*/
 	TabControlData *tabData = (TabControlData *)tabControl->winGetUserData();
 	Int width, height, x, y;
 	GadgetTabControlComputeSubPaneSize(tabControl, &width, &height, &x, &y);
@@ -346,6 +352,7 @@ void GadgetTabControlResizeSubPanes( GameWindow *tabControl )
 ///<In game creation finished, hook up Children to SubPane array
 void GadgetTabControlFixupSubPaneList( GameWindow *tabControl )
 {
+	if (gxIsNullWin(tabControl)) return; /*gx-null*/
 	Int childIndex =0;
 	TabControlData *tabData = (TabControlData *)tabControl->winGetUserData();
 	GameWindow *child = tabControl->winGetChild();

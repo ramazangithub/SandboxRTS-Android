@@ -54,6 +54,9 @@
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/IMEManager.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -537,6 +540,7 @@ void InformEntry( WideChar c )
 //=============================================================================
 void GadgetTextEntrySetFont( GameWindow *g, GameFont *font )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	EntryData *entryData = (EntryData *)g->winGetUserData();
 	DisplayString *dString;
 
@@ -568,6 +572,7 @@ void GadgetTextEntrySetFont( GameWindow *g, GameFont *font )
 //=============================================================================
 UnicodeString GadgetTextEntryGetText( GameWindow *textentry )
 {
+	if (gxIsNullWin(textentry)) return UnicodeString::TheEmptyString; /*gx-null*/
 
 	// sanity
 	if( textentry == nullptr )
@@ -586,6 +591,7 @@ UnicodeString GadgetTextEntryGetText( GameWindow *textentry )
 //=============================================================================
 void GadgetTextEntrySetMaxLen( GameWindow *g, Short length )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if( g == nullptr )
 		return;
 

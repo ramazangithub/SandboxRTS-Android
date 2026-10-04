@@ -52,6 +52,9 @@
 #include "GameClient/Gadget.h"
 #include "GameClient/GameWindowManager.h"
 
+// SandboxRTS-android: missing .wnd windows come back as nullptr; make window calls on them no-ops.
+static inline bool gxIsNullWin(const void *p) { return p == nullptr; }
+
 // DEFINES ////////////////////////////////////////////////////////////////////
 
 // PRIVATE TYPES //////////////////////////////////////////////////////////////
@@ -111,6 +114,7 @@ WindowMsgHandledType GadgetProgressBarSystem( GameWindow *window, UnsignedInt ms
 //=============================================================================
 void GadgetProgressBarSetProgress( GameWindow *g, Int progress )
 {
+	if (gxIsNullWin(g)) return; /*gx-null*/
 	if(!g)
 		return;
 

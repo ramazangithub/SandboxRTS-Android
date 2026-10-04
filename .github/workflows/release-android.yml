@@ -70,6 +70,13 @@ jobs:
           key: vcpkg-android-${{ hashFiles('vcpkg.json', 'cmake/triplets/arm64-android.cmake') }}
           restore-keys: vcpkg-android-
 
+      - name: Install ccache
+        run: sudo apt-get install -y ccache >/dev/null && ccache -M 3G
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-android-${{ github.sha }}
+          restore-keys: ccache-android-
       - name: Build libmain.so + DXVK + Turnip + adrenotools
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/$NDK_VERSION"
