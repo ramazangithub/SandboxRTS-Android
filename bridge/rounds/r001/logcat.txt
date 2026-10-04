@@ -1,0 +1,602 @@
+=== CRASH TOMBSTONE ===
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #05 pc 0000000000ee3764  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (SDL3GameEngine::execute()+52) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #06 pc 0000000000b0f4dc  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameMain()+212) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #07 pc 0000000000b0b608  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (SDL_main+2396) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #08 pc 0000000000185d4c  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libSDL3.so (Java_org_libsdl_app_SDLActivity_nativeRunMain+812) (BuildId: 8f61751fe35c1a2ac1d7f3b7304b02c9e4fbf078)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #09 pc 000000000013ced4  /apex/com.android.art/lib64/libart.so (art_quick_generic_jni_trampoline+148) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #10 pc 00000000001337e8  /apex/com.android.art/lib64/libart.so (art_quick_invoke_static_stub+568) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #11 pc 00000000001a8a94  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+228) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #12 pc 0000000000318288  /apex/com.android.art/lib64/libart.so (art::interpreter::ArtInterpreterToCompiledCodeBridge(art::Thread*, art::ArtMethod*, art::ShadowFrame*, unsigned short, art::JValue*)+376) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #13 pc 000000000030e5b4  /apex/com.android.art/lib64/libart.so (bool art::interpreter::DoCall<false, false>(art::ArtMethod*, art::Thread*, art::ShadowFrame&, art::Instruction const*, unsigned short, art::JValue*)+996) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #14 pc 0000000000680034  /apex/com.android.art/lib64/libart.so (MterpInvokeStatic+548) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #15 pc 000000000012d994  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_static+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #16 pc 0000000000009d98  [anon:dalvik-classes3.dex extracted in memory from /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!classes3.dex] (org.libsdl.app.SDLActivity.main+104)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #17 pc 000000000067d37c  /apex/com.android.art/lib64/libart.so (MterpInvokeVirtual+1520) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #18 pc 000000000012d814  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_virtual+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #19 pc 000000000000ca4e  [anon:dalvik-classes3.dex extracted in memory from /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!classes3.dex] (org.libsdl.app.SDLMain.run+78)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #20 pc 000000000067edb4  /apex/com.android.art/lib64/libart.so (MterpInvokeInterface+1808) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #21 pc 000000000012da14  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_interface+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #22 pc 00000000000eb89c  /apex/com.android.art/javalib/core-oj.jar (java.lang.Thread.run+8)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #23 pc 0000000000305bb0  /apex/com.android.art/lib64/libart.so (art::interpreter::Execute(art::Thread*, art::CodeItemDataAccessor const&, art::ShadowFrame&, art::JValue, bool, bool) (.llvm.6772346537078727864)+268) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #24 pc 000000000066bdf4  /apex/com.android.art/lib64/libart.so (artQuickToInterpreterBridge+780) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #25 pc 000000000013cff8  /apex/com.android.art/lib64/libart.so (art_quick_to_interpreter_bridge+88) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #26 pc 0000000000133564  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+548) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #27 pc 00000000001a8a78  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+200) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #28 pc 000000000055581c  /apex/com.android.art/lib64/libart.so (art::JValue art::InvokeVirtualOrInterfaceWithJValues<art::ArtMethod*>(art::ScopedObjectAccessAlreadyRunnable const&, _jobject*, art::ArtMethod*, jvalue const*)+460) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #29 pc 00000000005a4b80  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+1308) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #30 pc 00000000000da278  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+64) (BuildId: 1ca28d785d6567d2b225cf978ef04de5)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #31 pc 000000000007a448  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+64) (BuildId: 1ca28d785d6567d2b225cf978ef04de5)
+10-04 03:31:58.387 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.390 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.398 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.412 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.421 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.422 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.422 17216 18884 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:58.435 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.463 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.492 17216 18884 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-04 03:31:58.493 15974 20140 I Finsky  : [6098] App states replicator found 37 unowned apps
+10-04 03:31:58.497 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Starting sync for 8dde38ef
+10-04 03:31:58.497  1215  5468 V AlarmManager: set(PendingIntent{c3e8821: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220708 win=2185704 interval=0 flags=0x0 pkg = com.google.android.gms
+10-04 03:31:58.501 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Sync duration for 8dde38ef: 3
+10-04 03:31:58.502 17216 20232 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:58.510 15974 16104 I Finsky  : [5965] Completed 0 account content syncs with 0 successful.
+10-04 03:31:58.510 15974 15974 I Finsky  : [2] [ContentSync] Installation state replication succeeded.
+10-04 03:31:58.510 15974 15974 I Finsky  : [2] SCH: jobFinished: 12-1. TimeElapsed: 226ms.
+10-04 03:31:58.510 15974 15974 I Finsky  : [2] WM::SCH: Logging work end for 12-1
+10-04 03:31:58.534 15974 16104 I Finsky  : [5965] SCH: Scheduling phonesky job Id: 1-1337, CT: 1791058262276, Constraints: [{ L: 43196768, D: 86396768, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-04 03:31:58.538 15974 16108 I Finsky  : [5966] SCH: Scheduling 1 system job(s)
+10-04 03:31:58.538 15974 16108 I Finsky  : [5966] SCH: Scheduling system job Id: 9125, L: 27540506, D: 70740506, C: false, I: false, N: 1
+10-04 03:31:58.542 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.549  1215  5468 V AlarmManager: set(PendingIntent{c083ef7: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220669 win=2185665 interval=0 flags=0x0 pkg = com.google.android.gms
+10-04 03:31:58.549 17216 20232 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-04 03:31:58.552 17216 20181 I PlayGamesServices[GamesSyncAdapter]: Starting sync for e3d7c1eb
+10-04 03:31:58.555 17216 20181 I PlayGamesServices[GamesSyncAdapter]: Sync duration for e3d7c1eb: 3
+10-04 03:31:58.570 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.571 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.571 15974 20139 I Finsky  : [6097] SCH: job service finished with id 9123.
+10-04 03:31:58.571 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.611 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.611 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.634 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.641 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.651 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.652 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.652 17216 18884 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:58.653 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.700 17216 20181 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.721  1215  2369 D JobScheduler.Temperature: get temperature=31.1
+10-04 03:31:58.762 17216 18884 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-04 03:31:58.768  1215  3084 V AlarmManager: set(PendingIntent{5761b48: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220505 win=2185501 interval=0 flags=0x0 pkg = com.google.android.gms
+10-04 03:31:58.772 17216 20180 I PlayGamesServices[GamesSyncAdapter]: Starting sync for cd2e9b12
+10-04 03:31:58.776 17216 20441 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:58.783 17216 20180 I PlayGamesServices[GamesSyncAdapter]: Sync duration for cd2e9b12: 8
+10-04 03:31:58.840 17216 20180 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.892 17216 20180 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.895 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Starting sync for a9729ee6
+10-04 03:31:58.896 17216 20441 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-04 03:31:58.898  1215  3084 V AlarmManager: set(PendingIntent{eefdd8e: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220408 win=2185404 interval=0 flags=0x0 pkg = com.google.android.gms
+10-04 03:31:58.903 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Sync duration for a9729ee6: 6
+10-04 03:31:58.910  1215  1573 I chatty  : uid=1000(system) android.display expire 1 line
+10-04 03:31:58.915 17216 20180 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.919 17216 20180 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.929 17216 20180 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:58.945 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.985 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.986   975  3951 D AudioPolicyService: updateUidStates_l() current->uid=10872 current->pid=17675 allowCapture=0 UidState=-1 apmStat=0
+10-04 03:31:58.986 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.987   975  3951 D AudioPolicyService: updateUidStates_l() isInCall: 0, allowCapture: 0
+10-04 03:31:58.987 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:58.987   975  3951 D AudioPolicyService: updateUidStates_l() current->uid=10872 current->pid=17675 allowCapture=0 UidState=-1 apmStat=0
+10-04 03:31:58.988   975  3951 D AudioPolicyService: updateUidStates_l() isInCall: 0, allowCapture: 0
+10-04 03:31:58.988 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:59.007 17216 18884 W PlayGamesServices[DataBroker]: No player ID found when refreshing
+10-04 03:31:59.016 17216 18749 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+10-04 03:31:59.019 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Starting sync for 5f959e8d
+10-04 03:31:59.021  1215  3534 V AlarmManager: set(PendingIntent{3a86e1c: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220315 win=2185311 interval=0 flags=0x0 pkg = com.google.android.gms
+10-04 03:31:59.022 17216 18884 I PlayGamesServices[GamesSyncAdapter]: Sync duration for 5f959e8d: 2
+10-04 03:31:59.026 17216 20232 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+10-04 03:31:59.047  1215  3230 V AlarmManager: set(PendingIntent{5958b23: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=36035004whenElapsed36035004maxWhen =38220296 win=2185292 interval=0 flags=0x0 pkg = com.google.android.gms
+
+=== FILTERED LOGCAT TAIL ===
+10-04 03:31:55.011  1215  5002 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.generalsx.generalszh/.GeneralsXZHActivity (has extras) mCallingUid=2000} from uid 2000 and from pid 20397
+10-04 03:31:55.037  1215  5002 D ColorZoomWindowRUSConfigManager: isSupportZoomModeWithPolicyLocked: target = com.generalsx.generalszh/.GeneralsXZHActivity
+10-04 03:31:55.071  1215  1692 I ActivityManager: Start proc 20402:com.generalsx.generalszh/u0a882 for pre-top-activity {com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}
+10-04 03:31:55.347  1215  1267 I ColorAppSwitchManagerService: appswitch hasProcess ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742}
+10-04 03:31:55.348  1215  1267 I ColorAppSwitchManagerService: appswitch hasProcess ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742}
+10-04 03:31:55.348  1215  1267 I InputDispatcher: setFocusedApplication displayId=0 ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742}
+10-04 03:31:55.398 20402 20402 E libc    : Access denied finding property "ro.odm.prev.product.name"
+10-04 03:31:55.462 20402 20402 V SDL     : Manufacturer: realme
+10-04 03:31:55.462 20402 20402 V SDL     : Device: RMX1993L1
+10-04 03:31:55.462 20402 20402 V SDL     : Model: RMX1993
+10-04 03:31:55.462 20402 20402 V SDL     : onCreate()
+10-04 03:31:55.463 20402 20402 W linker  : Warning: "/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libc++_shared.so" unused DT entry: unknown processor-specific (type 0x70000001 arg 0x0) (ignoring)
+10-04 03:31:55.479 20402 20443 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.524 20402 20402 V SDL     : nativeSetupJNI()
+10-04 03:31:55.526 20402 20402 V SDL     : AUDIO nativeSetupJNI()
+10-04 03:31:55.526 20402 20402 V SDL     : CONTROLLER nativeSetupJNI()
+10-04 03:31:55.611 20402 20402 V SDL     : onStart()
+10-04 03:31:55.624 20402 20402 V SDL     : onResume()
+10-04 03:31:55.642 20402 20402 D WindowManager: Add to mViews: DecorView@a401e6d[GeneralsXZHActivity],pkg= com.generalsx.generalszh
+10-04 03:31:55.684  1215  5013 V WindowManager: Changing focus from null to Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity},diplayid=0
+10-04 03:31:55.692 20402 20402 V OplusZoomWindowDecorViewHelper: setLastReportedMergedConfiguration mZoomDisplayHeight: 1080 getDecorView.DecorView@a401e6d[GeneralsXZHActivity]
+10-04 03:31:55.694 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.694 20402 20439 I AdrenoGLES-0: Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+10-04 03:31:55.706 20402 20402 V SDL     : surfaceCreated()
+10-04 03:31:55.707 20402 20402 V SDL     : surfaceChanged()
+10-04 03:31:55.707 20402 20402 V SDL     : Window size: 2264x996
+10-04 03:31:55.707 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.707 20402 20402 V SDL     : Device size: 2340x1080
+10-04 03:31:55.707 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.709 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.709 20402 20402 V SensorManager: RegisterListener bmi160 Accelerometer Non-wakeup type:1 delay:20000us by org.libsdl.app.SDLSurface
+10-04 03:31:55.709 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.710 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.710 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.710 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.711  1215  4999 W SensorService: SensorEventConnection sensor handle=11, package = org.libsdl.app.SDLSurface enable
+10-04 03:31:55.711  1215  4999 E SensorService: Required app org.libsdl.app.SDLSurface, uid 10882, pid 20402
+10-04 03:31:55.713 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.713 20402 20439 E libEGL  : Invalid file path for libcolorx-loader.so
+10-04 03:31:55.731 20402 20402 V SensorManager: RegisterListener bmi160 Accelerometer Non-wakeup type:1 delay:20000us by org.libsdl.app.SDLSurface
+10-04 03:31:55.731 20402 20448 V SDL     : nativeInitSDLThread() 1 time
+10-04 03:31:55.732 20402 20448 V SDL     : Running main function SDL_main from library /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so
+10-04 03:31:55.770 20402 20449 I GeneralsX: INFO: Android working directory: /sdcard/GeneralsZH, HOME=/data/user/0/com.generalsx.generalszh/files
+10-04 03:31:55.802  1215  1574 V ColorZoomWindowManagerService: onAnimationFinished:  r = ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742}
+10-04 03:31:55.802  1215  1574 I ColorAppSwitchManagerService:  handleAppVisible , r = ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742}
+10-04 03:31:55.827 20402 20449 I GeneralsX: INFO: Turnip: staged driver -> /data/user/0/com.generalsx.generalszh/files/vulkan.ad07xx.so (17029721 bytes)
+10-04 03:31:55.827 20402 20449 I GeneralsX: INFO: Turnip: adrenotools env set (hookLibDir=/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64 driverDir=/data/user/0/com.generalsx.generalszh/files/ name=vulkan.ad07xx.so)
+10-04 03:31:55.827 20402 20449 I GeneralsX: =================================================
+10-04 03:31:55.827 20402 20449 I GeneralsX:  Command & Conquer Generals: Zero Hour (Linux)
+10-04 03:31:55.827 20402 20449 I GeneralsX:  SDL3 + DXVK Build
+10-04 03:31:55.827 20402 20449 I GeneralsX: =================================================
+10-04 03:31:55.827 20402 20449 I GeneralsX: 
+10-04 03:31:55.833   978  1656 D DispPerfService: onframeavailable pid=20402, slot=0, seq=15265, name=com.generalsx.generalszh:com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:55.834   978   978 E Layer   : [SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0] No local sync point found
+10-04 03:31:55.847 20402 20449 I GeneralsX: [DEBUG-WIN] parseWin() called: m_windowed set to TRUE
+10-04 03:31:55.847 20402 20449 I GeneralsX: INFO: Initializing SDL3 video subsystem...
+10-04 03:31:55.853 20402 20449 I GeneralsX: WARNING: Vulkan ICD filter: no hardware ICDs found, LLVMpipe exclusion skipped
+10-04 03:31:55.853 20402 20449 I GeneralsX: WARNING: If startup crashes in libvulkan_lvp.so, set VK_DRIVER_FILES manually
+10-04 03:31:55.853 20402 20449 I GeneralsX: INFO: OpenAL: keeping default driver selection on non-Linux platform
+10-04 03:31:55.853 20402 20449 I GeneralsX: INFO: Loading Vulkan library...
+10-04 03:31:55.921  1215  3533 I InputDispatcher: Focus entered window: Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity} in display 0
+10-04 03:31:55.923   978   978 E OppoExLayer: using cid as pid, cid=20402, name=Background for -SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:55.997 20402 20448 D vulkan  : searching for layers in '/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64'
+10-04 03:31:55.997 20402 20448 D vulkan  : searching for layers in '/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!/lib/arm64-v8a'
+10-04 03:31:55.997 20402 20448 V SDL     : setOrientation() requestedOrientation=13 width=1024 height=768 resizable=true hint=
+10-04 03:31:55.999 20402 20449 I GeneralsX: INFO: Creating SDL3 Vulkan window...
+10-04 03:31:56.007 20402 20402 V SDL     : onWindowFocusChanged(): true
+10-04 03:31:56.206  1215  3630 V WindowManager: Orientation start waiting for draw, mDrawState=DRAW_PENDING in Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}, surfaceController Surface(name=com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity)/@0xd9a2a0b
+10-04 03:31:56.215 20402 20402 V SDL     : nativeFocusChanged()
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: SDL3 window created successfully
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: internal resolution set to 2340x1080 (screen 2340x1080)
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: CreateGameEngine() - Creating SDL3GameEngine for Linux
+10-04 03:31:56.215 20402 20449 I GeneralsX: DEBUG: SDL3GameEngine::SDL3GameEngine() created
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: SDL3GameEngine::init() starting
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: SDL3GameEngine using pre-initialized window
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createLocalFileSystem() -> StdLocalFileSystem
+10-04 03:31:56.215 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createArchiveFileSystem() -> StdBIGFileSystem
+10-04 03:31:56.231 20402 20402 V SDL     : onConfigurationChanged()
+10-04 03:31:56.240 20402 20402 V OplusZoomWindowDecorViewHelper: setLastReportedMergedConfiguration mZoomDisplayHeight: 2340 getDecorView.DecorView@a401e6d[GeneralsXZHActivity]
+10-04 03:31:56.259  1215  3533 V WindowManager: Orientation start waiting for draw, mDrawState=DRAW_PENDING in Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}, surfaceController Surface(name=com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity)/@0xd9a2a0b
+10-04 03:31:56.283 20402 20402 V SDL     : surfaceChanged()
+10-04 03:31:56.283 20402 20402 V SDL     : Window size: 1080x2256
+10-04 03:31:56.283 20402 20402 V SDL     : Device size: 1080x2340
+10-04 03:31:56.383   978   978 D OppoExLayer: ~Layer() sequence=15271, name=Surface(name=36d8247 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity)/@0xefba385 - animation-leash#0
+10-04 03:31:56.565  1215  1573 I WindowManager: Screen frozen for +538ms due to Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}
+10-04 03:31:56.623 20402 20449 I GeneralsX: [CSF] init() - START
+10-04 03:31:56.665 20402 20449 I GeneralsX: [CSF] init() - getCSFInfo FAILED
+10-04 03:31:56.753 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createAudioManager()
+10-04 03:31:56.753 20402 20449 I GeneralsX: INFO: Creating OpenAL audio backend
+10-04 03:31:56.903 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createFunctionLexicon() -> W3DFunctionLexicon
+10-04 03:31:56.904 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createModuleFactory() -> W3DModuleFactory
+10-04 03:31:56.935 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createParticleSystemManager() -> W3DParticleSystemManager
+10-04 03:31:57.037 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createThingFactory() -> W3DThingFactory
+10-04 03:31:57.083 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createGameClient() -> W3DGameClient
+10-04 03:31:57.141 20402 20402 W SDLThread: type=1400 audit(0.0:131915): avc: denied { execstack } for scontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tcontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tclass=process permissive=0 app=com.generalsx.generalszh
+10-04 03:31:57.147 20402 20449 I GeneralsX: DEBUG: About to call WW3D::Init() with ApplicationHWnd=0x72b94dcc00
+10-04 03:31:57.147 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - Loading libdxvk_d3d8.so (Linux)...
+10-04 03:31:57.149 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - LoadLibrary result: 0xf73abe4fbc9bca53
+10-04 03:31:57.150 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - Getting Direct3DCreate8 function pointer...
+10-04 03:31:57.150 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - About to call Direct3DCreate8(D3D_SDK_VERSION=220)
+10-04 03:31:57.150 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - Window handle: 0x72b94dcc00
+10-04 03:31:57.151 20402 20402 W SDLThread: type=1400 audit(0.0:131916): avc: denied { execstack } for scontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tcontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tclass=process permissive=0 app=com.generalsx.generalszh
+10-04 03:31:57.152 20402 20449 I GeneralsX: info:  Game: app_process64
+10-04 03:31:57.152 20402 20449 I GeneralsX: info:  DXVK: 2.6.0
+10-04 03:31:57.152 20402 20449 I GeneralsX: info:  Build: aarch64 clang 18.0.3
+10-04 03:31:57.153 20402 20449 I GeneralsX: info:  Found config env: d3d9.deferSurfaceCreation = True;d3d9.samplerAnisotropy = 16
+10-04 03:31:57.155 20402 20449 I GeneralsX: info:  Effective configuration:
+10-04 03:31:57.155 20402 20449 I GeneralsX: info:    d3d9.deferSurfaceCreation = True
+10-04 03:31:57.155 20402 20449 I GeneralsX: info:    d3d9.samplerAnisotropy = 16
+10-04 03:31:57.156 20402 20449 I GeneralsX: info:  Vulkan: opening Turnip via adrenotools (hookLibDir=/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64 driverDir=/data/user/0/com.generalsx.generalszh/files/ driver=vulkan.ad07xx.so)
+10-04 03:31:57.161 20402 20402 W SDLThread: type=1400 audit(0.0:131917): avc: denied { execstack } for scontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tcontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tclass=process permissive=0 app=com.generalsx.generalszh
+10-04 03:31:57.161 20402 20402 W SDLThread: type=1400 audit(0.0:131918): avc: granted { execute } for path="/data/user/0/com.generalsx.generalszh/files/vulkan.ad07xx.so" dev="sda11" ino=7080209 scontext=u:r:untrusted_app_29:s0:c114,c259,c512,c768 tcontext=u:object_r:app_data_file:s0:c114,c259,c512,c768 tclass=file app=com.generalsx.generalszh
+10-04 03:31:57.166 20402 20449 I GeneralsX: info:  Vulkan: Found vkGetInstanceProcAddr in adrenotools/Turnip libvulkan @ 0x7259e9e060
+10-04 03:31:57.166 20402 20449 I GeneralsX: info:  Built-in extension providers:
+10-04 03:31:57.166 20402 20449 I GeneralsX: info:    Platform WSI
+10-04 03:31:57.166 20402 20448 I hook_impl: hook_android_dlopen_ext: filename: vulkan.adreno.so
+10-04 03:31:57.170 20402 20448 I hook_impl: hook_android_dlopen_ext: loading custom driver: /data/user/0/com.generalsx.generalszh/files/vulkan.ad07xx.so
+10-04 03:31:57.174 20402 20448 D vulkan  : searching for layers in '/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64'
+10-04 03:31:57.174 20402 20448 D vulkan  : searching for layers in '/data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!/lib/arm64-v8a'
+10-04 03:31:57.174 20402 20449 I GeneralsX: info:  Enabled instance extensions:
+10-04 03:31:57.174 20402 20449 I GeneralsX: info:    VK_KHR_android_surface
+10-04 03:31:57.174 20402 20449 I GeneralsX: info:    VK_KHR_get_surface_capabilities2
+10-04 03:31:57.174 20402 20449 I GeneralsX: info:    VK_KHR_surface
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.fd.rd.dump"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.debug"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.debug.file"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.gallium.print.optio"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.x11.override.min"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.x11.strict.image"
+10-04 03:31:57.176 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.x11.ensure.min.i"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.xwayland.wait.re"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.wsi.force.bgra8."
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.wsi.force.swapch"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.x11.ignore.subop"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.dont.care.as.loa"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.disable.conservativ"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.dont.reserve.des"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.allow.oob.indire"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.disable.d24s8.bo"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.use.tex.coord.ro"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.ignore.frag.dept"
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.driconf.executable."
+10-04 03:31:57.177 20402 20448 E libc    : Access denied finding property "vendor.mesa.process.name"
+10-04 03:31:57.178 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.gmem"
+10-04 03:31:57.179 20402 20448 E libc    : Access denied finding property "vendor.mesa.fd.dev.features"
+10-04 03:31:57.347 20402 20448 E libc    : Access denied finding property "vendor.mesa.log"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.log.level"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.log.file"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.disk.cache.single.f"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.disk.cache.database"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.disk.cache.multi.fi"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.shader.cache.max.si"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.glsl.cache.max.size"
+10-04 03:31:57.348 20402 20448 E libc    : Access denied finding property "vendor.mesa.shader.cache.disabl"
+10-04 03:31:57.349 20402 20449 I GeneralsX: info:  D3D9: VK_FORMAT_D16_UNORM_S8_UINT -> VK_FORMAT_D24_UNORM_S8_UINT
+10-04 03:31:57.349 20402 20449 I GeneralsX: info:  Turnip Adreno (TM) 618:
+10-04 03:31:57.349 20402 20449 I GeneralsX: info:    Driver : turnip Mesa driver 25.2.99
+10-04 03:31:57.349 20402 20449 I GeneralsX: info:    Memory Heap[0]: 
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Size: 5688 MiB
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Flags: 0x1
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Memory Type[0]: Property Flags = 0x7
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Memory Type[1]: Property Flags = 0xf
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Memory Type[2]: Property Flags = 0xb
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:      Memory Type[3]: Property Flags = 0x11
+10-04 03:31:57.350 20402 20449 I GeneralsX: info:  The D3D9 interface is now operating in D3D8 compatibility mode.
+10-04 03:31:57.350 20402 20449 I GeneralsX: DEBUG: DX8Wrapper::Init() - Direct3DCreate8 returned: 0x72b9500800
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.debug"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.override"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.bisect.d"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.bisect.l"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.bisect.h"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.ir3.shader.bisect.d"
+10-04 03:31:57.356 20402 20448 E libc    : Access denied finding property "vendor.mesa.gcm"
+10-04 03:31:57.359 20402 20449 I GeneralsX: DEBUG: WW3D::Init() returned: 0 (WW3D_ERROR_OK)
+10-04 03:31:57.359 20402 20449 I GeneralsX: DEBUG: Showing SDL3 window after WW3D init...
+10-04 03:31:57.359 20402 20449 I GeneralsX: [DEBUG-WIN] W3DDisplay::init() - TheGlobalData->m_windowed=1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Device properties:
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    Device : Turnip Adreno (TM) 618
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    Driver : turnip Mesa driver 25.2.99
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Enabled device extensions:
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_attachment_feedback_loop_layout
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_custom_border_color
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_depth_clip_enable
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_extended_dynamic_state3
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_graphics_pipeline_library
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_hdr_metadata
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_line_rasterization
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_multi_draw
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_non_seamless_cube_map
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_robustness2
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_shader_module_identifier
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_shader_stencil_export
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_transform_feedback
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_EXT_vertex_attribute_divisor
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_KHR_maintenance5
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_KHR_pipeline_library
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    VK_KHR_swapchain
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Device features:
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    robustBufferAccess                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    fullDrawIndexUint32                    : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    imageCubeArray                         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    independentBlend                       : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    geometryShader                         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    tessellationShader                     : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sampleRateShading                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    dualSrcBlend                           : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    logicOp                                : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    multiDrawIndirect                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    drawIndirectFirstInstance              : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthClamp                             : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthBiasClamp                         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    fillModeNonSolid                       : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthBounds                            : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    wideLines                              : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    multiViewport                          : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    samplerAnisotropy                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    textureCompressionBC                   : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    occlusionQueryPrecise                  : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    pipelineStatisticsQuery                : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    vertexPipelineStoresAndAtomics         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    fragmentStoresAndAtomics               : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderImageGatherExtended              : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderClipDistance                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderCullDistance                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderFloat64                          : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderInt64                            : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    variableMultisampleRate                : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderResourceResidency                : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderResourceMinLod                   : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseBinding                          : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidencyBuffer                  : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidencyImage2D                 : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidencyImage3D                 : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidency2Samples                : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidency4Samples                : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidency8Samples                : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidency16Samples               : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    sparseResidencyAliased                 : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Vulkan 1.1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderDrawParameters                   : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Vulkan 1.2
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    samplerMirrorClampToEdge               : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    drawIndirectCount                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    samplerFilterMinmax                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    hostQueryReset                         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    timelineSemaphore                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    bufferDeviceAddress                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderOutputViewportIndex              : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderOutputLayer                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    vulkanMemoryModel                      : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Vulkan 1.3
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    robustImageAccess                      : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    pipelineCreationCacheControl           : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderDemoteToHelperInvocation         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderZeroInitializeWorkgroupMemory    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    synchronization2                       : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    dynamicRendering                       : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_AMD_shader_fragment_mask
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_attachment_feedback_loop_layout
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    attachmentFeedbackLoopLayout           : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_conservative_rasterization
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_custom_border_color
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    customBorderColors                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    customBorderColorWithoutFormat         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_depth_clip_enable
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthClipEnable                        : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_depth_bias_control
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthBiasControl                       : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    leastRepresentableValueForceUnormRepresentation : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    floatRepresentation                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    depthBiasExact                         : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_extended_dynamic_state3
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extDynamicState3AlphaToCoverageEnable  : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extDynamicState3DepthClipEnable        : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extDynamicState3RasterizationSamples   : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extDynamicState3SampleMask             : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extDynamicState3LineRasterizationMode  : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_fragment_shader_interlock
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    fragmentShaderSampleInterlock          : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    fragmentShaderPixelInterlock           : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_full_screen_exclusive
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_graphics_pipeline_library
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    graphicsPipelineLibrary                : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_line_rasterization
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    rectangularLines                       : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    smoothLines                            : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_memory_budget
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_memory_priority
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    memoryPriority                         : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_multi_draw
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    multiDraw                              : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_non_seamless_cube_map
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    nonSeamlessCubeMap                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_pageable_device_local_memory
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    pageableDeviceLocalMemory              : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_robustness2
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    robustBufferAccess2                    : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    robustImageAccess2                     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    nullDescriptor                         : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_shader_module_identifier
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderModuleIdentifier                 : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_shader_stencil_export
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_swapchain_colorspace
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_swapchain_maintenance1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    swapchainMaintenance1                  : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_hdr_metadata
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_transform_feedback
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    transformFeedback                      : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    geometryStreams                        : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_EXT_vertex_attribute_divisor
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    vertexAttributeInstanceRateDivisor     : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    vertexAttributeInstanceRateZeroDivisor : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_external_memory_win32
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_external_semaphore_win32
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_maintenance5
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    maintenance5                           : 1
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_present_id
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    presentId                              : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_present_wait
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    presentWait                            : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_NV_descriptor_pool_overallocation
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    descriptorPoolOverallocation           : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_NV_low_latency2
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_NV_raw_access_chains
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    shaderRawAccessChains                  : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_NVX_binary_import
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_NVX_image_view_handle
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  VK_KHR_win32_keyed_mutex
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    extension supported                    : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:  Queue families:
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    Graphics : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    Transfer : 0
+10-04 03:31:57.359 20402 20449 I GeneralsX: info:    Sparse   : 0
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.vk.enable.pipeline."
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.debug.stale.regs"
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.gpu.tracepoint"
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.gpu.traces"
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.gpu.tracefile"
+10-04 03:31:57.362 20402 20448 E libc    : Access denied finding property "vendor.mesa.tu.breadcrumbs"
+10-04 03:31:57.362 20402 20449 I GeneralsX: info:  Memory type mask for sparse resources: 0x7
+10-04 03:31:57.362 20402 20449 I GeneralsX: info:  Memory type mask for buffer resources: 0x7, usage: 0x1ff
+10-04 03:31:57.363 20402 20449 I GeneralsX: info:  DXVK: Graphics pipeline libraries supported
+10-04 03:31:57.363 20402 20448 E libc    : Access denied finding property "vendor.mesa.spirv.debug"
+10-04 03:31:57.363 20402 20448 E libc    : Access denied finding property "vendor.mesa.spirv.force.unstruc"
+10-04 03:31:57.370 20402 20449 I GeneralsX: info:  D3D9DeviceEx: Using extended constant set for software vertex processing.
+10-04 03:31:57.383 20402 20449 I GeneralsX: warn:  D3D9DeviceEx::SetupFPU: not supported on this arch.
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:  D3D9DeviceEx::ResetSwapChain:
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:    Requested Presentation Parameters
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Width:              2340
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Height:             1080
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Format:             D3D9Format::A8R8G8B8
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Auto Depth Stencil: true
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:                  ^ Format: D3D9Format::D24S8
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Windowed:           true
+10-04 03:31:57.383 20402 20449 I GeneralsX: info:      - Swap effect:        1
+10-04 03:31:57.423 20402 20484 E libc    : Access denied finding property "vendor.mesa.vk.max.timeout"
+10-04 03:31:57.431 20402 20449 I GeneralsX: WARNING: SDL_SetWindowSize(2340,1080) failed: That operation is not supported
+10-04 03:31:57.432 20402 20449 I GeneralsX: [ASSET_LOAD] Attempting to load shader (PIXEL): file='shaders\terrain.pso'
+10-04 03:31:57.432 20402 20449 I GeneralsX: [ASSET_PATH] Original: 'shaders\terrain.pso' -> Normalized: 'shaders/terrain.pso'
+10-04 03:31:57.436 20402 20449 I GeneralsX: [ASSET_FAIL] File not found in VFS: normalized_path='shaders/terrain.pso'
+10-04 03:31:57.436 20402 20449 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\terrain.pso' (normalized: 'shaders/terrain.pso')
+10-04 03:31:57.436 20402 20449 I GeneralsX: 
+10-04 03:31:57.436 20402 20449 I GeneralsX: [ASSET_LOAD] Attempting to load shader (PIXEL): file='shaders\roadnoise2.pso'
+10-04 03:31:57.436 20402 20449 I GeneralsX: [ASSET_PATH] Original: 'shaders\roadnoise2.pso' -> Normalized: 'shaders/roadnoise2.pso'
+10-04 03:31:57.437 20402 20449 I GeneralsX: [ASSET_FAIL] File not found in VFS: normalized_path='shaders/roadnoise2.pso'
+10-04 03:31:57.437 20402 20449 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\roadnoise2.pso' (normalized: 'shaders/roadnoise2.pso')
+10-04 03:31:57.437 20402 20449 I GeneralsX: 
+10-04 03:31:57.438 20402 20449 I GeneralsX: [ASSET_LOAD] Attempting to load shader (PIXEL): file='shaders\fterrain.pso'
+10-04 03:31:57.438 20402 20449 I GeneralsX: [ASSET_PATH] Original: 'shaders\fterrain.pso' -> Normalized: 'shaders/fterrain.pso'
+10-04 03:31:57.440 20402 20449 I GeneralsX: [ASSET_FAIL] File not found in VFS: normalized_path='shaders/fterrain.pso'
+10-04 03:31:57.440 20402 20449 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\fterrain.pso' (normalized: 'shaders/fterrain.pso')
+10-04 03:31:57.440 20402 20449 I GeneralsX: 
+10-04 03:31:57.440 20402 20449 I GeneralsX: [ASSET_LOAD] Attempting to load shader (PIXEL): file='shaders\monochrome.pso'
+10-04 03:31:57.440 20402 20449 I GeneralsX: [ASSET_PATH] Original: 'shaders\monochrome.pso' -> Normalized: 'shaders/monochrome.pso'
+10-04 03:31:57.442 20402 20449 I GeneralsX: [ASSET_FAIL] File not found in VFS: normalized_path='shaders/monochrome.pso'
+10-04 03:31:57.442 20402 20449 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\monochrome.pso' (normalized: 'shaders/monochrome.pso')
+10-04 03:31:57.442 20402 20449 I GeneralsX: 
+10-04 03:31:57.502 20402 20449 I GeneralsX: WARNING: DX8WebBrowser::Initialize() - Linux stub (browser not available)
+10-04 03:31:57.507 20402 20449 I GeneralsX: INIT: Subsystem WindowManager...
+10-04 03:31:57.512 20402 20449 I GeneralsX: INIT: Subsystem Shell...
+10-04 03:31:57.522 20402 20449 I GeneralsX: INIT: Subsystem InGameUI...
+10-04 03:31:57.558 20402 20449 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'GeneralsExpPoints.wnd'
+10-04 03:31:57.561 20402 20449 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'ControlBarPopupDescription.wnd'
+10-04 03:31:57.561 20402 20449 I GeneralsX: INIT: Subsystem ChallengeGenerals...
+10-04 03:31:57.569 20402 20449 I GeneralsX: INIT: Subsystem HotKeyManager...
+10-04 03:31:57.569 20402 20449 I GeneralsX: INIT: Subsystem TerrainVisual...
+10-04 03:31:57.572 20402 20449 I GeneralsX: [ASSET_LOAD] Attempting to load shader (VERTEX): file='shaders\Trees.vso'
+10-04 03:31:57.572 20402 20449 I GeneralsX: [ASSET_PATH] Original: 'shaders\Trees.vso' -> Normalized: 'shaders/Trees.vso'
+10-04 03:31:57.572 20402 20449 I GeneralsX: [ASSET_FAIL] File not found in VFS: normalized_path='shaders/Trees.vso'
+10-04 03:31:57.572 20402 20449 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\Trees.vso' (normalized: 'shaders/Trees.vso')
+10-04 03:31:57.572 20402 20449 I GeneralsX: 
+10-04 03:31:57.721 20402 20449 I GeneralsX: INIT: Subsystem RayEffects...
+10-04 03:31:57.721 20402 20449 I GeneralsX: INIT: Subsystem Mouse...
+10-04 03:31:57.730 20402 20449 I GeneralsX: INIT: Subsystem VideoPlayer...
+10-04 03:31:57.736 20402 20449 I GeneralsX: INIT: Subsystem LanguageFilter...
+10-04 03:31:57.736 20402 20449 I GeneralsX: INIT: Subsystem CampaignManager...
+10-04 03:31:57.740 20402 20449 I GeneralsX: INIT: Subsystem Eva...
+10-04 03:31:57.746 20402 20449 I GeneralsX: INIT: Subsystem SnowManager...
+10-04 03:31:57.758 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createGameLogic() -> W3DGameLogic
+10-04 03:31:57.765 20402 20449 I GeneralsX: INFO: SDL3GameEngine::createRadar() -> W3DRadar
+10-04 03:31:57.778 20402 20449 I GeneralsX: DEBUG: Shell::push() called with filename='Menus/MainMenu.wnd'
+10-04 03:31:57.778 20402 20449 I GeneralsX: DEBUG: Shell::push() marked as pending, will load 'Menus/MainMenu.wnd' next frame
+10-04 03:31:57.778 20402 20449 I GeneralsX: DEBUG: Shell::update() - Processing pending push: 'Menus/MainMenu.wnd'
+10-04 03:31:57.778 20402 20449 I GeneralsX: DEBUG: Shell::doPush() called with layoutFile='Menus/MainMenu.wnd'
+10-04 03:31:57.778 20402 20449 I GeneralsX: DEBUG: About to call TheWindowManager->winCreateLayout('Menus/MainMenu.wnd')
+10-04 03:31:57.783 20402 20449 I GeneralsX: DEBUG: winCreateLayout returned: 0x72b9509c20
+10-04 03:31:57.789 20402 20449 I GeneralsX: DEBUG: Shell::doPush() completed successfully
+10-04 03:31:57.789 20402 20449 I GeneralsX: DEBUG: Shell::update() - Push completed
+10-04 03:31:57.794 20402 20449 I GeneralsX: INFO: SDL3GameEngine::execute() - entering main loop
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:  DXVK: Using 8 compiler threads
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:  Presenter: Actual swapchain properties:
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:    Format:       VK_FORMAT_A2B10G10R10_UNORM_PACK32
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:    Color space:  VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:    Present mode: VK_PRESENT_MODE_MAILBOX_KHR (dynamic: no)
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:    Buffer size:  1080x2256
+10-04 03:31:57.830 20402 20449 I GeneralsX: info:    Image count:  3
+10-04 03:31:57.882 20402 20402 V SDL     : onTrimMemory()
+10-04 03:31:57.894 20402 20448 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8 in tid 20448 (SDLThread), pid 20402 (SDLActivity)
+10-04 03:31:57.979   978  1079 D DispPerfService: onframeavailable pid=20402, slot=0, seq=15269, name=com.generalsx.generalszh:SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:58.085 20543 20543 F DEBUG   : Process name is com.generalsx.generalszh, not key_process
+10-04 03:31:58.085 20543 20543 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+10-04 03:31:58.085 20543 20543 F DEBUG   : Build fingerprint: 'realme/RMX1993EEA/RMX1993L1:11/RKQ1.201112.002/1639416071285:user/release-keys'
+10-04 03:31:58.085 20543 20543 F DEBUG   : Revision: '0'
+10-04 03:31:58.085 20543 20543 F DEBUG   : ABI: 'arm64'
+10-04 03:31:58.085 20543 20543 F DEBUG   : Timestamp: 2026-10-04 03:31:58+0300
+10-04 03:31:58.085 20543 20543 F DEBUG   : pid: 20402, tid: 20448, name: SDLThread  >>> com.generalsx.generalszh <<<
+10-04 03:31:58.085 20543 20543 F DEBUG   : uid: 10882
+10-04 03:31:58.085 20543 20543 F DEBUG   : signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x8
+10-04 03:31:58.085 20543 20543 F DEBUG   : Cause: null pointer dereference
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x0  0000000000000000  x1  0000000000000000  x2  0000000000000000  x3  0000007256ff8810
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x4  0000000000000000  x5  0000007244320f38  x6  0000000000000079  x7  0000000000000079
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x8  e2dfcc5d28cf7010  x9  e2dfcc5d28cf7010  x10 0000000000004fe0  x11 0000000000004fe0
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x12 0000007252e005a0  x13 0000000000000fff  x14 0000000000000038  x15 000000730000006c
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x16 0000007259341480  x17 000000725832e1b0  x18 0000007251948000  x19 000000723fc4c880
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x20 0000000000000000  x21 0000000000000000  x22 0000000000000000  x23 0000000000000000
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x24 000000723fc4e920  x25 000000725935c000  x26 000000723fc4e880  x27 000000725936b0f8
+10-04 03:31:58.085 20543 20543 F DEBUG   :     x28 000000725936c430  x29 0000007256ffaa20
+10-04 03:31:58.085 20543 20543 F DEBUG   :     lr  000000725813b160  sp  0000007256ffa9a0  pc  000000725832e1b0  pst 0000000020000000
+10-04 03:31:58.337 20543 20543 F DEBUG   : backtrace:
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #00 pc 0000000000e231b0  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameWindow::winHide(bool)) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #01 pc 0000000000c3015c  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (InGameUI::update()+1872) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #02 pc 0000000000b90124  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameClient::update()+1320) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #03 pc 0000000000b13110  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameEngine::update()+92) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #04 pc 0000000000b13324  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameEngine::execute()+88) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #05 pc 0000000000ee3764  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (SDL3GameEngine::execute()+52) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #06 pc 0000000000b0f4dc  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (GameMain()+212) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #07 pc 0000000000b0b608  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libmain.so (SDL_main+2396) (BuildId: 2eb1cdd04f9ba425f1e18084f942ff05bac3f475)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #08 pc 0000000000185d4c  /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/lib/arm64/libSDL3.so (Java_org_libsdl_app_SDLActivity_nativeRunMain+812) (BuildId: 8f61751fe35c1a2ac1d7f3b7304b02c9e4fbf078)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #09 pc 000000000013ced4  /apex/com.android.art/lib64/libart.so (art_quick_generic_jni_trampoline+148) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #10 pc 00000000001337e8  /apex/com.android.art/lib64/libart.so (art_quick_invoke_static_stub+568) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #11 pc 00000000001a8a94  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+228) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #12 pc 0000000000318288  /apex/com.android.art/lib64/libart.so (art::interpreter::ArtInterpreterToCompiledCodeBridge(art::Thread*, art::ArtMethod*, art::ShadowFrame*, unsigned short, art::JValue*)+376) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #13 pc 000000000030e5b4  /apex/com.android.art/lib64/libart.so (bool art::interpreter::DoCall<false, false>(art::ArtMethod*, art::Thread*, art::ShadowFrame&, art::Instruction const*, unsigned short, art::JValue*)+996) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #14 pc 0000000000680034  /apex/com.android.art/lib64/libart.so (MterpInvokeStatic+548) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #15 pc 000000000012d994  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_static+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #16 pc 0000000000009d98  [anon:dalvik-classes3.dex extracted in memory from /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!classes3.dex] (org.libsdl.app.SDLActivity.main+104)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #17 pc 000000000067d37c  /apex/com.android.art/lib64/libart.so (MterpInvokeVirtual+1520) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #18 pc 000000000012d814  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_virtual+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #19 pc 000000000000ca4e  [anon:dalvik-classes3.dex extracted in memory from /data/app/~~rVmVguNuTHIwQE2ijVj87w==/com.generalsx.generalszh-ARANJ0fDNrjjgo5jPAgRUw==/base.apk!classes3.dex] (org.libsdl.app.SDLMain.run+78)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #20 pc 000000000067edb4  /apex/com.android.art/lib64/libart.so (MterpInvokeInterface+1808) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #21 pc 000000000012da14  /apex/com.android.art/lib64/libart.so (mterp_op_invoke_interface+20) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #22 pc 00000000000eb89c  /apex/com.android.art/javalib/core-oj.jar (java.lang.Thread.run+8)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #23 pc 0000000000305bb0  /apex/com.android.art/lib64/libart.so (art::interpreter::Execute(art::Thread*, art::CodeItemDataAccessor const&, art::ShadowFrame&, art::JValue, bool, bool) (.llvm.6772346537078727864)+268) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #24 pc 000000000066bdf4  /apex/com.android.art/lib64/libart.so (artQuickToInterpreterBridge+780) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #25 pc 000000000013cff8  /apex/com.android.art/lib64/libart.so (art_quick_to_interpreter_bridge+88) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #26 pc 0000000000133564  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+548) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #27 pc 00000000001a8a78  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+200) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #28 pc 000000000055581c  /apex/com.android.art/lib64/libart.so (art::JValue art::InvokeVirtualOrInterfaceWithJValues<art::ArtMethod*>(art::ScopedObjectAccessAlreadyRunnable const&, _jobject*, art::ArtMethod*, jvalue const*)+460) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #29 pc 00000000005a4b80  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+1308) (BuildId: c24ad92624bea19ba7ea2ce7352c29b9)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #30 pc 00000000000da278  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+64) (BuildId: 1ca28d785d6567d2b225cf978ef04de5)
+10-04 03:31:58.337 20543 20543 F DEBUG   :       #31 pc 000000000007a448  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+64) (BuildId: 1ca28d785d6567d2b225cf978ef04de5)
+10-04 03:31:59.075  1215 20547 W ActivityTaskManager:   Force finishing activity com.generalsx.generalszh/.GeneralsXZHActivity
+10-04 03:31:59.269  1215  3633 I WindowManager: WIN DEATH: Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}
+10-04 03:31:59.280   978   978 E Layer   : [Bounds for - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0] No local sync point found
+10-04 03:31:59.283  1215  3633 V WindowManager: Changing focus from Window{36d8247 u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity} to null,diplayid=0
+10-04 03:31:59.294  1215  3084 V ColorZoomWindowManagerService: onAnimationFinished:  r = ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1742 f}}
+10-04 03:31:59.296   978   978 D OppoExLayer: ~Layer() sequence=15265, name=com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:59.296   978   978 D OppoExLayer: ~Layer() sequence=15268, name=Bounds for - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:59.296   978   978 D OppoExLayer: ~Layer() sequence=15269, name=SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:59.296   978   978 D OppoExLayer: ~Layer() sequence=15270, name=Background for -SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:59.296   978   978 D OppoExLayer: ~Layer() sequence=15264, name=36d8247 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-04 03:31:59.329   978   978 D OppoExLayer: ~Layer() sequence=15253, name=ActivityRecord{ded7631 u0 com.generalsx.generalszh/.GeneralsXZHActivity#0
+10-04 03:32:04.454  1215  1692 I ActivityManager: Start proc 20585:com.generalsx.generalszh/u0a882 for next_app {com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}
+10-04 03:32:04.464 20585 20585 I libc    : SetHeapTaggingLevel: tag level set to 0
+10-04 03:32:05.018 20585 20585 E libc    : Access denied finding property "ro.odm.prev.product.name"
