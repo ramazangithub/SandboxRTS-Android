@@ -161,7 +161,7 @@ void DX8TextureManagerClass::Release_Textures()
 	while (!it.Is_Done())
 	{
 		TextureTrackerClass *track=it.Peek_Obj();
-		track->Release();
+		if (track) track->Release();
 		it.Next();
 	}
 }

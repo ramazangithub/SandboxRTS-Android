@@ -404,7 +404,7 @@ DX8VertexBufferClass::~DX8VertexBufferClass()
 	_DX8VertexBufferCount--;
 	WWDEBUG_SAY(("Current vertex buffer count: %d",_DX8VertexBufferCount));
 #endif
-	VertexBuffer->Release();
+	if (VertexBuffer) { VertexBuffer->Release(); VertexBuffer = nullptr; } // SandboxRTS-android
 }
 
 // ----------------------------------------------------------------------------

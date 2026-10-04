@@ -187,8 +187,8 @@ bool DX8Wrapper::Pillarbox_Setup(int gameW, int gameH)
 	hr = D3DDevice->CreateDepthStencilSurface(gameW, gameH,
 		_PresentParameters.AutoDepthStencilFormat, D3DMULTISAMPLE_NONE, &s_depthSurf);
 	if (FAILED(hr)) {
-		s_offscreenSurf->Release(); s_offscreenSurf = nullptr;
-		s_offscreenTex->Release(); s_offscreenTex = nullptr;
+		if (s_offscreenSurf) s_offscreenSurf->Release(); s_offscreenSurf = nullptr;
+		if (s_offscreenTex) s_offscreenTex->Release(); s_offscreenTex = nullptr;
 		return false;
 	}
 
@@ -452,6 +452,9 @@ void DX8Wrapper::Pillarbox_Process_Resize()
 	if ((int)_PresentParameters.BackBufferWidth == physW &&
 		(int)_PresentParameters.BackBufferHeight == physH) return;
 
+#ifdef __ANDROID__
+	return; // SandboxRTS-android: skip device reset on resize
+#endif
 	Pillarbox_Cleanup();
 	_PresentParameters.BackBufferWidth = physW;
 	_PresentParameters.BackBufferHeight = physH;
@@ -651,7 +654,7 @@ void DX8Wrapper::Shutdown()
 	}
 
 	if (D3DInterface) {
-		D3DInterface->Release();
+		if (D3DInterface) D3DInterface->Release();
 		D3DInterface=nullptr;
 
 	}
@@ -1011,7 +1014,7 @@ void DX8Wrapper::Release_Device()
 		** Release the device
 		*/
 
-		D3DDevice->Release();
+		if (D3DDevice) D3DDevice->Release();
 		D3DDevice=nullptr;
 	}
 }
@@ -2170,7 +2173,7 @@ void DX8Wrapper::Clear(bool clear_color, bool clear_z_stencil, const Vector3 &co
 		);
 
 		// release ref
-		depthbuffer->Release();
+		if (depthbuffer) depthbuffer->Release();
 	}
 
 	DWORD flags = 0;
@@ -2895,7 +2898,7 @@ IDirect3DTexture8 * DX8Wrapper::_Create_DX8_Texture
 	D3DSURFACE_DESC desc;
 	texture->GetLevelDesc(0,&desc);
 	if (desc.Format==D3DFMT_P8) {
-		texture->Release();
+		if (texture) texture->Release();
 		return MissingTexture::_Get_Missing_Texture();
 	}
 	return texture;
@@ -2924,7 +2927,7 @@ IDirect3DTexture8 * DX8Wrapper::_Create_DX8_Texture
 	IDirect3DSurface8 *tex_surface = nullptr;
 	texture->GetSurfaceLevel(0, &tex_surface);
 	DX8_ErrorCode(D3DXLoadSurfaceFromSurface(tex_surface, nullptr, nullptr, surface, nullptr, nullptr, D3DX_FILTER_BOX, 0));
-	tex_surface->Release();
+	if (tex_surface) tex_surface->Release();
 
 	// Create mipmaps if needed
 	if (mip_level_count!=MIP_LEVELS_1)
@@ -3531,7 +3534,7 @@ SurfaceClass * DX8Wrapper::_Get_DX8_Back_Buffer(unsigned int num)
 	if (bb)
 	{
 		surf=NEW_REF(SurfaceClass,(bb));
-		bb->Release();
+		if (bb) bb->Release();
 	}
 
 	return surf;
@@ -3699,13 +3702,13 @@ void DX8Wrapper::Set_Render_Target_With_Z
 		d3d_zbuf=ztexture->Get_D3D_Surface_Level();
 		WWASSERT(d3d_zbuf!=nullptr);
 		Set_Render_Target(d3d_surf,d3d_zbuf);
-		d3d_zbuf->Release();
+		if (d3d_zbuf) d3d_zbuf->Release();
 	}
 	else
 	{
 		Set_Render_Target(d3d_surf,true);
 	}
-	d3d_surf->Release();
+	if (d3d_surf) d3d_surf->Release();
 
 	IsRenderToTexture = true;
 }
@@ -3781,7 +3784,7 @@ DX8Wrapper::Set_Render_Target(IDirect3DSurface8 *render_target, bool use_default
 
 		if (CurrentDepthBuffer!=nullptr)
 		{
-			CurrentDepthBuffer->Release();
+			if (CurrentDepthBuffer) CurrentDepthBuffer->Release();
 			CurrentDepthBuffer=nullptr;
 		}
 
@@ -3818,7 +3821,7 @@ DX8Wrapper::Set_Render_Target(IDirect3DSurface8 *render_target, bool use_default
 
 		if (CurrentDepthBuffer!=nullptr)
 		{
-			CurrentDepthBuffer->Release();
+			if (CurrentDepthBuffer) CurrentDepthBuffer->Release();
 			CurrentDepthBuffer=nullptr;
 		}
 
@@ -3907,7 +3910,7 @@ void DX8Wrapper::Set_Render_Target
 
 		if (CurrentDepthBuffer!=nullptr)
 		{
-			CurrentDepthBuffer->Release();
+			if (CurrentDepthBuffer) CurrentDepthBuffer->Release();
 			CurrentDepthBuffer=nullptr;
 		}
 	}
@@ -3943,7 +3946,7 @@ void DX8Wrapper::Set_Render_Target
 
 		if (CurrentDepthBuffer!=nullptr)
 		{
-			CurrentDepthBuffer->Release();
+			if (CurrentDepthBuffer) CurrentDepthBuffer->Release();
 			CurrentDepthBuffer=nullptr;
 		}
 
