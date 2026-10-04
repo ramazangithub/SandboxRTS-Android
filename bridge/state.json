@@ -1,12 +1,12 @@
 {
-  "round": 5,
-  "turn": "builder",
-  "commit": "e358a1f",
-  "release_tag": "android-v0.5.0-r005",
+  "round": 6,
+  "turn": "tester",
+  "commit": "8e222ce",
+  "release_tag": "android-v0.6.0-r006",
   "apk": "GeneralsZH-Android-*.apk",
   "stubs_changed": false,
-  "status": "done",
-  "updated_by": "tester",
-  "updated_at": "2026-10-04T23:42:00Z",
+  "status": "ready",
+  "updated_by": "builder",
+  "updated_at": "2026-10-04T23:49:54Z",
   "mode": "cloud_release"
 }
