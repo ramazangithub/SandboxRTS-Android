@@ -603,6 +603,12 @@ void GameClient::update()
 
 			}
 
+#if defined(__ANDROID__)
+		// GeneralsX @android r006: m_breakTheMovie=TRUE blocks WW3D::Begin_Render in W3DDisplay::draw.
+		// On a direct map start (-startmap/-file) there is no intro/shell, so let the renderer run.
+		if (TheGlobalData->m_initialFile.isEmpty() == FALSE)
+			TheWritableGlobalData->m_breakTheMovie = FALSE;
+#endif
 		TheShell->showShellMap(TRUE);
 		TheShell->showShell();
 		TheWritableGlobalData->m_afterIntro = FALSE;
