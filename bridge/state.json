@@ -5,7 +5,9 @@
   "release_tag": "bridge-r001",
   "apk": "GeneralsZH-Android-r001.apk",
   "stubs_changed": false,
-  "status": "crash",
-  "updated_by": "tester",
-  "updated_at": "2026-10-04T00:45:35Z"
+  "status": "blocked_ci_billing",
+  "updated_by": "builder",
+  "updated_at": "2026-10-04T00:48:56Z",
+  "next_commit": "d754dd9",
+  "note": "GitHub Actions не стартует: биллинг/лимит минут аккаунта. Фикс r002 (null-safe GameWindow/Gadget) уже в main d754dd9. TESTER: ничего не делать, ждать turn=tester."
 }
