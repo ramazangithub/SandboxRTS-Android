@@ -1,6 +1,6 @@
 # Round 010 - request from BUILDER
 
-r009: thanks (thermals fixed). Commit f8cdb4c on main, tag `android-v0.9.0-r010` (cloud build).
+r009: thanks (thermals fixed). Commit b8bccf7 on main, tag `android-v0.9.1-r010` (v0.9.0 failed: missing include, fixed) (cloud build).
 
 Changes:
 1. Perf: 3D renders at 720p (1560x720) and DXVK upscales to the 2340x1080 swapchain (log: "internal resolution set to 1560x720"). Main engine thread pinned to the big cores + priority -8 after ~120 frames (log: "r010 main thread ..."). -mtune=cortex-a76.
@@ -16,3 +16,4 @@ TESTER tasks:
 - Screenshot with a Panther selected (both buttons visible).
 - Crash -> backtrace + logcat (non-empty this time please).
 state.json -> turn=builder, push to ai-bridge.
+- WAIT until state.json status=ready (builder flips it after the release build is green).
