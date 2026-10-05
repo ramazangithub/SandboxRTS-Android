@@ -11,16 +11,17 @@ import org.libsdl.app.SDLActivity;
 public class GeneralsXZHActivity extends SDLActivity {
     @Override
     protected void onCreate(android.os.Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // GeneralsX @android r007: lock landscape + immersive fullscreen so the
-        // DXVK swapchain is never resized mid-draw (r006 crash in DxvkMemoryAllocator).
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode =
+                android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
             | android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode =
-                android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        }
+
+        super.onCreate(savedInstanceState);
         hideSystemBars();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -59,11 +60,20 @@ public class GeneralsXZHActivity extends SDLActivity {
     @Override
     protected String[] getArguments() {
         String args = getIntent() != null ? getIntent().getStringExtra("args") : null;
-        if (args == null || args.trim().isEmpty()) {
+        if (args != null && !args.trim().isEmpty()) {
+            return args.trim().split("\\s+");
+        }
+        String map = getIntent() != null ? getIntent().getStringExtra("map") : null;
+        if (map != null && !map.trim().isEmpty()) {
+            if (!map.startsWith("Maps\\") && !map.startsWith("Maps/")) {
+                map = "Maps\\" + map;
+            }
             return new String[] {
-                "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", "Maps\\Flat.map"
+                "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", map
             };
         }
-        return args.trim().split("\\s+");
+        return new String[] {
+            "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", "Maps\\Volcano.map"
+        };
     }
 }

@@ -1,0 +1,50 @@
+diff --git a/src/dxvk/dxvk_presenter.cpp b/src/dxvk/dxvk_presenter.cpp
+index 38b8a2d6..17571ecd 100644
+--- a/src/dxvk/dxvk_presenter.cpp
++++ b/src/dxvk/dxvk_presenter.cpp
+@@ -106,6 +106,13 @@ namespace dxvk {
+ 
+     // This is a normal occurence, but may be useful for
+     // debugging purposes in case WSI goes wrong somehow.
++#if defined(__ANDROID__)
++    if (m_acquireStatus != VK_SUCCESS && m_acquireStatus != VK_SUBOPTIMAL_KHR && m_swapchain)
++      Logger::info(str::format("Presenter: Got ", m_acquireStatus, ", recreating swapchain"));
++
++    // If the swap chain is out of date, recreate it and retry.
++    if ((m_acquireStatus != VK_SUCCESS && m_acquireStatus != VK_SUBOPTIMAL_KHR) || !m_swapchain) {
++#else
+     if (m_acquireStatus != VK_SUCCESS && m_swapchain)
+       Logger::info(str::format("Presenter: Got ", m_acquireStatus, ", recreating swapchain"));
+ 
+@@ -113,6 +120,7 @@ namespace dxvk {
+     // is possible that we do not get a new swap chain here, e.g.
+     // because the window is minimized.
+     if (m_acquireStatus != VK_SUCCESS || !m_swapchain) {
++#endif
+       VkResult vr = recreateSwapChain();
+ 
+       if (vr == VK_NOT_READY && hasSwapchain)
+@@ -232,7 +240,11 @@ namespace dxvk {
+ 
+     // On a successful present, try to acquire next image already, in
+     // order to hide potential delays from the application thread.
++#if defined(__ANDROID__)
++    if (status == VK_SUCCESS || status == VK_SUBOPTIMAL_KHR) {
++#else
+     if (status == VK_SUCCESS) {
++#endif
+       PresenterSync& nextSync = m_semaphores.at(m_frameIndex);
+       waitForSwapchainFence(nextSync);
+ 
+@@ -245,7 +257,11 @@ namespace dxvk {
+     // There is no guarantee that suboptimal state is returned by both functions.
+     std::lock_guard lock(m_surfaceMutex);
+ 
++#if defined(__ANDROID__)
++    if (status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR) {
++#else
+     if (status != VK_SUCCESS) {
++#endif
+       Logger::info(str::format("Presenter: Got ", status, ", recreating swapchain"));
+ 
+       m_dirtySwapchain = true;

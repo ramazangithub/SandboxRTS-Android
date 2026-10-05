@@ -335,6 +335,22 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android" OR ANDROID)
     message(STATUS "DXVK Android: Patches/dxvk-android.patch already present in source")
   endif()
 
+  # Apply Patches/dxvk-android-presenter.patch to prevent VK_SUBOPTIMAL_KHR infinite recreate loop on Android
+  if(EXISTS "${DXVK_LOCAL_FORK_DIR}/src/dxvk/dxvk_presenter.cpp")
+    file(READ "${DXVK_LOCAL_FORK_DIR}/src/dxvk/dxvk_presenter.cpp" _PRESENTER_CONTENT)
+    if(NOT _PRESENTER_CONTENT MATCHES "status != VK_SUBOPTIMAL_KHR")
+      execute_process(
+        COMMAND git -C "${DXVK_LOCAL_FORK_DIR}" apply "${CMAKE_SOURCE_DIR}/Patches/dxvk-android-presenter.patch"
+        RESULT_VARIABLE _PRESENTER_PATCH_RES)
+      if(NOT _PRESENTER_PATCH_RES EQUAL 0)
+        message(FATAL_ERROR "Failed to apply Patches/dxvk-android-presenter.patch to references/fadi-labib-dxvk")
+      endif()
+      message(STATUS "DXVK Android: applied Patches/dxvk-android-presenter.patch")
+    else()
+      message(STATUS "DXVK Android: Patches/dxvk-android-presenter.patch already applied")
+    endif()
+  endif()
+
   # Generate the meson cross file from the template, filling in the NDK bin dir
   # and the host glslang. The wrappers embed -target/--sysroot, so no arch/sysroot
   # flags are needed in [built-in options] (unlike the iOS file).

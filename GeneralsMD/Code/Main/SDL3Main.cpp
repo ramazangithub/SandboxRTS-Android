@@ -796,6 +796,9 @@ int main(int argc, char* argv[])
 		// the display upscales 3x, visibly blurring textures and terrain.
 		windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
 #endif
+#if defined(__ANDROID__)
+		windowFlags |= SDL_WINDOW_FULLSCREEN;
+#endif
 		TheSDL3Window = SDL_CreateWindow(
 			"Command & Conquer Generals: Zero Hour",
 			1024, 768,  // Default resolution
