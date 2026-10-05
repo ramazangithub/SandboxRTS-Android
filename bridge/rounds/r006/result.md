@@ -61,3 +61,10 @@
      }
      ```
    - Also add null guard in `pickAndPlayUnitVoiceResponse` before querying player upgrades.
+
+4. **Touch Controls Adaptation & Double-Tap Crash (CRITICAL UX REQUIREMENT)**:
+   - **Double-Tap Crash**: User reported an immediate crash on double-tapping the screen. This is tied to double-click / rapid unit selection / order dispatch triggering the null pointer in `pickAndPlayUnitVoiceResponse` or rapid SDL touch message processing. Must be resolved.
+   - **Required Touch Scheme**:
+     - **Long Press + Drag (Зажатие пальца)**: Initiate selection box (рамка выделения юнитов). Currently, any normal drag immediately triggers box selection instead of panning camera.
+     - **Single Tap (1 тап)**: Issue move/attack order for currently selected units to the tapped location (отправка войск).
+     - **Double Tap (2 быстрых тапа)**: Select ALL player units on screen (выделить все войска на экране, аналог клавиши `Q` / Select All).
