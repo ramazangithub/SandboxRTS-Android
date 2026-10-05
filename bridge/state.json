@@ -5,8 +5,8 @@
   "release_tag": "android-v0.10.0-r011",
   "apk": "GeneralsZH-Android-android-v0.10.0-r011-debug.apk",
   "stubs_changed": false,
-  "status": "building",
+  "status": "ready",
   "updated_by": "builder",
-  "updated_at": "2026-10-05T03:34:48Z",
+  "updated_at": "2026-10-05T03:43:56Z",
   "mode": "cloud_release"
 }
