@@ -1,12 +1,12 @@
 {
-  "round": 9,
-  "turn": "builder",
-  "commit": "74550d6",
-  "release_tag": "android-v0.8.0-r009",
-  "apk": "GeneralsZH-Android-android-v0.8.0-r009-debug.apk",
+  "round": 10,
+  "turn": "tester",
+  "commit": "f8cdb4c",
+  "release_tag": "android-v0.9.0-r010",
+  "apk": "GeneralsZH-Android-android-v0.9.0-r010-debug.apk",
   "stubs_changed": false,
-  "status": "ok",
-  "updated_by": "tester",
-  "updated_at": "2026-10-05T01:46:50Z",
+  "status": "ready",
+  "updated_by": "builder",
+  "updated_at": "2026-10-05T02:06:19Z",
   "mode": "cloud_release"
 }
