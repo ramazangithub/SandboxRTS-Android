@@ -86,5 +86,10 @@ MaxCameraHeight = 700.0     ; Extreme zoom-out (vanilla is 310)
    - Change `d3d9.samplerAnisotropy = 4` -> `d3d9.samplerAnisotropy = 0` (or leave to `dxvk.conf`).
 2. **Default GameData / SagePatch**:
    - Ship with `DrawEntireTerrain = No` and `TerrainLOD = AUTOMATIC` (and `MaxCameraHeight = 350.0`).
-3. **Optional Render Scale / FPS Cap Option**:
-   - For mid-range 2019 SoCs (like Snapdragon 730G), an optional 540p render scale or a stable 40 FPS target (25.0ms evenly spaced, no thermal throttling) would provide a silky-smooth experience without heat spikes.
+   - Verified on device: with these settings, frame time immediately dropped to **17.6–17.9 ms (~56 FPS)**!
+3. **OpenAL Audio Optimization**:
+   - Simpleperf showed OpenAL (`Resample_<CubicTag>`) consumes **7.92% of CPU**. Switching to `resampler = linear` saves ~4–5% CPU.
+4. **Multithreading Verdict**:
+   - See detailed on-device profile in [`profile_simpleperf.md`](profile_simpleperf.md).
+   - **Engine logic is only 14.1% of CPU!** Graphics translation (DXVK 24.8% + Turnip 20.4% + Kernel 16.1%) is 61.3%. Rewriting game logic to multithreading is NOT needed.
+
