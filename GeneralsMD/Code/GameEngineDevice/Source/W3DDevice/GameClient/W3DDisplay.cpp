@@ -2537,14 +2537,25 @@ void W3DDisplay::gxUpdateDayNight()
 			m_myLight[i]->Set_Transform(mtx);
 		}
 	}
-	// shadows follow the sun
-	if (TheW3DShadowManager && frame - s_lastShadow >= 15)
+	// shadows follow the sun. r013: every rebuild re-extrudes every shadow volume
+	// (a frame spike), so only rebuild when the sun really turned (~4 degrees).
 	{
-		TheW3DShadowManager->setTimeOfDay((TimeOfDay)s_slot);
-		s_lastShadow = frame;
+		static Real s_sx = 0.0f, s_sy = 0.0f, s_sz = 0.0f;
+		const Coord3D &sp = TheGlobalData->m_terrainObjectsLighting[s_slot][0].lightPos;
+		const Real len = sqrtf(sp.x * sp.x + sp.y * sp.y + sp.z * sp.z);
+		if (TheW3DShadowManager && len > 0.0001f && frame - s_lastShadow >= 15)
+		{
+			const Real nx = sp.x / len, ny = sp.y / len, nz = sp.z / len;
+			if (nx * s_sx + ny * s_sy + nz * s_sz < 0.9976f)
+			{
+				TheW3DShadowManager->setTimeOfDay((TimeOfDay)s_slot);
+				s_sx = nx; s_sy = ny; s_sz = nz;
+			}
+			s_lastShadow = frame;
+		}
 	}
-	// terrain vertex lighting
-	if (TheTerrainRenderObject && frame - s_lastTerrain >= 90)
+	// terrain vertex lighting (full relight = spike; r013: every 10 s)
+	if (TheTerrainRenderObject && frame - s_lastTerrain >= 300)
 	{
 		TheTerrainRenderObject->setTimeOfDay((TimeOfDay)s_slot);
 		s_lastTerrain = frame;

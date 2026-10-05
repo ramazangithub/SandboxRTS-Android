@@ -17,6 +17,9 @@
 */
 
 #include "PreRTS.h"
+#if defined(__ANDROID__)
+#include <sched.h>
+#endif
 #include "Common/FrameRateLimit.h"
 
 // GeneralsX @build BenderAI 12/02/2026 Platform-specific high-resolution timing
@@ -100,9 +103,10 @@ Real FrameRateLimit::wait(UnsignedInt maxFps)
 	double elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
 	const double targetSeconds = 1.0 / maxFps;
 #if defined(__ANDROID__)
-	// GeneralsX @android r009: no 2 ms spin per frame - it kept a big core at 100%
-	// and thermal-throttled the SoC (75C, FPS dips to 30). Sleep the whole gap.
-	const double sleepSeconds = targetSeconds - elapsedSeconds;
+	// GeneralsX @android r013: nanosleep on Android oversleeps 1-4 ms, so a 60 cap
+	// landed at ~50 with uneven frames. Sleep until 1.5 ms before the deadline,
+	// then yield-spin the rest (sched_yield, not a hot spin).
+	const double sleepSeconds = targetSeconds - elapsedSeconds - 0.0015;
 #else
 	const double sleepSeconds = targetSeconds - elapsedSeconds - 0.002; // leave ~2ms for spin wait
 #endif
@@ -117,9 +121,15 @@ Real FrameRateLimit::wait(UnsignedInt maxFps)
 	}
 
 #if defined(__ANDROID__)
-	clock_gettime(CLOCK_MONOTONIC, &tick);
-	tickValue = static_cast<Int64>(tick.tv_sec) * 1000000000 + tick.tv_nsec;
-	elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
+	do
+	{
+		clock_gettime(CLOCK_MONOTONIC, &tick);
+		tickValue = static_cast<Int64>(tick.tv_sec) * 1000000000 + tick.tv_nsec;
+		elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
+		if (elapsedSeconds < targetSeconds)
+			sched_yield();
+	}
+	while (elapsedSeconds < targetSeconds);
 #else
 	// Busy wait for remaining time
 	do

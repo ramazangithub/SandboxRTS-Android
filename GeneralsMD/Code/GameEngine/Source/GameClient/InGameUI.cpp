@@ -27,7 +27,10 @@
 // Author: Michael S. Booth, March 2001
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
+#include "PreRTS.h"
+#if defined(__ANDROID__)
+#include <time.h>
+#endif	// This must go first in EVERY cpp file in the GameEngine
 
 #include <stdio.h>
 
@@ -3788,12 +3791,27 @@ void InGameUI::postWindowDraw()
 			if (s_androidFps)
 			{
 				const Int fps = (Int)(TheDisplay->getAverageFPS() + 0.5f);
-				if (fps != s_androidFpsLast)
+				// r013: worst frame time over the last second, in ms
+				static UnsignedInt s_prevMs = 0, s_winStart = 0, s_worst = 0, s_shownWorst = 0;
+				struct timespec gxTs;
+				clock_gettime(CLOCK_MONOTONIC, &gxTs);
+				const UnsignedInt nowMs = (UnsignedInt)((Int64)gxTs.tv_sec * 1000 + gxTs.tv_nsec / 1000000);
+				if (s_prevMs != 0 && nowMs - s_prevMs > s_worst)
+					s_worst = nowMs - s_prevMs;
+				s_prevMs = nowMs;
+				if (nowMs - s_winStart >= 1000)
+				{
+					s_shownWorst = s_worst;
+					s_worst = 0;
+					s_winStart = nowMs;
+				}
+				const Int key = fps * 1000 + (Int)(s_shownWorst > 999 ? 999 : s_shownWorst);
+				if (key != s_androidFpsLast)
 				{
 					UnicodeString str;
-					str.format(L"FPS %d", fps);
+					str.format(L"FPS %d  max %dms", fps, (Int)s_shownWorst);
 					s_androidFps->setText(str);
-					s_androidFpsLast = fps;
+					s_androidFpsLast = key;
 				}
 				s_androidFps->draw(w / 28, h / 22, GameMakeColor(60, 235, 80, 255), GameMakeColor(0, 0, 0, 255));
 			}
