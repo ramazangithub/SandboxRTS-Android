@@ -819,6 +819,7 @@ int main(int argc, char* argv[])
 #endif
 #if defined(__ANDROID__)
 		windowFlags |= SDL_WINDOW_FULLSCREEN;
+		SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight"); // r019: never portrait
 #endif
 		TheSDL3Window = SDL_CreateWindow(
 			"Command & Conquer Generals: Zero Hour",

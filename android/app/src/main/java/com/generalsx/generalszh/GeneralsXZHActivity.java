@@ -52,6 +52,19 @@ public class GeneralsXZHActivity extends SDLActivity {
         }
     }
 
+    // r019: SDL re-requests the orientation when the window is created; never
+    // let it pick portrait. Always landscape (both sides, follows the sensor).
+    @Override
+    public void setOrientationBis(int w, int h, boolean resizable, String hint) {
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+    }
+
     @Override
     protected String[] getLibraries() {
         return new String[] { "SDL3", "main" };
@@ -72,8 +85,12 @@ public class GeneralsXZHActivity extends SDLActivity {
                 "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", map
             };
         }
+        // r019: second launcher icon "SandboxRTS Showcase" starts the Campaign00 tour.
+        String cls = (getIntent() != null && getIntent().getComponent() != null)
+            ? getIntent().getComponent().getClassName() : "";
+        String startMap = cls.endsWith("ShowcaseAlias") ? "Maps\\Campaign00.map" : "Maps\\Volcano.map";
         return new String[] {
-            "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", "Maps\\Volcano.map"
+            "-win", "-nologo", "-noshellmap", "-quickstart", "-startmap", startMap
         };
     }
 }
