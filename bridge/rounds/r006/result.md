@@ -63,8 +63,23 @@
    - Also add null guard in `pickAndPlayUnitVoiceResponse` before querying player upgrades.
 
 4. **Touch Controls Adaptation & Double-Tap Crash (CRITICAL UX REQUIREMENT)**:
-   - **Double-Tap Crash**: User reported an immediate crash on double-tapping the screen. This is tied to double-click / rapid unit selection / order dispatch triggering the null pointer in `pickAndPlayUnitVoiceResponse` or rapid SDL touch message processing. Must be resolved.
-   - **Required Touch Scheme**:
-     - **Long Press + Drag (Зажатие пальца)**: Initiate selection box (рамка выделения юнитов). Currently, any normal drag immediately triggers box selection instead of panning camera.
-     - **Single Tap (1 тап)**: Issue move/attack order for currently selected units to the tapped location (отправка войск).
-     - **Double Tap (2 быстрых тапа)**: Select ALL player units on screen (выделить все войска на экране, аналог клавиши `Q` / Select All).
+   - **User's Direct Appeal to BUILDER**:
+     > *"И еще: то ИИ невероятно умный, но делает минимум который просят, он же тоже не тупой — пусть уже настроит мне нормально игру и управление!"*
+     > *(Translation: "Please don't do just a bare minimal 1-line patch this round — take full initiative to configure the game, UI, and touch controls properly so it's genuinely playable on Android!")*
+
+   - **Double-Tap Crash Root Cause**:
+     In `SDL3GameEngine.cpp` (lines 495-505), a double tap sends `clicks = 2` synthetic mouse down/up. This immediately routes through `SelectionXlat` -> `CommandTranslator::issueMoveToLocationCommand` -> `pickAndPlayUnitVoiceResponse` -> `Player::hasUpgradeComplete`, causing SIGSEGV (SEGV_MAPERR) because of the missing null guard. Fixing item 3 directly cures this crash!
+
+   - **User's Desired Mobile Touch Control Scheme**:
+     1. **Single Tap (1 тап)**:
+        - If tapping ground: Issue move/attack order for currently selected units to the tapped location (`issueMoveToLocationCommand`).
+        - If tapping a unit: Select that unit.
+     2. **Double Tap (2 быстрых тапа)**:
+        - Select **ALL player units currently on screen** (equivalent to pressing 'Q' / `TheInGameUI->selectAllUnits()` / Select All Units command).
+     3. **Long Press + Drag (Зажатие пальца перед свайпом)**:
+        - Initiate unit selection box (зелёная рамка). Currently, any light 1-finger drag immediately starts dragging a box, which conflicts with camera moving.
+     4. **Camera Navigation**:
+        - Ensure 1-finger or 2-finger panning is smooth and doesn't get hijacked by accidental selection boxes.
+
+   - **UI / Control Bar**:
+     - `WindowLayout::load` failed on `ControlBarPopupDescription.wnd` and `GeneralsExpPoints.wnd`. If these layout files can be stubbed or enabled gracefully, the bottom command bar and mini-map will become visible for commanding units!
