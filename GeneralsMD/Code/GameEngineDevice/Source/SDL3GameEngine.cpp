@@ -32,6 +32,7 @@
 #include "OpenALAudioManager.h"
 #include "SDL3Device/GameClient/SDL3Mouse.h"
 #include "SDL3Device/GameClient/SDL3Keyboard.h"
+#include "GameClient/View.h"
 #include "GameClient/Mouse.h"
 #include "GameClient/Keyboard.h"
 #include "GameClient/GameWindow.h"
@@ -52,8 +53,10 @@
 #include "GameClient/Display.h"
 #if defined(__ANDROID__)
 Bool AndroidHud_HandleTap(Int x, Int y);   // InGameUI.cpp (r009 touch HUD)
+void AndroidHud_SelectOnScreen();          // InGameUI.cpp (r011 double tap)
 #else
 static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
+static inline void AndroidHud_SelectOnScreen() {}
 #endif
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -193,6 +196,11 @@ struct TouchState {
 	bool gliding = false;                     // r010: inertia after lift (RMB still held)
 	float glideX = 0.0f, glideY = 0.0f;
 	float f1x = 0.0f, f1y = 0.0f, f2x = 0.0f, f2y = 0.0f; // normalized per finger
+	float rot0 = 0.0f;        // r011: finger-vector angle at second-finger down
+	float rotLast = 0.0f;     // r011: last applied finger-vector angle
+	float rotAccum = 0.0f;    // r011: rotation accrued before the deadzone opens
+	bool rotActive = false;   // r011: two-finger twist rotates the camera
+	float wvX = 0.0f, wvY = 0.0f; // r011: smoothed world-space camera velocity per frame
 };
 
 TouchState s_touch;
@@ -225,10 +233,14 @@ const float PINCH_STEP_RATIO = 0.03f;  // 3% distance change per wheel tick
 // drag: the camera moves with the fingers and stops when they stop. PAN_GAIN
 // scales that delta — 1.0 tracks the fingers; lower = slower camera.
 // r009: user wants "swipe right->left = camera goes right" and a faster camera.
-const float PAN_GAIN = -3.2f;   // r010: a bit faster again
+// r011: direct camera drag. 1.0 = the ground sticks to the finger; >1 = faster.
+const float PAN_GAIN = 1.7f;
+const float GLIDE_START = 0.9f;   // fraction of the last frame world velocity
+const float GLIDE_DECAY = 0.86f;  // per-frame decay
+const float ROTATE_SIGN = 1.0f;   // camera yaw follows the finger twist
+const float ROTATE_DEADZONE = 0.10f; // rad of twist before rotation engages
+const Uint64 TAP_MAX_MS = 450;    // longer presses are not taps (no flick double-taps)
 // r010: inertia - after lift the camera keeps ~10% of the swipe momentum
-const float GLIDE_START = 0.7f;   // fraction of the last frame velocity
-const float GLIDE_DECAY = 0.75f;  // per-frame decay
 
 // GeneralsX @android FadiLabib 07/07/2026 - Edge-hold scroll. A pure 1:1 drag can
 // only move the camera as far as the fingers can travel, so it stops dead when
@@ -325,6 +337,76 @@ void sendSyntheticMouse(SDL3Mouse *mouse, SDL_Window *window, Uint32 type,
 // either, so we classify first: whichever crosses the movement threshold first
 // — centroid travel (pan) or finger-distance change (pinch) — locks the gesture
 // mode until a finger lifts. The loser is ignored for the rest of the gesture.
+float wrapAngle(float a)
+{
+	while (a > 3.14159265f) a -= 6.2831853f;
+	while (a < -3.14159265f) a += 6.2831853f;
+	return a;
+}
+
+float fingerAngle(int winW, int winH)
+{
+	return SDL_atan2f((s_touch.f2y - s_touch.f1y) * (float)winH, (s_touch.f2x - s_touch.f1x) * (float)winW);
+}
+
+// r011: move the camera look-at point by a world-space delta (no mouse buttons involved,
+// so nothing can be read as a right-click / deselect / UI close).
+void touchMoveCameraWorld(float wx, float wy)
+{
+	if (!TheTacticalView || (wx == 0.0f && wy == 0.0f)) {
+		return;
+	}
+	Coord3D p = TheTacticalView->getPosition();
+	p.x += wx;
+	p.y += wy;
+	p.z = 0.0f;  // ground target: W3DView::lookAt skips its ray cast
+	TheTacticalView->userLookAt(&p);
+}
+
+// r011: finger moved by (sdx, sdy) window points -> world delta that keeps the ground
+// under the finger (x PAN_GAIN). Measured around the screen centre so the speed does
+// not explode near the horizon. Returns the world delta applied.
+void touchScrollScreen(SDL_Window *window, float sdx, float sdy, float *outWx, float *outWy)
+{
+	*outWx = 0.0f;
+	*outWy = 0.0f;
+	if (!TheTacticalView || !TheDisplay || (sdx == 0.0f && sdy == 0.0f)) {
+		return;
+	}
+	int ww = 0, wh = 0;
+	SDL_GetWindowSize(window, &ww, &wh);
+	if (ww <= 0 || wh <= 0) {
+		return;
+	}
+	const float dW = (float)TheDisplay->getWidth();
+	const float dH = (float)TheDisplay->getHeight();
+	const float ddx = sdx * dW / (float)ww * PAN_GAIN;
+	const float ddy = sdy * dH / (float)wh * PAN_GAIN;
+	// probe with an enlarged vector for sub-pixel precision, kept on screen
+	const float len = SDL_fabsf(ddx) + SDL_fabsf(ddy);
+	float k = 8.0f;
+	if (len * k > dH * 0.3f) {
+		k = (dH * 0.3f) / len;
+	}
+	ICoord2D c;
+	c.x = (Int)(dW * 0.5f);
+	c.y = (Int)(dH * 0.5f);
+	ICoord2D e;
+	e.x = c.x + (Int)(ddx * k);
+	e.y = c.y + (Int)(ddy * k);
+	if (e.x == c.x && e.y == c.y) {
+		return;
+	}
+	Coord3D wc, we;
+	TheTacticalView->screenToTerrain(&c, &wc);
+	TheTacticalView->screenToTerrain(&e, &we);
+	const float wx = (wc.x - we.x) / k;
+	const float wy = (wc.y - we.y) / k;
+	touchMoveCameraWorld(wx, wy);
+	*outWx = wx;
+	*outWy = wy;
+}
+
 void beginTwoPending(int winW, int winH)
 {
 	s_touch.twoCx0 = (s_touch.f1x + s_touch.f2x) * 0.5f * (float)winW;
@@ -332,40 +414,42 @@ void beginTwoPending(int winW, int winH)
 	const float dx = (s_touch.f1x - s_touch.f2x) * (float)winW;
 	const float dy = (s_touch.f1y - s_touch.f2y) * (float)winH;
 	s_touch.twoDist0 = SDL_sqrtf(dx * dx + dy * dy);
+	s_touch.rot0 = fingerAngle(winW, winH);
+	s_touch.rotActive = false;
 	s_touch.phase = TouchState::TWO_PENDING;
 }
 
 void beginPan(SDL3Mouse *mouse, SDL_Window *window, int winW, int winH)
 {
-	// panX/panY is the FIXED scroll anchor (matches the engine's RMB-down anchor);
-	// panLast tracks the rolling centroid, panAccum the delta flushed each frame.
+	(void)mouse;
+	(void)window;
 	s_touch.panX = (s_touch.f1x + s_touch.f2x) * 0.5f * (float)winW;
 	s_touch.panY = (s_touch.f1y + s_touch.f2y) * 0.5f * (float)winH;
 	s_touch.panLastX = s_touch.panX;
 	s_touch.panLastY = s_touch.panY;
 	s_touch.panAccumX = 0.0f;
 	s_touch.panAccumY = 0.0f;
-	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.panX, s_touch.panY);
-	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
-	                   s_touch.panX, s_touch.panY, SDL_BUTTON_RIGHT);
+	s_touch.wvX = s_touch.wvY = 0.0f;
+	s_touch.rotLast = fingerAngle(winW, winH);
+	s_touch.rotAccum = wrapAngle(s_touch.rotLast - s_touch.rot0);
 	s_touch.oneFingerPan = false;
 	s_touch.phase = TouchState::PAN;
 }
 
-// GeneralsX @android r007: 1-finger drag = camera pan (RMB scroll anchored at the
-// press point). Drag-box selection moved to long-press + drag.
 void beginOneFingerPan(SDL3Mouse *mouse, SDL_Window *window)
 {
+	(void)mouse;
+	(void)window;
 	s_touch.panX = s_touch.downX;
 	s_touch.panY = s_touch.downY;
 	s_touch.panLastX = s_touch.lastX;
 	s_touch.panLastY = s_touch.lastY;
+	// r011: the movement made during the threshold/grace window is applied too
 	s_touch.panAccumX = s_touch.lastX - s_touch.downX;
 	s_touch.panAccumY = s_touch.lastY - s_touch.downY;
+	s_touch.wvX = s_touch.wvY = 0.0f;
+	s_touch.rotActive = false;
 	s_touch.finger2 = (SDL_FingerID)~(SDL_FingerID)0;
-	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.panX, s_touch.panY);
-	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
-	                   s_touch.panX, s_touch.panY, SDL_BUTTON_RIGHT);
 	s_touch.oneFingerPan = true;
 	s_touch.phase = TouchState::PAN;
 }
@@ -382,8 +466,6 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 		if (s_touch.gliding) {
 			// r010: finger stops the glide (catch the camera)
 			s_touch.gliding = false;
-			sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-			                   s_touch.panX + 3.0f, s_touch.panY + 3.0f, SDL_BUTTON_RIGHT);  // off-anchor: not a right-click
 		}
 		if (s_touch.phase == TouchState::IDLE) {
 			// Defer all BUTTON output: a finger landing could become a tap, a
@@ -488,7 +570,15 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 			const float centroidMoved = SDL_fabsf(cx - s_touch.twoCx0) + SDL_fabsf(cy - s_touch.twoCy0);
 			const float distChanged = SDL_fabsf(dist - s_touch.twoDist0);
 
-			if (distChanged >= threshold && distChanged > centroidMoved) {
+			const float twist = SDL_fabsf(wrapAngle(fingerAngle(winW, winH) - s_touch.rot0));
+			const float arc = twist * dist * 0.5f;  // px travelled along the circle
+
+			if (arc >= threshold && arc > centroidMoved && arc > distChanged) {
+				// r011: two-finger twist -> rotate (pan rides along)
+				beginPan(mouse, window, winW, winH);
+				s_touch.rotActive = true;
+			}
+			else if (distChanged >= threshold && distChanged > centroidMoved) {
 				// Pinch wins: zoom only, camera never moves.
 				s_touch.pinchDist = dist;
 				s_touch.phase = TouchState::PINCH;
@@ -508,6 +598,18 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 			s_touch.panAccumY += cy - s_touch.panLastY;
 			s_touch.panLastX = cx;
 			s_touch.panLastY = cy;
+			// r011: two-finger twist rotates the camera
+			const float ang = fingerAngle(winW, winH);
+			const float dAng = wrapAngle(ang - s_touch.rotLast);
+			s_touch.rotLast = ang;
+			if (!s_touch.rotActive) {
+				s_touch.rotAccum += dAng;
+				if (SDL_fabsf(s_touch.rotAccum) >= ROTATE_DEADZONE) {
+					s_touch.rotActive = true;
+				}
+			} else if (TheTacticalView && dAng != 0.0f) {
+				TheTacticalView->userSetAngle(TheTacticalView->getAngle() + ROTATE_SIGN * dAng);
+			}
 		}
 		else if (s_touch.phase == TouchState::PINCH) {
 			const float cx = (s_touch.f1x + s_touch.f2x) * 0.5f * (float)winW;
@@ -553,6 +655,22 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				{
 					const Uint64 now = SDL_GetTicks();
 					const float slop = gestureThresholdPx(window) * 2.0f;
+					// r011: a fast flick lifts before the pan engages. It moved / lasted too
+					// long to be a tap -> apply it as a camera scroll, never as a (double) tap.
+					const float upMoved = SDL_fabsf(px - s_touch.downX) + SDL_fabsf(py - s_touch.downY);
+					if (s_touch.thresholdCrossed || upMoved >= gestureThresholdPx(window) ||
+					    (now - s_touch.downTicks) > TAP_MAX_MS) {
+						s_touch.lastTapTicks = 0;
+						if (upMoved >= gestureThresholdPx(window)) {
+							float wx = 0.0f, wy = 0.0f;
+							touchScrollScreen(window, px - s_touch.downX, py - s_touch.downY, &wx, &wy);
+							const float frames = SDL_max(1.0f, (float)(now - s_touch.downTicks) / 16.7f);
+							s_touch.glideX = wx / frames * GLIDE_START;
+							s_touch.glideY = wy / frames * GLIDE_START;
+							s_touch.gliding = true;
+						}
+						break;
+					}
 					const bool dbl =
 						s_touch.lastTapTicks != 0 &&
 						(now - s_touch.lastTapTicks) <= DOUBLE_TAP_MS &&
@@ -568,8 +686,8 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 						break;
 					}
 					if (dbl && TheMessageStream) {
-						// r007: double tap = select all own units on screen (same as the Q hotkey)
-						TheMessageStream->appendMessage(GameMessage::MSG_META_SELECT_ALL);
+						// r011: double tap = select own units visible on screen only
+						AndroidHud_SelectOnScreen();
 					} else {
 						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
 						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
@@ -592,24 +710,15 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
 				break;
 			case TouchState::PAN:
-				// GeneralsX @android FadiLabib 07/07/2026 - Release RMB at the last
-				// pan centroid, NOT the fixed anchor. SelectionXlat's isClick() (drag
-				// tolerance 0) treats an RMB down+up at the SAME pixel as a right-click,
-				// which in regular mouse mode calls deselectAll() — so ending a pace-
-				// controlled pan at the anchor deselected the whole army on every lift.
-				// The last centroid always differs from the anchor after a real pan, so
-				// isClick sees movement and the release reads as a drag-scroll end.
+				// r011: no mouse buttons are held during a pan any more; just coast.
 				if (event.type != SDL_EVENT_FINGER_CANCELED &&
-				    (SDL_fabsf(s_touch.velX) + SDL_fabsf(s_touch.velY)) > 2.0f) {
-					// r010: keep RMB held, updateTouchLongPress() coasts it out
+				    (SDL_fabsf(s_touch.wvX) + SDL_fabsf(s_touch.wvY)) > 0.05f) {
 					s_touch.gliding = true;
-					s_touch.glideX = s_touch.velX * GLIDE_START;
-					s_touch.glideY = s_touch.velY * GLIDE_START;
-				} else {
-					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-					                   s_touch.panLastX, s_touch.panLastY, SDL_BUTTON_RIGHT);
+					s_touch.glideX = s_touch.wvX * GLIDE_START;
+					s_touch.glideY = s_touch.wvY * GLIDE_START;
 				}
-				s_touch.velX = s_touch.velY = 0.0f;
+				s_touch.wvX = s_touch.wvY = 0.0f;
+				s_touch.rotActive = false;
 				break;
 			// TWO_PENDING / PINCH hold no buttons — nothing to release.
 			default:
@@ -629,14 +738,10 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 		if (s_touch.phase != TouchState::IDLE) {
 			s_touch.gliding = false;
 		} else {
-			sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION,
-			                   s_touch.panX + s_touch.glideX, s_touch.panY + s_touch.glideY);
+			touchMoveCameraWorld(s_touch.glideX, s_touch.glideY);
 			s_touch.glideX *= GLIDE_DECAY;
 			s_touch.glideY *= GLIDE_DECAY;
-			if (SDL_fabsf(s_touch.glideX) + SDL_fabsf(s_touch.glideY) < 0.75f) {
-				// release off-anchor so SelectionXlat::isClick() does not see a right-click (deselect)
-				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-				                   s_touch.panX + 3.0f, s_touch.panY + 3.0f, SDL_BUTTON_RIGHT);
+			if (SDL_fabsf(s_touch.glideX) + SDL_fabsf(s_touch.glideY) < 0.05f) {
 				s_touch.gliding = false;
 			}
 		}
@@ -665,28 +770,26 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 	// still) makes the engine's velocity-joystick scroll behave like a 1:1 drag and
 	// stop the instant the fingers stop.
 	if (s_touch.phase == TouchState::PAN) {
-		float offX = s_touch.panAccumX * PAN_GAIN;
-		float offY = s_touch.panAccumY * PAN_GAIN;
-		s_touch.velX = 0.6f * s_touch.velX + 0.4f * offX;
-		s_touch.velY = 0.6f * s_touch.velY + 0.4f * offY;
+		// r011: direct camera drag, once per frame with all finger motion since last frame
+		float sdx = s_touch.panAccumX;
+		float sdy = s_touch.panAccumY;
 
-		// Edge-hold: keep scrolling in the drag direction when the centroid parks
-		// near a screen edge, so a map larger than one swipe stays reachable.
 		int winW = 0, winH = 0;
 		SDL_GetWindowSize(window, &winW, &winH);
 		const float marginX = EDGE_MARGIN_FRAC * (float)winW;
 		const float marginTop = EDGE_MARGIN_FRAC * (float)winH;
 		const float marginBottom = EDGE_MARGIN_BOTTOM_FRAC * (float)winH;
 		const float edgePush = EDGE_SCROLL_FRAC * (float)winW;
-		// r009: inverted with PAN_GAIN - finger parked at the left edge scrolls right
-		const float edgeSign = (PAN_GAIN < 0.0f) ? -1.0f : 1.0f;
-		if (s_touch.panLastX < marginX)                    offX -= edgeSign * edgePush;
-		else if (s_touch.panLastX > (float)winW - marginX) offX += edgeSign * edgePush;
-		if (s_touch.panLastY < marginTop)                     offY -= edgeSign * edgePush;
-		else if (s_touch.panLastY > (float)winH - marginBottom) offY += edgeSign * edgePush;
+		// finger parked at an edge = keep dragging that way
+		if (s_touch.panLastX < marginX)                         sdx -= edgePush;
+		else if (s_touch.panLastX > (float)winW - marginX)      sdx += edgePush;
+		if (s_touch.panLastY < marginTop)                       sdy -= edgePush;
+		else if (s_touch.panLastY > (float)winH - marginBottom) sdy += edgePush;
 
-		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION,
-		                   s_touch.panX + offX, s_touch.panY + offY);
+		float wx = 0.0f, wy = 0.0f;
+		touchScrollScreen(window, sdx, sdy, &wx, &wy);
+		s_touch.wvX = 0.5f * s_touch.wvX + 0.5f * wx;
+		s_touch.wvY = 0.5f * s_touch.wvY + 0.5f * wy;
 		s_touch.panAccumX = 0.0f;
 		s_touch.panAccumY = 0.0f;
 	}
@@ -851,6 +954,23 @@ void SDL3GameEngine::reset(void)
  */
 void SDL3GameEngine::update(void)
 {
+#if defined(__ANDROID__)
+	{
+		// GeneralsX @android r011: mobile render/visibility settings, forced once after
+		// the INI load and before any map is built (the device GameData.ini shipped
+		// DrawEntireTerrain=Yes / TerrainLOD=DISABLE / MaxCameraHeight=700 and no shroud).
+		static bool s_mobileGlobalsDone = false;
+		if (!s_mobileGlobalsDone && TheWritableGlobalData) {
+			s_mobileGlobalsDone = true;
+			TheWritableGlobalData->m_drawEntireTerrain = FALSE;
+			TheWritableGlobalData->m_terrainLOD = TERRAIN_LOD_AUTOMATIC;
+			if (TheWritableGlobalData->m_maxCameraHeight > 380.0f) {
+				TheWritableGlobalData->m_maxCameraHeight = 380.0f;
+			}
+			TheWritableGlobalData->m_shroudOn = TRUE;   // fog of war back on
+		}
+	}
+#endif
 	pollSDL3Events();
 #if GX_TOUCH_UI
 	// Pause sim + render while backgrounded OR inactive (see iosLifecycleWatcher).

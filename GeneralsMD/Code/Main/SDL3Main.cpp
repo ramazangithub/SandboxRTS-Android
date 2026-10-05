@@ -771,7 +771,24 @@ int main(int argc, char* argv[])
 		// filtering, so terrain smears under the tilted RTS camera. Mobile GPUs
 		// (Adreno/Turnip and Xclipse alike) support it; force it for sharp ground
 		// textures. A user-supplied dxvk.conf can still override via the file.
-		setenv("DXVK_CONFIG", "d3d9.deferSurfaceCreation = True;d3d9.samplerAnisotropy = 4;d3d9.maxFrameLatency = 1;dxgi.maxFrameLatency = 1", 0);
+		// r011: tester profile - anisotropy cost ~2 ms/frame on Adreno 618 and a 1-frame
+		// latency cap stalled the CPU on every present. 2 frames in flight, app filtering.
+		setenv("DXVK_CONFIG", "d3d9.deferSurfaceCreation = True;d3d9.maxFrameLatency = 2;dxgi.maxFrameLatency = 2", 0);
+#if defined(__ANDROID__)
+		{
+			// r011: OpenAL Soft cubic resampler + limiter were ~8% CPU. Linear is inaudible on a phone.
+			const char *ip = SDL_GetAndroidInternalStoragePath();
+			if (ip && *ip) {
+				char confPath[1024];
+				SDL_snprintf(confPath, sizeof(confPath), "%s/alsoft.conf", ip);
+				if (FILE *cf = fopen(confPath, "w")) {
+					fputs("[general]\nresampler = linear\noutput-limiter = false\n", cf);
+					fclose(cf);
+					setenv("ALSOFT_CONF", confPath, 0);
+				}
+			}
+		}
+#endif
 #if defined(__ANDROID__)
 		// GeneralsX @android r009: skip Turnip conformance-only slow paths on Adreno 6xx
 		setenv("TU_DEBUG", "noconform", 0);

@@ -3762,6 +3762,52 @@ void InGameUI::postWindowDraw()
 	Int hudOffsetX = 0;
 	Int hudOffsetY = 0;
 
+#if defined(__ANDROID__)
+	// GeneralsX @android r011: the stock top-left/top-right counters (fps[limit],
+	// system clock, game timer, latency) are gone. One big green FPS number sits
+	// top-left, inset from the rounded/notched screen corner.
+	{
+		static DisplayString *s_androidFps = nullptr;
+		static Int s_androidFpsLast = -1;
+		static Int s_androidFpsFontH = -1;
+		if (TheDisplay && TheDisplayStringManager && TheWindowManager)
+		{
+			const Int w = (Int)TheDisplay->getWidth();
+			const Int h = (Int)TheDisplay->getHeight();
+			if (s_androidFps == nullptr)
+				s_androidFps = TheDisplayStringManager->newDisplayString();
+			if (s_androidFps && s_androidFpsFontH != h)
+			{
+				const AsciiString fontName = m_renderFpsFont.isEmpty() ? AsciiString("Arial") : m_renderFpsFont;
+				GameFont *font = TheWindowManager->winFindFont(fontName, h / 24, TRUE);
+				if (font)
+					s_androidFps->setFont(font);
+				s_androidFpsFontH = h;
+				s_androidFpsLast = -1;
+			}
+			if (s_androidFps)
+			{
+				const Int fps = (Int)(TheDisplay->getAverageFPS() + 0.5f);
+				if (fps != s_androidFpsLast)
+				{
+					UnicodeString str;
+					str.format(L"FPS %d", fps);
+					s_androidFps->setText(str);
+					s_androidFpsLast = fps;
+				}
+				s_androidFps->draw(w / 28, h / 22, GameMakeColor(60, 235, 80, 255), GameMakeColor(0, 0, 0, 255));
+			}
+		}
+		if (m_playerInfoListPointSize > 0 && TheGameLogic->isInGame() && TheControlBar->isObserverControlBarOn())
+		{
+			drawPlayerInfoList();
+		}
+		(void)hudOffsetX;
+		(void)hudOffsetY;
+		return;
+	}
+#endif
+
 	if (m_networkLatencyPointSize > 0 && TheGameLogic->isInMultiplayerGame())
 	{
 		drawNetworkLatency(hudOffsetX, hudOffsetY);
@@ -3839,6 +3885,50 @@ static void androidHudGeometry(Int &siegeX, Int &siegeY, Int &siegeS, Int &cross
 	crossY = h - crossS - h / 30;
 }
 
+// r011: right-middle "select whole army" button
+static void androidHudAllGeometry(Int &x, Int &y, Int &s)
+{
+	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	s = h / 9;
+	x = w - s - h / 30;
+	y = h / 2 - s / 2;
+}
+
+// r011: double tap -> only own units that are on screen
+static Bool androidSelectOnScreenCb(Drawable *draw, void *userData)
+{
+	GameMessage *msg = (GameMessage *)userData;
+	Object *obj = draw ? draw->getObject() : nullptr;
+	if (obj == nullptr || msg == nullptr)
+		return FALSE;
+	if (!obj->isLocallyControlled() || !obj->isSelectable() || obj->isEffectivelyDead())
+		return FALSE;
+	if (obj->isKindOf(KINDOF_STRUCTURE))
+		return FALSE;
+	if (TheInGameUI->getMaxSelectCount() > 0 && TheInGameUI->getSelectCount() >= TheInGameUI->getMaxSelectCount())
+		return FALSE;
+	TheInGameUI->selectDrawable(draw);
+	msg->appendObjectIDArgument(obj->getID());
+	return TRUE;
+}
+
+void AndroidHud_SelectOnScreen()
+{
+	if (TheTacticalView == nullptr || TheInGameUI == nullptr || TheMessageStream == nullptr ||
+	    TheDisplay == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+		return;
+	TheInGameUI->deselectAllDrawables();
+	GameMessage *msg = TheMessageStream->appendMessage(GameMessage::MSG_CREATE_SELECTED_GROUP);
+	msg->appendBooleanArgument(TRUE);  // new group
+	IRegion2D region;
+	region.lo.x = 0;
+	region.lo.y = 0;
+	region.hi.x = (Int)TheDisplay->getWidth();
+	region.hi.y = (Int)TheDisplay->getHeight();
+	TheTacticalView->iterateDrawablesInRegion(&region, androidSelectOnScreenCb, msg);
+}
+
 static void androidHudPlate(Int x, Int y, Int s, Bool active)
 {
 	const UnsignedInt plate  = GameMakeColor( 14,  18,  24, 205);
@@ -3871,6 +3961,24 @@ void AndroidHud_Draw()
 {
 	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return;
+	{
+		// r011: select-all-army button: 3x2 squad of small blocks
+		Int ax, ay, as;
+		androidHudAllGeometry(ax, ay, as);
+		androidHudPlate(ax, ay, as, FALSE);
+		const UnsignedInt icon = GameMakeColor(205, 212, 200, 255);
+		const Int cell = as / 6;
+		const Int gap = as / 14;
+		const Int gw = cell * 3 + gap * 2;
+		const Int gh = cell * 2 + gap;
+		const Int ox = ax + (as - gw) / 2;
+		const Int oy = ay + (as - gh) / 2;
+		for (Int r = 0; r < 2; ++r)
+			for (Int c = 0; c < 3; ++c)
+				TheDisplay->drawFillRect(ox + c * (cell + gap), oy + r * (cell + gap), cell, cell, icon);
+		// bracket underline = "all"
+		TheDisplay->drawLine(ox, oy + gh + gap, ox + gw, oy + gh + gap, 2.0f, icon);
+	}
 	if (TheInGameUI->getSelectCount() <= 0)
 		return;
 	Int sx, sy, ss, cx, cy, cs;
@@ -3911,6 +4019,17 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 {
 	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return FALSE;
+	{
+		Int ax, ay, as;
+		androidHudAllGeometry(ax, ay, as);
+		const Int apad = as / 4;
+		if (x >= ax - apad && x <= ax + as + apad && y >= ay - apad && y <= ay + as + apad)
+		{
+			if (TheMessageStream)
+				TheMessageStream->appendMessage(GameMessage::MSG_META_SELECT_ALL);
+			return TRUE;
+		}
+	}
 	if (TheInGameUI->getSelectCount() <= 0)
 		return FALSE;
 	Int sx, sy, ss, cx, cy, cs;
