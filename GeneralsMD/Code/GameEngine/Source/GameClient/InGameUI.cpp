@@ -100,6 +100,14 @@
 
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
 
+// r016: day/night speed multiplier, read by W3DDisplay's day/night cycle.
+float g_gxDayTimeScale = 1.0f;
+#if defined(__ANDROID__)
+#include <time.h>
+#include <ctype.h>
+#include <math.h>
+#endif
+
 
 
 // ------------------------------------------------------------------------------------------------
@@ -3760,6 +3768,231 @@ void InGameUI::disregardDrawable( Drawable *draw )
 //-------------------------------------------------------------------------------------------------
 /** This is called after the WindowManager has drawn the menus. */
 //-------------------------------------------------------------------------------------------------
+#if defined(__ANDROID__)
+// r016: Campaign00 showcase. On a map whose path contains "campaign00" the
+// camera runs a short tour (map, tanks, factory, battle, day/night) with plain
+// captions, then hands control to the player. Pure client-side camera work +
+// a few move/attack orders; real time, frozen while paused.
+static Bool gxIsShowcaseMap()
+{
+	if (!TheGlobalData) return FALSE;
+	const char *s = TheGlobalData->m_mapName.str();
+	if (!s) return FALSE;
+	char low[512];
+	Int n = 0;
+	for (; s[n] && n < 511; ++n) low[n] = (char)tolower((unsigned char)s[n]);
+	low[n] = 0;
+	return strstr(low, "campaign00") != nullptr;
+}
+
+static void gxShowcaseOrder(Bool localSide, const Coord3D &dst, Bool attack)
+{
+	Player *local = ThePlayerList->getLocalPlayer();
+	Player *neutral = ThePlayerList->getNeutralPlayer();
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead() || !o->isKindOf(KINDOF_VEHICLE)) continue;
+		Player *p = o->getControllingPlayer();
+		if (p == nullptr || p == neutral) continue;
+		if ((p == local) != (localSide == TRUE)) continue;
+		AIUpdateInterface *ai = o->getAIUpdateInterface();
+		if (!ai) continue;
+		if (attack) ai->aiAttackMoveToPosition(&dst, NO_MAX_SHOTS_LIMIT, CMD_FROM_SCRIPT);
+		else ai->aiMoveToPosition(&dst, CMD_FROM_SCRIPT);
+	}
+}
+
+// Returns TRUE while the showcase owns the screen (FPS counter hidden).
+static Bool gxShowcaseUpdate(Int w, Int h)
+{
+	static Bool s_active = FALSE, s_done = FALSE;
+	static double s_t = 0.0;
+	static Int64 s_prevNs = 0;
+	static UnsignedInt s_lastFrame = 0;
+	static Int s_stage = -1;
+	static Coord3D s_cam, s_pBase, s_eBase, s_center;
+	static Real s_ang = 0.0f, s_zoom = 1.0f;
+	static DisplayString *s_cap = nullptr;
+	static Int s_capFontH = -1, s_capStage = -2;
+
+	if (!TheGameLogic || !TheGameLogic->isInGame() || TheGameLogic->isInShellGame() || !TheTacticalView || !ThePlayerList || !ThePlayerList->getLocalPlayer())
+	{
+		s_active = FALSE; s_done = FALSE; s_prevNs = 0; s_lastFrame = 0;
+		g_gxDayTimeScale = 1.0f;
+		return FALSE;
+	}
+	const UnsignedInt frame = TheGameLogic->getFrame();
+	if (frame < s_lastFrame) { s_active = FALSE; s_done = FALSE; g_gxDayTimeScale = 1.0f; }
+	s_lastFrame = frame;
+	if (s_done) return FALSE;
+
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	const Int64 ns = (Int64)ts.tv_sec * 1000000000 + ts.tv_nsec;
+	double dt = (s_prevNs != 0) ? (double)(ns - s_prevNs) * 1e-9 : 0.0;
+	s_prevNs = ns;
+	if (dt < 0.0) dt = 0.0;
+	if (dt > 0.1) dt = 0.1;
+	if (TheGameLogic->isGamePaused()) dt = 0.0;
+
+	// live centroids
+	Player *local = ThePlayerList->getLocalPlayer();
+	Player *neutral = ThePlayerList->getNeutralPlayer();
+	Coord3D pc, ec, fc;
+	pc.zero(); ec.zero(); fc.zero();
+	Int np = 0, ne = 0, nf = 0;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead()) continue;
+		Player *p = o->getControllingPlayer();
+		if (p == nullptr || p == neutral) continue;
+		const Coord3D *pos = o->getPosition();
+		if (o->isKindOf(KINDOF_STRUCTURE))
+		{
+			if (p == local) { fc.x += pos->x; fc.y += pos->y; fc.z += pos->z; ++nf; }
+			continue;
+		}
+		if (!o->isKindOf(KINDOF_VEHICLE)) continue;
+		if (p == local) { pc.x += pos->x; pc.y += pos->y; pc.z += pos->z; ++np; }
+		else { ec.x += pos->x; ec.y += pos->y; ec.z += pos->z; ++ne; }
+	}
+	if (np) { pc.x /= np; pc.y /= np; pc.z /= np; }
+	if (ne) { ec.x /= ne; ec.y /= ne; ec.z /= ne; }
+	if (nf) { fc.x /= nf; fc.y /= nf; fc.z /= nf; }
+
+	if (!s_active)
+	{
+		if (!gxIsShowcaseMap() || np == 0) { s_done = TRUE; return FALSE; }
+		s_active = TRUE;
+		s_t = 0.0;
+		s_stage = -1;
+		s_capStage = -2;
+		s_pBase = pc;
+		s_eBase = ne ? ec : pc;
+		s_center.x = 0.5f * (s_pBase.x + s_eBase.x);
+		s_center.y = 0.5f * (s_pBase.y + s_eBase.y);
+		s_center.z = 0.5f * (s_pBase.z + s_eBase.z);
+		if (!ne) { s_center.x += 300.0f; s_center.y += 300.0f; }
+	}
+	s_t += dt;
+	const Real t = (Real)s_t;
+
+	// timeline (seconds)
+	static const Real T_TANKS = 12.0f, T_FACTORY = 24.0f, T_BATTLE = 32.0f, T_DAY = 50.0f, T_CONTROL = 74.0f, T_END = 80.0f;
+	Int stage = (t < T_TANKS) ? 0 : (t < T_FACTORY) ? 1 : (t < T_FACTORY + 0.0f || t < T_BATTLE) ? 2 : (t < T_DAY) ? 3 : (t < T_CONTROL) ? 4 : (t < T_END) ? 5 : 6;
+	if (stage == 2 && nf == 0) stage = 3;
+	if (stage == 6)
+	{
+		s_active = FALSE; s_done = TRUE;
+		g_gxDayTimeScale = 1.0f;
+		return FALSE;
+	}
+	if (stage != s_stage)
+	{
+		if (stage == 1)
+		{
+			Coord3D a, b;
+			a.x = s_pBase.x + (s_center.x - s_pBase.x) * 0.45f; a.y = s_pBase.y + (s_center.y - s_pBase.y) * 0.45f; a.z = s_center.z;
+			b.x = s_eBase.x + (s_center.x - s_eBase.x) * 0.45f; b.y = s_eBase.y + (s_center.y - s_eBase.y) * 0.45f; b.z = s_center.z;
+			gxShowcaseOrder(TRUE, a, FALSE);
+			gxShowcaseOrder(FALSE, b, FALSE);
+		}
+		else if (stage == 3)
+		{
+			gxShowcaseOrder(TRUE, s_center, TRUE);
+			gxShowcaseOrder(FALSE, s_center, TRUE);
+		}
+	}
+
+	// camera target per stage
+	Coord3D tgt = s_center;
+	Real tz = 1.0f, ta = s_ang;
+	switch (stage)
+	{
+	case 0: tgt = s_center; tz = 1.6f; ta = 0.5f + t * 0.10f; break;
+	case 1: tgt = pc; tz = 0.75f; ta = s_ang + (Real)dt * 0.06f; break;
+	case 2: tgt = fc; tz = 0.95f; ta = s_ang + (Real)dt * 0.05f; break;
+	case 3:
+		if (np + ne > 0)
+		{
+			tgt.x = (pc.x * np + ec.x * ne) / (Real)(np + ne);
+			tgt.y = (pc.y * np + ec.y * ne) / (Real)(np + ne);
+			tgt.z = (pc.z * np + ec.z * ne) / (Real)(np + ne);
+		}
+		tz = 0.9f; ta = s_ang + (Real)dt * 0.04f; break;
+	case 4: tgt = s_center; tz = 1.5f; ta = s_ang + (Real)dt * 0.08f; break;
+	default: break;
+	}
+	g_gxDayTimeScale = (stage == 4) ? 64.0f : 1.0f;
+
+	if (stage <= 4)
+	{
+		if (s_stage == -1)
+		{
+			s_cam = tgt; s_zoom = tz; s_ang = ta;
+		}
+		else
+		{
+			const Real k = 1.0f - (Real)exp(-dt * 1.6);
+			s_cam.x += (tgt.x - s_cam.x) * k;
+			s_cam.y += (tgt.y - s_cam.y) * k;
+			s_cam.z += (tgt.z - s_cam.z) * k;
+			s_zoom += (tz - s_zoom) * k;
+			s_ang += (ta - s_ang) * k;
+		}
+		TheTacticalView->setAngle(s_ang);
+		TheTacticalView->setZoom(s_zoom);
+		TheTacticalView->lookAt(&s_cam);
+	}
+	s_stage = stage;
+
+	// caption
+	if (TheDisplayStringManager && TheWindowManager)
+	{
+		if (s_cap == nullptr) s_cap = TheDisplayStringManager->newDisplayString();
+		if (s_cap && s_capFontH != h)
+		{
+			GameFont *font = TheWindowManager->winFindFont(AsciiString("Arial"), h / 12, TRUE);
+			if (font) s_cap->setFont(font);
+			s_capFontH = h;
+			s_capStage = -2;
+		}
+		if (s_cap)
+		{
+			if (s_capStage != stage)
+			{
+				const wchar_t *txt = L"";
+				switch (stage)
+				{
+				case 0: txt = L"\x041A\x0430\x0440\x0442\x0430"; break;                         // Karta
+				case 1: txt = L"\x0422\x0430\x043D\x043A\x0438"; break;                         // Tanki
+				case 2: txt = L"\x0417\x0430\x0432\x043E\x0434"; break;                         // Zavod
+				case 3: txt = L"\x0411\x043E\x0439"; break;                                     // Boy
+				case 4: txt = L"\x0414\x0435\x043D\x044C \x0438 \x043D\x043E\x0447\x044C"; break; // Den i noch
+				case 5: txt = L"\x0423\x043F\x0440\x0430\x0432\x043B\x0435\x043D\x0438\x0435"; break; // Upravlenie
+				default: break;
+				}
+				UnicodeString str;
+				str.set((const WideChar *)txt);
+				s_cap->setText(str);
+				s_capStage = stage;
+			}
+			const Real st[7] = { 0.0f, T_TANKS, T_FACTORY, T_BATTLE, T_DAY, T_CONTROL, T_END };
+			Real s0 = st[stage], s1 = st[stage + 1];
+			if (stage == 3 && nf == 0) s0 = T_FACTORY;
+			Real a = 1.0f;
+			if (t - s0 < 0.6f) a = (t - s0) / 0.6f;
+			if (s1 - t < 0.6f) a = (s1 - t) / 0.6f;
+			if (a < 0.0f) a = 0.0f;
+			if (a > 1.0f) a = 1.0f;
+			const Int ai = (Int)(a * 255.0f);
+			s_cap->draw(w / 22, h - h / 5, GameMakeColor(255, 255, 255, ai), GameMakeColor(0, 0, 0, ai));
+		}
+	}
+	return stage <= 4;
+}
+#endif
+
 void InGameUI::postWindowDraw()
 {
 	Int hudOffsetX = 0;
@@ -3788,7 +4021,8 @@ void InGameUI::postWindowDraw()
 				s_androidFpsFontH = h;
 				s_androidFpsLast = -1;
 			}
-			if (s_androidFps)
+			const Bool gxShowcase = gxShowcaseUpdate(w, h); // r016
+			if (s_androidFps && !gxShowcase)
 			{
 				const Int fps = (Int)(TheDisplay->getAverageFPS() + 0.5f);
 				// r013: worst frame time over the last second, in ms

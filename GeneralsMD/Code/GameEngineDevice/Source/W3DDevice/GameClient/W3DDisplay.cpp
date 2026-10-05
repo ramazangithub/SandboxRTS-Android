@@ -2494,7 +2494,8 @@ void W3DDisplay::gxUpdateDayNight()
 		{
 			double dt = (double)(ns - s_prevNs) * 1e-9;
 			if (dt > 0.25) dt = 0.25;
-			s_dayTime += dt;
+			extern float g_gxDayTimeScale; // r016: showcase time-lapse (InGameUI.cpp)
+			s_dayTime += dt * (double)g_gxDayTimeScale;
 		}
 		if (frame < s_lastFrame) s_dayTime = 0.0;
 		s_prevNs = ns;
