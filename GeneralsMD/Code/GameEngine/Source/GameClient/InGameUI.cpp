@@ -89,6 +89,8 @@
 #include "GameLogic/Module/StealthUpdate.h"
 #include "GameLogic/Module/SupplyWarehouseDockUpdate.h"
 #include "GameLogic/Module/MobMemberSlavedUpdate.h"//ML
+#include "GameLogic/Module/AIUpdate.h"           // r010 touch HUD: siege capability check
+#include "GameLogic/Module/OverchargeBehavior.h" // r010 touch HUD: siege state
 
 #include "GameNetwork/GameInfo.h"
 #include "GameNetwork/NetworkInterface.h"
@@ -2531,7 +2533,6 @@ void InGameUI::createGarrisonHint( const GameMessage *msg )
 #ifdef AI_DEBUG_TOOLTIPS
 #include "Common/StateMachine.h"
 #include "GameLogic/Module/AIUpdate.h"
-#include "GameLogic/Module/OverchargeBehavior.h"
 #include "GameLogic/AIPathfind.h"
 #endif // AI_DEBUG_TOOLTIPS
 
