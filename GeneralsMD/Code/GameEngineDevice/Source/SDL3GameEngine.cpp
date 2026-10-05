@@ -49,6 +49,12 @@
 #include "StdDevice/Common/StdBIGFileSystem.h"
 #include "Common/GlobalData.h"
 #include "Common/MessageStream.h"
+#include "GameClient/Display.h"
+#if defined(__ANDROID__)
+Bool AndroidHud_HandleTap(Int x, Int y);   // InGameUI.cpp (r009 touch HUD)
+#else
+static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
+#endif
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdio>
@@ -210,7 +216,8 @@ const float PINCH_STEP_RATIO = 0.03f;  // 3% distance change per wheel tick
 // feed it only THIS frame's finger delta as the offset, so it behaves like a 1:1
 // drag: the camera moves with the fingers and stops when they stop. PAN_GAIN
 // scales that delta — 1.0 tracks the fingers; lower = slower camera.
-const float PAN_GAIN = 1.0f;
+// r009: user wants "swipe right->left = camera goes right" and a faster camera.
+const float PAN_GAIN = -2.5f;
 
 // GeneralsX @android FadiLabib 07/07/2026 - Edge-hold scroll. A pure 1:1 drag can
 // only move the camera as far as the fingers can travel, so it stops dead when
@@ -534,6 +541,15 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 						(now - s_touch.lastTapTicks) <= DOUBLE_TAP_MS &&
 						SDL_fabsf(s_touch.downX - s_touch.lastTapX) <= slop &&
 						SDL_fabsf(s_touch.downY - s_touch.lastTapY) <= slop;
+					int hudWinW = 0, hudWinH = 0;
+					SDL_GetWindowSize(window, &hudWinW, &hudWinH);
+					const float hudSX = (TheDisplay && hudWinW > 0) ? (float)TheDisplay->getWidth() / (float)hudWinW : 1.0f;
+					const float hudSY = (TheDisplay && hudWinH > 0) ? (float)TheDisplay->getHeight() / (float)hudWinH : 1.0f;
+					if (AndroidHud_HandleTap((Int)(s_touch.downX * hudSX), (Int)(s_touch.downY * hudSY))) {
+						// r009: siege / deselect HUD button consumed the tap
+						s_touch.lastTapTicks = 0;
+						break;
+					}
 					if (dbl && TheMessageStream) {
 						// r007: double tap = select all own units on screen (same as the Q hotkey)
 						TheMessageStream->appendMessage(GameMessage::MSG_META_SELECT_ALL);
@@ -618,10 +634,12 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 		const float marginTop = EDGE_MARGIN_FRAC * (float)winH;
 		const float marginBottom = EDGE_MARGIN_BOTTOM_FRAC * (float)winH;
 		const float edgePush = EDGE_SCROLL_FRAC * (float)winW;
-		if (s_touch.panLastX < marginX)                    offX -= edgePush;
-		else if (s_touch.panLastX > (float)winW - marginX) offX += edgePush;
-		if (s_touch.panLastY < marginTop)                     offY -= edgePush;
-		else if (s_touch.panLastY > (float)winH - marginBottom) offY += edgePush;
+		// r009: inverted with PAN_GAIN - finger parked at the left edge scrolls right
+		const float edgeSign = (PAN_GAIN < 0.0f) ? -1.0f : 1.0f;
+		if (s_touch.panLastX < marginX)                    offX -= edgeSign * edgePush;
+		else if (s_touch.panLastX > (float)winW - marginX) offX += edgeSign * edgePush;
+		if (s_touch.panLastY < marginTop)                     offY -= edgeSign * edgePush;
+		else if (s_touch.panLastY > (float)winH - marginBottom) offY += edgeSign * edgePush;
 
 		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION,
 		                   s_touch.panX + offX, s_touch.panY + offY);

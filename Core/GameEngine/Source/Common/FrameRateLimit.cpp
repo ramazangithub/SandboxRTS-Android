@@ -99,7 +99,13 @@ Real FrameRateLimit::wait(UnsignedInt maxFps)
 	Int64 tickValue = static_cast<Int64>(tick.tv_sec) * 1000000000 + tick.tv_nsec;
 	double elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
 	const double targetSeconds = 1.0 / maxFps;
+#if defined(__ANDROID__)
+	// GeneralsX @android r009: no 2 ms spin per frame - it kept a big core at 100%
+	// and thermal-throttled the SoC (75C, FPS dips to 30). Sleep the whole gap.
+	const double sleepSeconds = targetSeconds - elapsedSeconds;
+#else
 	const double sleepSeconds = targetSeconds - elapsedSeconds - 0.002; // leave ~2ms for spin wait
+#endif
 
 	if (sleepSeconds > 0.0)
 	{
@@ -110,6 +116,11 @@ Real FrameRateLimit::wait(UnsignedInt maxFps)
 		nanosleep(&sleepTime, nullptr);
 	}
 
+#if defined(__ANDROID__)
+	clock_gettime(CLOCK_MONOTONIC, &tick);
+	tickValue = static_cast<Int64>(tick.tv_sec) * 1000000000 + tick.tv_nsec;
+	elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
+#else
 	// Busy wait for remaining time
 	do
 	{
@@ -118,6 +129,7 @@ Real FrameRateLimit::wait(UnsignedInt maxFps)
 		elapsedSeconds = static_cast<double>(tickValue - m_start) / static_cast<double>(m_freq);
 	}
 	while (elapsedSeconds < targetSeconds);
+#endif
 
 	m_start = tickValue;
 	return static_cast<Real>(elapsedSeconds);

@@ -771,7 +771,11 @@ int main(int argc, char* argv[])
 		// filtering, so terrain smears under the tilted RTS camera. Mobile GPUs
 		// (Adreno/Turnip and Xclipse alike) support it; force it for sharp ground
 		// textures. A user-supplied dxvk.conf can still override via the file.
-		setenv("DXVK_CONFIG", "d3d9.deferSurfaceCreation = True;d3d9.samplerAnisotropy = 16", 0);
+		setenv("DXVK_CONFIG", "d3d9.deferSurfaceCreation = True;d3d9.samplerAnisotropy = 4;d3d9.maxFrameLatency = 1;dxgi.maxFrameLatency = 1", 0);
+#if defined(__ANDROID__)
+		// GeneralsX @android r009: skip Turnip conformance-only slow paths on Adreno 6xx
+		setenv("TU_DEBUG", "noconform", 0);
+#endif
 #endif
 
 		// GeneralsX @bugfix BenderAI 06/03/2026 - Exclude LLVMpipe Vulkan ICD before loading Vulkan.

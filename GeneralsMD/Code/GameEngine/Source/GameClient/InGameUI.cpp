@@ -3789,8 +3789,137 @@ void InGameUI::postWindowDraw()
 //-------------------------------------------------------------------------------------------------
 /** This is called after the UI has been drawn. */
 //-------------------------------------------------------------------------------------------------
+#if defined(__ANDROID__)
+// ============================================================================
+// GeneralsX @android r009 - touch HUD:
+//  * bottom-centre round "cage + crosshair" button while a Panther is selected:
+//    tap = siege toggle (same as the D hotkey -> MSG_META_DEPLOY)
+//  * bottom-right cross while anything is selected: tap = deselect all
+// Coordinates are display pixels.
+// ============================================================================
+static Bool androidHudHasPanther()
+{
+	if (TheInGameUI == nullptr || TheInGameUI->getSelectCount() <= 0)
+		return FALSE;
+	const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
+	if (list == nullptr)
+		return FALSE;
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		const Object *obj = d ? d->getObject() : nullptr;
+		if (obj == nullptr || obj->getTemplate() == nullptr)
+			continue;
+		const char *n = obj->getTemplate()->getName().str();
+		for (const char *p = n; p && *p; ++p)
+		{
+			if ((p[0] == 'P' || p[0] == 'p') && strncasecmp(p, "panther", 7) == 0)
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void androidHudGeometry(Int &siegeX, Int &siegeY, Int &siegeR, Int &crossX, Int &crossY, Int &crossR)
+{
+	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	siegeR = h / 11;
+	siegeX = w / 2;
+	siegeY = h - siegeR - h / 5;
+	crossR = h / 16;
+	crossX = w - crossR - h / 25;
+	crossY = h - crossR - h / 25;
+}
+
+static void androidHudCircle(Int cx, Int cy, Int r, Real width, UnsignedInt color)
+{
+	const Int SEG = 40;
+	for (Int i = 0; i < SEG; ++i)
+	{
+		const Real a0 = (Real)i * 6.2831853f / SEG;
+		const Real a1 = (Real)(i + 1) * 6.2831853f / SEG;
+		TheDisplay->drawLine(cx + (Int)(r * cosf(a0)), cy + (Int)(r * sinf(a0)),
+		                     cx + (Int)(r * cosf(a1)), cy + (Int)(r * sinf(a1)), width, color);
+	}
+}
+
+void AndroidHud_Draw()
+{
+	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+		return;
+	if (TheInGameUI->getSelectCount() <= 0)
+		return;
+	Int sx, sy, sr, cx, cy, cr;
+	androidHudGeometry(sx, sy, sr, cx, cy, cr);
+	const UnsignedInt bg = GameMakeColor(0, 0, 0, 140);
+	const UnsignedInt fg = GameMakeColor(120, 255, 120, 235);
+	const UnsignedInt red = GameMakeColor(255, 90, 70, 235);
+	if (androidHudHasPanther())
+	{
+		// dark disc
+		for (Int yy = -sr; yy <= sr; yy += 2)
+		{
+			const Int half = (Int)sqrtf((Real)(sr * sr - yy * yy));
+			TheDisplay->drawFillRect(sx - half, sy + yy, half * 2, 2, bg);
+		}
+		androidHudCircle(sx, sy, sr, 4.0f, fg);
+		// cage bars (round grid)
+		for (Int k = -1; k <= 1; k += 2)
+		{
+			const Int o = k * sr / 2;
+			const Int half = (Int)sqrtf((Real)(sr * sr - o * o));
+			TheDisplay->drawLine(sx + o, sy - half, sx + o, sy + half, 2.0f, fg);
+			TheDisplay->drawLine(sx - half, sy + o, sx + half, sy + o, 2.0f, fg);
+		}
+		// crosshair
+		androidHudCircle(sx, sy, sr / 3, 3.0f, red);
+		TheDisplay->drawLine(sx - sr / 2, sy, sx + sr / 2, sy, 3.0f, red);
+		TheDisplay->drawLine(sx, sy - sr / 2, sx, sy + sr / 2, 3.0f, red);
+	}
+	// deselect cross
+	for (Int yy = -cr; yy <= cr; yy += 2)
+	{
+		const Int half = (Int)sqrtf((Real)(cr * cr - yy * yy));
+		TheDisplay->drawFillRect(cx - half, cy + yy, half * 2, 2, bg);
+	}
+	androidHudCircle(cx, cy, cr, 3.0f, red);
+	const Int a = cr * 5 / 10;
+	TheDisplay->drawLine(cx - a, cy - a, cx + a, cy + a, 5.0f, red);
+	TheDisplay->drawLine(cx - a, cy + a, cx + a, cy - a, 5.0f, red);
+}
+
+// Returns TRUE if the tap hit a HUD button (and was handled).
+Bool AndroidHud_HandleTap(Int x, Int y)
+{
+	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+		return FALSE;
+	if (TheInGameUI->getSelectCount() <= 0)
+		return FALSE;
+	Int sx, sy, sr, cx, cy, cr;
+	androidHudGeometry(sx, sy, sr, cx, cy, cr);
+	const Int pad = cr / 2;
+	if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= (cr + pad) * (cr + pad))
+	{
+		TheInGameUI->deselectAllDrawables();
+		return TRUE;
+	}
+	if (androidHudHasPanther() &&
+	    (x - sx) * (x - sx) + (y - sy) * (y - sy) <= (sr + pad) * (sr + pad))
+	{
+		if (TheMessageStream)
+			TheMessageStream->appendMessage(GameMessage::MSG_META_DEPLOY);
+		return TRUE;
+	}
+	return FALSE;
+}
+#endif // __ANDROID__
+
 void InGameUI::postDraw()
 {
+#if defined(__ANDROID__)
+	AndroidHud_Draw();
+#endif
 
 	// render our display strings for the messages if on
 	if( m_messagesOn )
