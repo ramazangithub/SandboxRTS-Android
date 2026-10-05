@@ -858,8 +858,17 @@ int main(int argc, char* argv[])
 				static char xresVal[16], yresVal[16];
 				static char xresFlag[] = "-xres";
 				static char yresFlag[] = "-yres";
+#if defined(__ANDROID__)
+				// GeneralsX @android r010: render at 720p and let DXVK scale the back
+				// buffer to the native swapchain (2340x1080 -> 1560x720 = 2.25x fewer
+				// pixels). Touch is mapped by SDL3Mouse::scaleMouseCoordinates. Pass
+				// -xres/-yres to override.
+				const int yres = winH > 720 ? 720 : winH;
+				int xres = (int)((long long)winW * yres / winH);
+#else
 				const int yres = winH;
 				int xres = winW;
+#endif
 				xres &= ~1;  // keep it even
 				snprintf(xresVal, sizeof(xresVal), "%d", xres);
 				snprintf(yresVal, sizeof(yresVal), "%d", yres);

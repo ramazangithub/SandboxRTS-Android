@@ -2531,6 +2531,7 @@ void InGameUI::createGarrisonHint( const GameMessage *msg )
 #ifdef AI_DEBUG_TOOLTIPS
 #include "Common/StateMachine.h"
 #include "GameLogic/Module/AIUpdate.h"
+#include "GameLogic/Module/OverchargeBehavior.h"
 #include "GameLogic/AIPathfind.h"
 #endif // AI_DEBUG_TOOLTIPS
 
@@ -3791,56 +3792,77 @@ void InGameUI::postWindowDraw()
 //-------------------------------------------------------------------------------------------------
 #if defined(__ANDROID__)
 // ============================================================================
-// GeneralsX @android r009 - touch HUD:
-//  * bottom-centre round "cage + crosshair" button while a Panther is selected:
+// GeneralsX @android r010 - touch HUD in the Generals control-bar style
+// (dark steel plate, bevelled grey frame, pale steel icon, gold when active):
+//  * bottom-centre siege button while any selected unit has the SandboxRTS
+//    siege module (any unit whose AI exposes the overcharge/siege toggle):
 //    tap = siege toggle (same as the D hotkey -> MSG_META_DEPLOY)
-//  * bottom-right cross while anything is selected: tap = deselect all
-// Coordinates are display pixels.
+//  * bottom-right "X" button while anything is selected: tap = deselect all
+// ~45 draw calls total (r009 used ~250 strip fills).
 // ============================================================================
-static Bool androidHudHasPanther()
+static Bool androidHudSiege(Bool *anyDeployed)
 {
+	if (anyDeployed) *anyDeployed = FALSE;
 	if (TheInGameUI == nullptr || TheInGameUI->getSelectCount() <= 0)
 		return FALSE;
 	const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
 	if (list == nullptr)
 		return FALSE;
+	Bool found = FALSE;
 	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
 	{
 		const Drawable *d = *it;
-		const Object *obj = d ? d->getObject() : nullptr;
-		if (obj == nullptr || obj->getTemplate() == nullptr)
+		Object *obj = d ? const_cast<Object *>(d->getObject()) : nullptr;
+		if (obj == nullptr)
 			continue;
-		const char *n = obj->getTemplate()->getName().str();
-		for (const char *p = n; p && *p; ++p)
-		{
-			if ((p[0] == 'P' || p[0] == 'p') && strncasecmp(p, "panther", 7) == 0)
-				return TRUE;
-		}
+		AIUpdateInterface *ai = obj->getAIUpdateInterface();
+		OverchargeBehaviorInterface *siege = ai ? ai->getOverchargeBehaviorInterface() : nullptr;
+		if (siege == nullptr)
+			continue;
+		found = TRUE;
+		if (anyDeployed && siege->isOverchargeActive())
+			*anyDeployed = TRUE;
 	}
-	return FALSE;
+	return found;
 }
 
-static void androidHudGeometry(Int &siegeX, Int &siegeY, Int &siegeR, Int &crossX, Int &crossY, Int &crossR)
+static void androidHudGeometry(Int &siegeX, Int &siegeY, Int &siegeS, Int &crossX, Int &crossY, Int &crossS)
 {
 	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
 	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
-	siegeR = h / 11;
-	siegeX = w / 2;
-	siegeY = h - siegeR - h / 5;
-	crossR = h / 16;
-	crossX = w - crossR - h / 25;
-	crossY = h - crossR - h / 25;
+	siegeS = h / 7;                       // square button side
+	siegeX = w / 2 - siegeS / 2;          // top-left corner
+	siegeY = h - siegeS - h / 30;
+	crossS = h / 9;
+	crossX = w - crossS - h / 30;
+	crossY = h - crossS - h / 30;
 }
 
-static void androidHudCircle(Int cx, Int cy, Int r, Real width, UnsignedInt color)
+static void androidHudPlate(Int x, Int y, Int s, Bool active)
 {
-	const Int SEG = 40;
-	for (Int i = 0; i < SEG; ++i)
+	const UnsignedInt plate  = GameMakeColor( 14,  18,  24, 205);
+	const UnsignedInt frame  = active ? GameMakeColor(230, 190,  70, 255) : GameMakeColor(118, 128, 140, 255);
+	const UnsignedInt light  = GameMakeColor(190, 198, 208, 200);
+	const UnsignedInt shadow = GameMakeColor(  0,   0,   0, 220);
+	TheDisplay->drawFillRect(x, y, s, s, plate);
+	TheDisplay->drawOpenRect(x, y, s, s, 2.0f, frame);
+	// bevel: light top/left, dark bottom/right inside the frame
+	TheDisplay->drawLine(x + 3, y + 3, x + s - 4, y + 3, 1.0f, light);
+	TheDisplay->drawLine(x + 3, y + 3, x + 3, y + s - 4, 1.0f, light);
+	TheDisplay->drawLine(x + 3, y + s - 4, x + s - 4, y + s - 4, 1.0f, shadow);
+	TheDisplay->drawLine(x + s - 4, y + 3, x + s - 4, y + s - 4, 1.0f, shadow);
+}
+
+static void androidHudCircle(Int cx, Int cy, Int r, Int seg, Real width, UnsignedInt color)
+{
+	Int px = cx + r, py = cy;
+	for (Int i = 1; i <= seg; ++i)
 	{
-		const Real a0 = (Real)i * 6.2831853f / SEG;
-		const Real a1 = (Real)(i + 1) * 6.2831853f / SEG;
-		TheDisplay->drawLine(cx + (Int)(r * cosf(a0)), cy + (Int)(r * sinf(a0)),
-		                     cx + (Int)(r * cosf(a1)), cy + (Int)(r * sinf(a1)), width, color);
+		const Real a = (Real)i * 6.2831853f / (Real)seg;
+		const Int nx = cx + (Int)(r * cosf(a));
+		const Int ny = cy + (Int)(r * sinf(a));
+		TheDisplay->drawLine(px, py, nx, ny, width, color);
+		px = nx; py = ny;
 	}
 }
 
@@ -3850,43 +3872,37 @@ void AndroidHud_Draw()
 		return;
 	if (TheInGameUI->getSelectCount() <= 0)
 		return;
-	Int sx, sy, sr, cx, cy, cr;
-	androidHudGeometry(sx, sy, sr, cx, cy, cr);
-	const UnsignedInt bg = GameMakeColor(0, 0, 0, 140);
-	const UnsignedInt fg = GameMakeColor(120, 255, 120, 235);
-	const UnsignedInt red = GameMakeColor(255, 90, 70, 235);
-	if (androidHudHasPanther())
+	Int sx, sy, ss, cx, cy, cs;
+	androidHudGeometry(sx, sy, ss, cx, cy, cs);
+	Bool deployed = FALSE;
+	if (androidHudSiege(&deployed))
 	{
-		// dark disc
-		for (Int yy = -sr; yy <= sr; yy += 2)
-		{
-			const Int half = (Int)sqrtf((Real)(sr * sr - yy * yy));
-			TheDisplay->drawFillRect(sx - half, sy + yy, half * 2, 2, bg);
-		}
-		androidHudCircle(sx, sy, sr, 4.0f, fg);
-		// cage bars (round grid)
+		androidHudPlate(sx, sy, ss, deployed);
+		const UnsignedInt icon = deployed ? GameMakeColor(240, 205, 90, 255) : GameMakeColor(205, 212, 200, 255);
+		const Int mx = sx + ss / 2, my = sy + ss / 2, r = ss * 36 / 100;
+		// round cage: ring + two vertical and two horizontal bars
+		androidHudCircle(mx, my, r, 20, 2.5f, icon);
 		for (Int k = -1; k <= 1; k += 2)
 		{
-			const Int o = k * sr / 2;
-			const Int half = (Int)sqrtf((Real)(sr * sr - o * o));
-			TheDisplay->drawLine(sx + o, sy - half, sx + o, sy + half, 2.0f, fg);
-			TheDisplay->drawLine(sx - half, sy + o, sx + half, sy + o, 2.0f, fg);
+			const Int o = k * r / 2;
+			const Int half = (Int)sqrtf((Real)(r * r - o * o));
+			TheDisplay->drawLine(mx + o, my - half, mx + o, my + half, 1.5f, icon);
+			TheDisplay->drawLine(mx - half, my + o, mx + half, my + o, 1.5f, icon);
 		}
-		// crosshair
-		androidHudCircle(sx, sy, sr / 3, 3.0f, red);
-		TheDisplay->drawLine(sx - sr / 2, sy, sx + sr / 2, sy, 3.0f, red);
-		TheDisplay->drawLine(sx, sy - sr / 2, sx, sy + sr / 2, 3.0f, red);
+		// crosshair: small ring + 4 ticks
+		const Int cr = r / 3;
+		androidHudCircle(mx, my, cr, 12, 2.0f, icon);
+		TheDisplay->drawLine(mx - cr - r / 4, my, mx - cr / 2, my, 2.0f, icon);
+		TheDisplay->drawLine(mx + cr / 2, my, mx + cr + r / 4, my, 2.0f, icon);
+		TheDisplay->drawLine(mx, my - cr - r / 4, mx, my - cr / 2, 2.0f, icon);
+		TheDisplay->drawLine(mx, my + cr / 2, mx, my + cr + r / 4, 2.0f, icon);
 	}
-	// deselect cross
-	for (Int yy = -cr; yy <= cr; yy += 2)
-	{
-		const Int half = (Int)sqrtf((Real)(cr * cr - yy * yy));
-		TheDisplay->drawFillRect(cx - half, cy + yy, half * 2, 2, bg);
-	}
-	androidHudCircle(cx, cy, cr, 3.0f, red);
-	const Int a = cr * 5 / 10;
-	TheDisplay->drawLine(cx - a, cy - a, cx + a, cy + a, 5.0f, red);
-	TheDisplay->drawLine(cx - a, cy + a, cx + a, cy - a, 5.0f, red);
+	// deselect "X"
+	androidHudPlate(cx, cy, cs, FALSE);
+	const UnsignedInt xcol = GameMakeColor(205, 212, 200, 255);
+	const Int a = cs * 28 / 100, mx = cx + cs / 2, my = cy + cs / 2;
+	TheDisplay->drawLine(mx - a, my - a, mx + a, my + a, 4.0f, xcol);
+	TheDisplay->drawLine(mx - a, my + a, mx + a, my - a, 4.0f, xcol);
 }
 
 // Returns TRUE if the tap hit a HUD button (and was handled).
@@ -3896,16 +3912,15 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 		return FALSE;
 	if (TheInGameUI->getSelectCount() <= 0)
 		return FALSE;
-	Int sx, sy, sr, cx, cy, cr;
-	androidHudGeometry(sx, sy, sr, cx, cy, cr);
-	const Int pad = cr / 2;
-	if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= (cr + pad) * (cr + pad))
+	Int sx, sy, ss, cx, cy, cs;
+	androidHudGeometry(sx, sy, ss, cx, cy, cs);
+	const Int pad = cs / 4;
+	if (x >= cx - pad && x <= cx + cs + pad && y >= cy - pad && y <= cy + cs + pad)
 	{
 		TheInGameUI->deselectAllDrawables();
 		return TRUE;
 	}
-	if (androidHudHasPanther() &&
-	    (x - sx) * (x - sx) + (y - sy) * (y - sy) <= (sr + pad) * (sr + pad))
+	if (x >= sx - pad && x <= sx + ss + pad && y >= sy - pad && y <= sy + ss + pad && androidHudSiege(nullptr))
 	{
 		if (TheMessageStream)
 			TheMessageStream->appendMessage(GameMessage::MSG_META_DEPLOY);

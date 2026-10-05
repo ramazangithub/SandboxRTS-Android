@@ -81,3 +81,9 @@ if(RTS_BUILD_OPTION_ASAN)
         add_link_options(-fsanitize=address)
     endif()
 endif()
+
+# GeneralsX @android r010: schedule for Cortex-A76-class big cores. -mtune only
+# changes instruction scheduling (no new instructions), so it stays ARMv8.0-safe.
+if(ANDROID)
+    add_compile_options(-mtune=cortex-a76)
+endif()

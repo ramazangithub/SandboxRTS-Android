@@ -60,6 +60,11 @@ static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#if defined(__ANDROID__)
+#include <sched.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -184,6 +189,9 @@ struct TouchState {
 	float lastTapX = 0.0f, lastTapY = 0.0f; // position of the previous clean tap
 	float panLastX = 0.0f, panLastY = 0.0f;   // previous pan centroid (per-event delta)
 	float panAccumX = 0.0f, panAccumY = 0.0f; // finger delta accrued since last frame flush
+	float velX = 0.0f, velY = 0.0f;           // r010: smoothed per-frame pan offset
+	bool gliding = false;                     // r010: inertia after lift (RMB still held)
+	float glideX = 0.0f, glideY = 0.0f;
 	float f1x = 0.0f, f1y = 0.0f, f2x = 0.0f, f2y = 0.0f; // normalized per finger
 };
 
@@ -217,7 +225,10 @@ const float PINCH_STEP_RATIO = 0.03f;  // 3% distance change per wheel tick
 // drag: the camera moves with the fingers and stops when they stop. PAN_GAIN
 // scales that delta — 1.0 tracks the fingers; lower = slower camera.
 // r009: user wants "swipe right->left = camera goes right" and a faster camera.
-const float PAN_GAIN = -2.5f;
+const float PAN_GAIN = -3.2f;   // r010: a bit faster again
+// r010: inertia - after lift the camera keeps ~10% of the swipe momentum
+const float GLIDE_START = 0.7f;   // fraction of the last frame velocity
+const float GLIDE_DECAY = 0.75f;  // per-frame decay
 
 // GeneralsX @android FadiLabib 07/07/2026 - Edge-hold scroll. A pure 1:1 drag can
 // only move the camera as far as the fingers can travel, so it stops dead when
@@ -368,6 +379,12 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 
 	switch (event.type) {
 	case SDL_EVENT_FINGER_DOWN:
+		if (s_touch.gliding) {
+			// r010: finger stops the glide (catch the camera)
+			s_touch.gliding = false;
+			sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+			                   s_touch.panX + 3.0f, s_touch.panY + 3.0f, SDL_BUTTON_RIGHT);  // off-anchor: not a right-click
+		}
 		if (s_touch.phase == TouchState::IDLE) {
 			// Defer all BUTTON output: a finger landing could become a tap, a
 			// drag-box, a long-press, or the first finger of a camera pan. A
@@ -582,8 +599,17 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				// controlled pan at the anchor deselected the whole army on every lift.
 				// The last centroid always differs from the anchor after a real pan, so
 				// isClick sees movement and the release reads as a drag-scroll end.
-				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-				                   s_touch.panLastX, s_touch.panLastY, SDL_BUTTON_RIGHT);
+				if (event.type != SDL_EVENT_FINGER_CANCELED &&
+				    (SDL_fabsf(s_touch.velX) + SDL_fabsf(s_touch.velY)) > 2.0f) {
+					// r010: keep RMB held, updateTouchLongPress() coasts it out
+					s_touch.gliding = true;
+					s_touch.glideX = s_touch.velX * GLIDE_START;
+					s_touch.glideY = s_touch.velY * GLIDE_START;
+				} else {
+					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+					                   s_touch.panLastX, s_touch.panLastY, SDL_BUTTON_RIGHT);
+				}
+				s_touch.velX = s_touch.velY = 0.0f;
 				break;
 			// TWO_PENDING / PINCH hold no buttons — nothing to release.
 			default:
@@ -599,6 +625,22 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 // polled from the frame loop or it would never fire.
 void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 {
+	if (s_touch.gliding) {
+		if (s_touch.phase != TouchState::IDLE) {
+			s_touch.gliding = false;
+		} else {
+			sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION,
+			                   s_touch.panX + s_touch.glideX, s_touch.panY + s_touch.glideY);
+			s_touch.glideX *= GLIDE_DECAY;
+			s_touch.glideY *= GLIDE_DECAY;
+			if (SDL_fabsf(s_touch.glideX) + SDL_fabsf(s_touch.glideY) < 0.75f) {
+				// release off-anchor so SelectionXlat::isClick() does not see a right-click (deselect)
+				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+				                   s_touch.panX + 3.0f, s_touch.panY + 3.0f, SDL_BUTTON_RIGHT);
+				s_touch.gliding = false;
+			}
+		}
+	}
 	if (s_touch.phase == TouchState::PENDING &&
 	    (SDL_GetTicks() - s_touch.downTicks) >= LONG_PRESS_MS) {
 		// r007: long-press arms the selection box: LMB goes down at the press
@@ -625,6 +667,8 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 	if (s_touch.phase == TouchState::PAN) {
 		float offX = s_touch.panAccumX * PAN_GAIN;
 		float offY = s_touch.panAccumY * PAN_GAIN;
+		s_touch.velX = 0.6f * s_touch.velX + 0.4f * offX;
+		s_touch.velY = 0.6f * s_touch.velY + 0.4f * offY;
 
 		// Edge-hold: keep scrolling in the drag direction when the centroid parks
 		// near a screen edge, so a map larger than one swipe stays reachable.
@@ -1000,6 +1044,42 @@ void SDL3GameEngine::pollSDL3Events(void)
 		SDL3Mouse* touchMouse = dynamic_cast<SDL3Mouse*>(TheMouse);
 		if (touchMouse) {
 			updateTouchLongPress(touchMouse, m_SDLWindow);
+		}
+	}
+#endif
+#if defined(__ANDROID__)
+	{
+		// GeneralsX @android r010: the engine is one heavy thread (~87% of a core).
+		// Pin it to the fastest cores (2x Cortex-A76 on SD730G) and raise its
+		// priority so the scheduler never parks it on a little core. Done once,
+		// after start-up, so DXVK/audio worker threads keep their own masks.
+		static int s_pinFrames = 0;
+		if (s_pinFrames >= 0 && ++s_pinFrames > 120) {
+			s_pinFrames = -1;
+			const int ncpu = (int)sysconf(_SC_NPROCESSORS_CONF);
+			long freq[32] = {0};
+			long maxFreq = 0;
+			for (int c = 0; c < ncpu && c < 32; ++c) {
+				char path[96];
+				snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", c);
+				if (FILE *fp = fopen(path, "r")) {
+					if (fscanf(fp, "%ld", &freq[c]) != 1) freq[c] = 0;
+					fclose(fp);
+				}
+				if (freq[c] > maxFreq) maxFreq = freq[c];
+			}
+			if (maxFreq > 0) {
+				cpu_set_t set;
+				CPU_ZERO(&set);
+				int picked = 0;
+				for (int c = 0; c < ncpu && c < 32; ++c) {
+					if (freq[c] >= maxFreq * 9 / 10) { CPU_SET(c, &set); ++picked; }
+				}
+				const int rc = (picked > 0 && picked < ncpu) ? sched_setaffinity(0, sizeof(set), &set) : -2;
+				fprintf(stderr, "INFO: r010 main thread -> %d big core(s) @%ld kHz (rc=%d)\n", picked, maxFreq, rc);
+			}
+			const int prc = setpriority(PRIO_PROCESS, (id_t)gettid(), -8);
+			fprintf(stderr, "INFO: r010 main thread priority -8 (rc=%d)\n", prc);
 		}
 	}
 #endif
