@@ -456,8 +456,8 @@ public:
 	}
 	ShadowType getShadowType() const
 	{
-		if ((ShadowType)m_shadowType == SHADOW_NONE && gxWantsShadow(m_nameString.str()))
-			return SHADOW_VOLUME;
+		if (m_shadowType == 0 /*SHADOW_NONE*/ && gxWantsShadow(m_nameString.str()))
+			return (ShadowType)0x2; // SHADOW_VOLUME (Shadow.h not included here)
 		return (ShadowType)m_shadowType;
 	}
 #else
