@@ -81,6 +81,7 @@ static void drawFramerateBar();
 #include "W3DDevice/GameClient/W3DProfilerFrameCapture.h"
 #include "W3DDevice/GameClient/HeightMap.h"
 #include "W3DDevice/GameClient/W3DShadow.h"
+#include <time.h>
 #include "W3DDevice/GameClient/WorldHeightMap.h"
 #include "W3DDevice/GameClient/W3DScene.h"
 #include "W3DDevice/GameClient/W3DTerrainTracks.h"
@@ -2479,8 +2480,27 @@ void W3DDisplay::gxUpdateDayNight()
 	}
 	s_lastFrame = frame;
 
-	const Real CYCLE_FRAMES = 18000.0f;
-	Real t = (Real)frame / CYCLE_FRAMES * 4.0f + (Real)(s_slot - TIME_OF_DAY_FIRST);
+	// r014: real time, not logic frames (logic runs at render rate on Android, so
+	// frames made the day 2x+ too fast). Paused game = time stands still.
+	// Each segment (morning->day->evening->night->morning) = 200 s, so
+	// morning to night takes 20 minutes (r015).
+	static double s_dayTime = 0.0;
+	static Int64 s_prevNs = 0;
+	{
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		const Int64 ns = (Int64)ts.tv_sec * 1000000000 + ts.tv_nsec;
+		if (s_prevNs != 0 && frame >= s_lastFrame && !TheGameLogic->isGamePaused())
+		{
+			double dt = (double)(ns - s_prevNs) * 1e-9;
+			if (dt > 0.25) dt = 0.25;
+			s_dayTime += dt;
+		}
+		if (frame < s_lastFrame) s_dayTime = 0.0;
+		s_prevNs = ns;
+	}
+	const double SEGMENT_SECONDS = 400.0; // r015: morning -> night = 20 min
+	Real t = (Real)(s_dayTime / SEGMENT_SECONDS) + (Real)(s_slot - TIME_OF_DAY_FIRST);
 	t = fmodf(t, 4.0f);
 	Int seg = (Int)t;
 	if (seg > 3) seg = 3;
@@ -2488,8 +2508,7 @@ void W3DDisplay::gxUpdateDayNight()
 	const Int a = seg;
 	const Int b = (seg + 1) & 3;
 	// colours: hold 35% of the segment, then smoothstep into the next key
-	Real w = (f < 0.35f) ? 0.0f : (f - 0.35f) / 0.65f;
-	w = w * w * (3.0f - 2.0f * w);
+	Real w = f * f * (3.0f - 2.0f * f); // r014: continuous blend across the segment
 
 	for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
 	{

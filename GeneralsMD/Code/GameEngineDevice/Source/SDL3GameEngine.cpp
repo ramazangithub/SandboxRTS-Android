@@ -194,6 +194,7 @@ struct TouchState {
 	float panAccumX = 0.0f, panAccumY = 0.0f; // finger delta accrued since last frame flush
 	float velX = 0.0f, velY = 0.0f;           // r010: smoothed per-frame pan offset
 	Uint64 panStartTicks = 0;                // r012: pan ease-in
+	float catchX = 0.0f, catchY = 0.0f;       // r015: travel made before the pan engaged
 	bool gliding = false;                     // r010: inertia after lift (RMB still held)
 	float glideX = 0.0f, glideY = 0.0f;
 	float f1x = 0.0f, f1y = 0.0f, f2x = 0.0f, f2y = 0.0f; // normalized per finger
@@ -214,7 +215,7 @@ const Uint64 LONG_PRESS_MS = 600;
 // recognized as a two-finger pan. Deferring the LMB commit by this long gives a
 // same-gesture second finger time to land and redirect straight into the
 // two-finger path, which never sends a click.
-const Uint64 SECOND_FINGER_GRACE_MS = 60;
+const Uint64 SECOND_FINGER_GRACE_MS = 30; // r015: was 60 - first swipe felt stuck
 // GeneralsX @android FadiLabib 07/07/2026 - Touch double-tap -> double-click. A
 // tap landing within this window AND near the previous tap emits clicks=2 on the
 // button event, so the engine's double-click path fires (e.g. double-click a unit
@@ -235,14 +236,15 @@ const float PINCH_STEP_RATIO = 0.03f;  // 3% distance change per wheel tick
 // scales that delta — 1.0 tracks the fingers; lower = slower camera.
 // r009: user wants "swipe right->left = camera goes right" and a faster camera.
 // r011: direct camera drag. 1.0 = the ground sticks to the finger; >1 = faster.
-const float PAN_GAIN = 1.7f;
-const float GLIDE_START = 0.9f;   // fraction of the last frame world velocity
-const float GLIDE_DECAY = 0.86f;  // per-frame decay
+// r014: standard mobile feel - the ground sticks to the finger (1:1), a flick
+// coasts with its own average speed and decays smoothly.
+const float PAN_GAIN = 1.0f;
+const float GLIDE_START = 1.0f;   // fraction of the release world velocity
+const float GLIDE_DECAY = 0.93f;  // per-frame decay (~0.5 s coast)
 const float ROTATE_SIGN = 1.0f;   // camera yaw follows the finger twist
 const float ROTATE_DEADZONE = 0.10f; // rad of twist before rotation engages
 const Uint64 TAP_MAX_MS = 450;    // longer presses are not taps (no flick double-taps)
-const Uint64 PAN_RAMP_MS = 140;   // r012: first frames of a pan ease in (no jump)
-const float PAN_MAX_FRAC = 0.08f; // r012: max finger travel applied per frame, fraction of window
+const float PAN_MAX_FRAC = 0.30f; // r014: only clamps real spikes (lost frames), never normal swipes
 // r010: inertia - after lift the camera keeps ~10% of the swipe momentum
 
 // GeneralsX @android FadiLabib 07/07/2026 - Edge-hold scroll. A pure 1:1 drag can
@@ -269,7 +271,7 @@ const float PAN_MAX_FRAC = 0.08f; // r012: max finger travel applied per frame, 
 // tested panel. SDL_GetDisplayContentScale is 1.0 at the 160 dpi Android/desktop
 // baseline, so px/mm = 160 * scale / 25.4. Falls back to the old 8 px minimum if
 // the display query fails (returns 0).
-const float GESTURE_THRESHOLD_MM = 3.0f;
+const float GESTURE_THRESHOLD_MM = 2.0f; // r015: was 3 - first swipe felt stuck
 
 float gestureThresholdPx(SDL_Window *window)
 {
@@ -434,6 +436,7 @@ void beginPan(SDL3Mouse *mouse, SDL_Window *window, int winW, int winH)
 	s_touch.rotAccum = wrapAngle(s_touch.rotLast - s_touch.rot0);
 	s_touch.oneFingerPan = false;
 	s_touch.panStartTicks = SDL_GetTicks();
+	s_touch.catchX = s_touch.catchY = 0.0f;
 	s_touch.phase = TouchState::PAN;
 }
 
@@ -449,8 +452,12 @@ void beginOneFingerPan(SDL3Mouse *mouse, SDL_Window *window)
 	// was the jump/teleport on the first swipe); the pan starts from here.
 	s_touch.panAccumX = 0.0f;
 	s_touch.panAccumY = 0.0f;
+	// r015: ...but it is not thrown away either (that felt like heavy friction):
+	// it is caught up smoothly over the next few frames.
+	s_touch.catchX = s_touch.lastX - s_touch.downX;
+	s_touch.catchY = s_touch.lastY - s_touch.downY;
 	s_touch.panStartTicks = SDL_GetTicks();
-	s_touch.wvX = s_touch.wvY = 0.0f;
+	if (!s_touch.gliding) s_touch.wvX = s_touch.wvY = 0.0f;
 	s_touch.rotActive = false;
 	s_touch.finger2 = (SDL_FingerID)~(SDL_FingerID)0;
 	s_touch.oneFingerPan = true;
@@ -738,7 +745,11 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 {
 	if (s_touch.gliding) {
-		if (s_touch.phase != TouchState::IDLE) {
+		if (s_touch.phase == TouchState::PAN) {
+			s_touch.gliding = false;
+			s_touch.wvX = s_touch.glideX;
+			s_touch.wvY = s_touch.glideY;
+		} else if (s_touch.phase != TouchState::IDLE && s_touch.phase != TouchState::PENDING) {
 			s_touch.gliding = false;
 		} else {
 			touchMoveCameraWorld(s_touch.glideX, s_touch.glideY);
@@ -779,13 +790,13 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 
 		int winW = 0, winH = 0;
 		SDL_GetWindowSize(window, &winW, &winH);
-		// r012: no edge auto-scroll on touch (PC mechanic, fought the finger).
-		// Ease the first frames in and clamp spikes so the first swipe is smooth.
-		const Uint64 panAge = SDL_GetTicks() - s_touch.panStartTicks;
-		if (panAge < PAN_RAMP_MS) {
-			const float r = 0.35f + 0.65f * (float)panAge / (float)PAN_RAMP_MS;
-			sdx *= r;
-			sdy *= r;
+		// r012: no edge auto-scroll on touch. r014: no ease-in; spike clamp only.
+		// r015: feed the pre-pan travel in, half of what is left each frame.
+		if (s_touch.catchX != 0.0f || s_touch.catchY != 0.0f) {
+			float tx = s_touch.catchX * 0.5f, ty = s_touch.catchY * 0.5f;
+			if (SDL_fabsf(s_touch.catchX) + SDL_fabsf(s_touch.catchY) < 1.0f) { tx = s_touch.catchX; ty = s_touch.catchY; }
+			sdx += tx; sdy += ty;
+			s_touch.catchX -= tx; s_touch.catchY -= ty;
 		}
 		const float maxD = PAN_MAX_FRAC * (float)(winW > winH ? winW : winH);
 		if (sdx > maxD) sdx = maxD; else if (sdx < -maxD) sdx = -maxD;

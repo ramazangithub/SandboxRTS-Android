@@ -595,6 +595,7 @@ void GameLODManager::applyStaticLODLevel(StaticGameLODLevel level)
 
 #if defined(__ANDROID__)
 	lodInfo->m_useShadowVolumes = TRUE; // r012: real-time shadows on mobile
+	if (TheGlobalData) TheWritableGlobalData->m_makeTrackMarks = TRUE; // r015: tank tread marks
 #endif
 	if (TheGlobalData)
 	{
