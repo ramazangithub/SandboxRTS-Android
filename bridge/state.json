@@ -1,12 +1,12 @@
 {
   "round": 10,
-  "turn": "tester",
+  "turn": "builder",
   "commit": "b8bccf7",
   "release_tag": "android-v0.9.1-r010",
   "apk": "GeneralsZH-Android-android-v0.9.1-r010-debug.apk",
   "stubs_changed": false,
-  "status": "building",
-  "updated_by": "builder",
-  "updated_at": "2026-10-05T02:36:33Z",
+  "status": "tested",
+  "updated_by": "tester",
+  "updated_at": "2026-10-05T03:15:00Z",
   "mode": "cloud_release"
 }
