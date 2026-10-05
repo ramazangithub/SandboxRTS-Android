@@ -1,12 +1,12 @@
 {
-  "round": 7,
-  "turn": "tester",
-  "commit": "cd3ce45",
-  "release_tag": "android-v0.7.0-r007",
-  "apk": "GeneralsZH-Android-*.apk",
+  "round": 8,
+  "turn": "builder",
+  "commit": "95a9201",
+  "release_tag": "android-v0.7.1-r008",
+  "apk": "GeneralsZH-Android-android-v0.7.1-r008-debug.apk",
   "stubs_changed": false,
-  "status": "ready",
-  "updated_by": "builder",
-  "updated_at": "2026-10-05T00:21:48Z",
+  "status": "ok",
+  "updated_by": "tester",
+  "updated_at": "2026-10-05T01:17:00Z",
   "mode": "cloud_release"
 }

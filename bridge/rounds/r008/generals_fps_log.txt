@@ -1,0 +1,155 @@
+================================================================================
+ Generals: Zero Hour (Android) - Real-time Performance & FPS Monitor
+ Device: 192.168.1.101:38865 | Started: 2026-10-05 04:06:23
+================================================================================
+Game started successfully! PID: 20809
+Time       | FPS    | Frame Time  | CPU%   | RAM(MB) | Bat/CPU Temp  | Notes
+--------------------------------------------------------------------------------
+04:06:29   |   7.0  |   37.8 ms   |  10.0% |  500 MB | 39°C / 75°C   | LOW FPS (7.0); Spike: 216ms
+04:06:32   |  38.0  |   26.0 ms   |  10.0% |  516 MB | 39°C / 75°C   | Spike: 433ms
+04:06:34   |  45.6  |   22.4 ms   |  10.0% |  520 MB | 39°C / 75°C   | OK
+04:06:37   |  33.4  |   28.8 ms   |  10.0% |  510 MB | 39°C / 75°C   | OK
+04:06:40   |  29.7  |   33.1 ms   |  10.0% |  507 MB | 39°C / 75°C   | OK
+04:06:42   |  37.2  |   27.7 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:06:45   |  42.6  |   23.0 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:06:48   |  45.0  |   25.1 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:06:51   |  37.4  |   22.2 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:06:54   |  41.2  |   23.5 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+  [Logcat notes at 04:06:54]:
+    10-05 04:06:26.536 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\monochrome.pso' (normalized: 'shaders/monochrome.pso')
+    10-05 04:06:26.553 20809 20848 I GeneralsX: WARNING: DX8WebBrowser::Initialize() - Linux stub (browser not available)
+    10-05 04:06:26.581 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'GeneralsExpPoints.wnd'
+    10-05 04:06:26.583 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'ControlBarPopupDescription.wnd'
+    10-05 04:06:26.588 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\Trees.vso' (normalized: 'shaders/Trees.vso')
+04:06:57   |  44.4  |   22.5 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:06:59   |  44.0  |   23.2 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:02   |  30.4  |   33.1 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:05   |  34.5  |   28.1 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:07   |  41.4  |   24.0 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:10   |  46.1  |   22.6 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:13   |  44.0  |   21.8 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:16   |  44.4  |   22.7 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:18   |  46.7  |   21.8 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:21   |  46.1  |   22.5 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+  [Logcat notes at 04:07:21]:
+    10-05 04:06:26.536 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\monochrome.pso' (normalized: 'shaders/monochrome.pso')
+    10-05 04:06:26.553 20809 20848 I GeneralsX: WARNING: DX8WebBrowser::Initialize() - Linux stub (browser not available)
+    10-05 04:06:26.581 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'GeneralsExpPoints.wnd'
+    10-05 04:06:26.583 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'ControlBarPopupDescription.wnd'
+    10-05 04:06:26.588 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\Trees.vso' (normalized: 'shaders/Trees.vso')
+04:07:24   |  40.9  |   22.0 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:27   |  42.9  |   23.0 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:30   |  46.4  |   22.6 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:32   |  34.2  |   27.3 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:35   |  36.8  |   28.0 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:38   |  33.3  |   29.4 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:41   |  35.0  |   28.3 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+04:07:43   |  40.4  |   25.1 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:46   |  38.4  |   26.6 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:49   |  41.6  |   24.4 ms   |  10.0% |  529 MB | 39°C / 75°C   | OK
+  [Logcat notes at 04:07:49]:
+    10-05 04:06:26.536 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\monochrome.pso' (normalized: 'shaders/monochrome.pso')
+    10-05 04:06:26.553 20809 20848 I GeneralsX: WARNING: DX8WebBrowser::Initialize() - Linux stub (browser not available)
+    10-05 04:06:26.581 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'GeneralsExpPoints.wnd'
+    10-05 04:06:26.583 20809 20848 I GeneralsX: WARNING: WindowLayout::load - Unable to load layout file 'ControlBarPopupDescription.wnd'
+    10-05 04:06:26.588 20809 20848 I GeneralsX: [DEBUG] ERROR: Could not find shader file: 'shaders\Trees.vso' (normalized: 'shaders/Trees.vso')
+04:07:52   |  38.9  |   24.9 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:55   |  33.9  |   30.0 ms   |  10.0% |  530 MB | 39°C / 75°C   | OK
+04:07:57   |  36.2  |   27.0 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:00   |  38.5  |   26.0 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:03   |  42.8  |   23.4 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:06   |  43.1  |   23.4 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:08   |  41.7  |   23.6 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:11   |  36.3  |   27.7 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:14   |  43.7  |   24.1 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:17   |  41.3  |   23.9 ms   |  10.0% |  546 MB | 39°C / 75°C   | OK
+04:08:20   |  40.7  |   23.5 ms   |  10.0% |  546 MB | 40°C / 75°C   | OK
+04:08:23   |  37.5  |   28.2 ms   |  10.0% |  549 MB | 40°C / 75°C   | Spike: 233ms
+04:08:26   |  40.7  |   25.1 ms   |  10.0% |  550 MB | 40°C / 75°C   | OK
+04:08:29   |  37.1  |   25.1 ms   |  10.0% |  551 MB | 40°C / 75°C   | OK
+04:08:32   |  43.5  |   25.3 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:34   |  39.4  |   23.6 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:37   |  34.7  |   28.0 ms   |  10.0% |  554 MB | 40°C / 75°C   | OK
+04:08:40   |  37.5  |   29.5 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:43   |  34.0  |   27.3 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:46   |  44.2  |   22.9 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:49   |  42.1  |   22.4 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:52   |  45.2  |   22.6 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:55   |  38.8  |   24.0 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:08:57   |  37.4  |   25.7 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:00   |  39.9  |   25.9 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:03   |  39.8  |   24.6 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:05   |  39.2  |   25.7 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:08   |  44.5  |   22.3 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:11   |  46.7  |   21.8 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:14   |  45.7  |   21.2 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:17   |  44.5  |   21.8 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:19   |  44.5  |   22.0 ms   |  10.0% |  553 MB | 40°C / 75°C   | OK
+04:09:22   |  43.2  |   22.4 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:25   |  48.9  |   20.8 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:27   |  44.9  |   20.9 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:30   |  47.1  |   21.5 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:33   |  47.2  |   21.4 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:35   |  45.4  |   22.6 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:38   |  43.3  |   22.0 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:41   |  46.8  |   21.5 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:44   |  44.9  |   20.6 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:46   |  48.4  |   21.4 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:49   |  44.6  |   21.7 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:52   |  45.5  |   21.9 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:54   |  46.7  |   21.4 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+04:09:57   |  46.9  |   21.4 ms   |  10.0% |  552 MB | 40°C / 75°C   | OK
+
+[04:09:59] [ALERT] Game process 20809 exited or crashed!
+Crash Logcat:
+10-05 04:09:25.491  1215  2959 D ColorAppListInterceptManager: shouldFilterTask::packageName = com.generalsx.generalszh
+10-05 04:09:26.748 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 28us total 7.694ms
+10-05 04:09:29.408 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 79us total 16.005ms
+10-05 04:09:32.123 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 128us total 24.018ms
+10-05 04:09:34.848 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 64us total 20.137ms
+10-05 04:09:37.543 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 110us total 28.551ms
+10-05 04:09:40.232 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 29us total 10.993ms
+10-05 04:09:43.011 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 148us total 13.446ms
+10-05 04:09:45.740 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 77us total 8.957ms
+10-05 04:09:48.349 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 81us total 13.468ms
+10-05 04:09:51.027 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 109us total 11.641ms
+10-05 04:09:53.648 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 5683(192KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 77us total 11.227ms
+10-05 04:09:55.339 20809 20809 D ViewRootImpl[GeneralsXZHActivity]: processMotionEvent MotionEvent { action=ACTION_DOWN, actionButton=0, id[0]=0, x[0]=1614.0, y[0]=674.0, toolType[0]=TOOL_TYPE_FINGER, buttonState=0, classification=NONE, metaState=0, flags=0x0, edgeFlags=0x0, pointerCount=1, historySize=0, eventTime=84332763, downTime=84332763, deviceId=4, source=0x1002, displayId=0 }
+10-05 04:09:55.341 20809 20809 D ViewRootImpl[GeneralsXZHActivity]: dispatchPointerEvent handled=true, event=MotionEvent { action=ACTION_DOWN, actionButton=0, id[0]=0, x[0]=1614.0, y[0]=674.0, toolType[0]=TOOL_TYPE_FINGER, buttonState=0, classification=NONE, metaState=0, flags=0x0, edgeFlags=0x0, pointerCount=1, historySize=0, eventTime=84332763, downTime=84332763, deviceId=4, source=0x1002, displayId=0 }
+10-05 04:09:55.387   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:55.391   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:55.649 20809 20809 D ViewRootImpl[GeneralsXZHActivity]: processMotionEvent MotionEvent { action=ACTION_UP, actionButton=0, id[0]=0, x[0]=2069.0, y[0]=190.0, toolType[0]=TOOL_TYPE_FINGER, buttonState=0, classification=NONE, metaState=0, flags=0x0, edgeFlags=0x0, pointerCount=1, historySize=0, eventTime=84333073, downTime=84332763, deviceId=4, source=0x1002, displayId=0 }
+10-05 04:09:55.650 20809 20809 D ViewRootImpl[GeneralsXZHActivity]: dispatchPointerEvent handled=true, event=MotionEvent { action=ACTION_UP, actionButton=0, id[0]=0, x[0]=2069.0, y[0]=190.0, toolType[0]=TOOL_TYPE_FINGER, buttonState=0, classification=NONE, metaState=0, flags=0x0, edgeFlags=0x0, pointerCount=1, historySize=0, eventTime=84333073, downTime=84332763, deviceId=4, source=0x1002, displayId=0 }
+10-05 04:09:55.651   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:55.653   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:55.654   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.300 20809 20832 I alsx.generalsz: Explicit concurrent copying GC freed 6376(240KB) AllocSpace objects, 1(20KB) LOS objects, 49% free, 1909KB/3818KB, paused 67us total 29.357ms
+10-05 04:09:56.404   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.405   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.407  3176  3176 I Launcher.Quickstep-ColorGestureHelper: appinfos: [OplusAppInfo{windowingMode=1, activityType=1, taskId=1817, appBounds=Rect(0, 0 - 2340, 1080), appInfo=ApplicationInfo{3ca4c69 com.generalsx.generalszh}, topActivity=ComponentInfo{com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}, displayId=0, orientation=13, userId=0, launchedFromPackage=com.android.shell, isRootActivity=true, extension=Bundle[EMPTY_PARCEL]}]
+10-05 04:09:56.416  1215  3629 D ColorZoomWindowRUSConfigManager: isSupportZoomModeWithPolicyLocked: target = com.generalsx.generalszh/.GeneralsXZHActivity
+10-05 04:09:56.416  1215  3629 D ColorZoomWindowRUSConfigManager: targetPkg = com.generalsx.generalszh
+10-05 04:09:56.416  1215  3629 D ColorZoomWindowRUSConfigManager: isSupportZoomModeWithPolicyLocked: target = com.generalsx.generalszh/.GeneralsXZHActivity
+10-05 04:09:56.416  1215  3629 D ColorZoomWindowRUSConfigManager: targetPkg = com.generalsx.generalszh
+10-05 04:09:56.420  1215  3629 D ColorAppListInterceptManager: shouldFilterTask::packageName = com.generalsx.generalszh
+10-05 04:09:56.428  3176  3176 I Launcher.Quickstep-ColorGestureHelper: appinfos: [OplusAppInfo{windowingMode=1, activityType=1, taskId=1817, appBounds=Rect(0, 0 - 2340, 1080), appInfo=ApplicationInfo{1baafaa com.generalsx.generalszh}, topActivity=ComponentInfo{com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}, displayId=0, orientation=13, userId=0, launchedFromPackage=com.android.shell, isRootActivity=true, extension=Bundle[EMPTY_PARCEL]}]
+10-05 04:09:56.434  3176  3176 D ColorTaskThumbnailView: bind: pkg = com.generalsx.generalszh, lightning = false
+10-05 04:09:56.526  3176  3176 D ColorTaskThumbnailView: bind: pkg = com.generalsx.generalszh, lightning = false
+10-05 04:09:56.600   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.604   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.605   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.generalsx.generalszh feature:AppClassifier feedback = 1
+10-05 04:09:56.611  1215  5000 V WindowManager: Changing focus from Window{b2c9fb u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity} to null,diplayid=0
+10-05 04:09:57.147  1215  5000 V ColorZoomWindowManagerService: onAnimationFinished:  r = ActivityRecord{fa76fb4 u0 com.generalsx.generalszh/.GeneralsXZHActivity t1817}
+10-05 04:09:57.212   978   978 D OppoExLayer: ~Layer() sequence=34753, name=Background for -SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-05 04:09:57.402  1215  2229 D ColorAppListInterceptManager: shouldFilterTask::packageName = com.generalsx.generalszh
+10-05 04:09:57.472   978   978 D OppoExLayer: ~Layer() sequence=34749, name=com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-05 04:09:57.472   978   978 D OppoExLayer: ~Layer() sequence=34751, name=Bounds for - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-05 04:09:57.472   978   978 D OppoExLayer: ~Layer() sequence=34752, name=SurfaceView - com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-05 04:09:57.502  4724  4724 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1532 onStartInput(EditorInfo{EditorInfo{packageName=com.generalsx.generalszh, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+10-05 04:09:57.896  3176  3176 D KillAppWrapper: forceStopIfNeeded: task = [id=1817 windowingMode=1 user=0 lastActiveTime=121798638] Generals ZH
+10-05 04:09:57.918  1215  1573 I ActivityManager: Killing 20809:com.generalsx.generalszh/u0a890 (adj 400): remove task
+10-05 04:09:58.223  1215  3629 I WindowManager: WIN DEATH: Window{b2c9fb u0 com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity}
+10-05 04:09:58.224  1215  3629 W InputDispatcher: Attempted to unregister already unregistered input channel 'b2c9fb com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity (server)'
+10-05 04:09:58.240   978   978 D OppoExLayer: ~Layer() sequence=34748, name=b2c9fb com.generalsx.generalszh/com.generalsx.generalszh.GeneralsXZHActivity#0
+10-05 04:09:58.255   978   978 D OppoExLayer: ~Layer() sequence=34740, name=ActivityRecord{fa76fb4 u0 com.generalsx.generalszh/.GeneralsXZHActivity#0
+

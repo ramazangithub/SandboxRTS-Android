@@ -1,0 +1,1213 @@
+--------- beginning of main
+10-05 03:33:42.557 17216 17415 W OplusExSystemServiceHelper: checkOplusExSystemService intent getComponent is null
+10-05 03:33:42.576   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:42.578  5024  5024 D AppFeatureProviderUtils: getStringForFeature: null
+10-05 03:33:42.592  3279  3317 D OplusNotificationManager: getOpenid--pkg:com.oplus.crashbox,uid:1000,type:GUID
+10-05 03:33:42.593  4602  4621 E OpenID  : com.oplus.crashbox:GUID:ret:T
+10-05 03:33:42.599 17216 17216 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action: cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+10-05 03:33:42.599 17216 17216 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action: cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+--------- beginning of system
+10-05 03:33:42.603  1215  2369 D JobScheduler.Temperature: get temperature=26.5
+10-05 03:33:42.612  4602  4621 E OpenID  : com.oplus.crashbox:DUID:ret:T
+10-05 03:33:42.735  1215  1215 W NotificationService: Removed summary didn't match old notification: old=0|com.cyberportalx|100|null|10760, removed=0|com.cyberportalx|100|null|10760
+10-05 03:33:42.778   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:42.798 12727 12729 I cmd     : oneway function results will be dropped but finished with status OK and parcel size 4
+10-05 03:33:42.860  1215  1228 I system_server: Background concurrent copying GC freed 190522(47MB) AllocSpace objects, 27(2348KB) LOS objects, 22% free, 83MB/107MB, paused 394us total 948.031ms
+10-05 03:33:42.894 28428 28428 W milo-handler-th: type=1400 audit(0.0:294215): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36735 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:42.894 28428 28428 W milo-handler-th: type=1400 audit(0.0:294216): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36759 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:42.894 28428 28428 W milo-handler-th: type=1400 audit(0.0:294217): avc: denied { setattr } for name="stat" dev="proc" ino=4515055 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:42.946  2661  2661 D InterruptionStateProvider: No alerting: filtered notification: 0|com.cyberportalx|100|null|10760
+10-05 03:33:42.967  2661  2661 I chatty  : uid=10105(com.android.systemui) identical 2 lines
+10-05 03:33:42.968  2661  2661 D InterruptionStateProvider: No alerting: filtered notification: 0|com.cyberportalx|100|null|10760
+10-05 03:33:42.979   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:43.179   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:43.228  1215  3252 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1701 com.oplus.util.OplusStatisticsImpl.startService:216 com.oplus.util.OplusStatisticsImpl.sendDataToDCS:192 com.oplus.util.OplusStatisticsImpl.onCommonSync:84 com.oplus.util.OplusStatisticsImpl$1.run:124 
+10-05 03:33:43.231  4768  4830 I [0]DCS-StrategyManager: isNeedUpload: false, type: 2006, appID: 30098, logTag: 3009801, eventID: PMS_install_app
+10-05 03:33:43.232  4768  4830 W [0]DCS  : Record event failed. DCS reject event: [appId=30098,logTag=3009801,eventId=PMS_install_app] . Pls check server config.
+10-05 03:33:43.363 28428 30644 I OplusFeedbackInfo: [sendFPSInfo:L314] mInputBufCnt = 0 fps, mOutputBufCnt = 0 fps, mRenderFrameCnt = 0 fps
+10-05 03:33:43.364  1320  1432 D AtlasService: clientsCount 1
+10-05 03:33:43.364  1320  1432 D AtlasService: notify 1025 to client
+10-05 03:33:43.364  1320  1432 D AtlasService: clientsCount 1
+10-05 03:33:43.364  4049 26493 D OppoAtlas_jni: JNIAtlasListener::notify msg 1025 ext1 0 ext2 0
+10-05 03:33:43.364  1320  1432 D AtlasService: notify 1029 to client
+10-05 03:33:43.365  4049 26493 D OppoAtlas_jni: JNIAtlasListener::notify msg 1029 ext1 0 ext2 0
+10-05 03:33:43.381   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:43.582   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:43.745 12611 12634 W JavaBinder: BinderProxy is being destroyed but the application did not call unlinkToDeath to unlink all of its death recipients beforehand.  Releasing leaked death recipient: d.d.f.a.a
+10-05 03:33:43.745 12611 12634 I BpBinder: onLastStrongRef automatically unlinking death recipients: <uncached descriptor>
+10-05 03:33:43.784   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:43.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294218): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36735 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:43.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294219): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36759 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:43.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294220): avc: denied { setattr } for name="stat" dev="proc" ino=4515055 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:43.986   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.188   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.292  5658  5719 D HoraeHelper: getAllShellTemps tSize : 4
+10-05 03:33:44.294  5658  5719 D HoraeHelper: getAllShellTemps tSize : 4
+10-05 03:33:44.296  5658  5719 D HoraeHelper: Thermal length:1
+10-05 03:33:44.304  5658  5719 D HoraeHelper: Thermal length:1
+10-05 03:33:44.327 10904 10922 I .sberbankmobil: WaitForGcToComplete blocked ProfileSaver on HeapTrim for 2.029s
+10-05 03:33:44.365 28428 30644 I OplusFeedbackInfo: [sendFPSInfo:L314] mInputBufCnt = 0 fps, mOutputBufCnt = 0 fps, mRenderFrameCnt = 0 fps
+10-05 03:33:44.366  1320  1432 D AtlasService: clientsCount 1
+10-05 03:33:44.366  1320  1432 D AtlasService: notify 1025 to client
+10-05 03:33:44.366  4049 26493 D OppoAtlas_jni: JNIAtlasListener::notify msg 1025 ext1 0 ext2 0
+10-05 03:33:44.389   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.420 12056 12246 I PhoneManager.OplusVirusEngine: scanPackage() >>>>>>>>> 
+10-05 03:33:44.459  1215  1269 I ColorListManagerImpl: removeStageProtectInfo from com.coloros.phonemanager for com.coloros.phonemanager
+10-05 03:33:44.465  1215  1269 I ColorListManagerImpl: addStageProtectInfo from com.coloros.phonemanager for com.coloros.phonemanager in 300000
+10-05 03:33:44.465  1215  1269 W ColorListManagerImpl: com.coloros.phonemanager not in whitelist, can't add to protect, please check.
+10-05 03:33:44.591   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.603 17216 17229 I gle.android.gm: Background young concurrent copying GC freed 424710(21MB) AllocSpace objects, 28(1368KB) LOS objects, 23% free, 60MB/78MB, paused 50.521ms total 2.488s
+10-05 03:33:44.626 17216 17231 W SQLiteConnectionPool: A SQLiteConnection object for database '/data/user/0/com.google.android.gms/databases/metadata.db' was leaked!  Please fix your application to end transactions in progress properly and to close the database when it is no longer needed.
+10-05 03:33:44.626 17216 17231 W System  : A resource failed to call close. 
+10-05 03:33:44.652  1215  2229 I ColorStorageAllFileAccessManager: checkAppWhitelist: packageName com.coloros.phonemanager, mode 2
+10-05 03:33:44.655  1215  2229 I ColorStorageAllFileAccessManager: SignedWithPrivateKey, package:com.coloros.phonemanager, check hash result=true
+10-05 03:33:44.680  1215  9516 D BatteryLed: getLightInColorState, oppoLightMgr empty!
+10-05 03:33:44.697  3059  3059 D DeviceStatisticsService: chargerType=0 batteryLevel=39 totalBatteryCapacity=3041000
+10-05 03:33:44.697  3059  3059 D DeviceInfoHidlClient: getPowerInfoSupportStatus()=-1
+10-05 03:33:44.701  3468 15973 E ChargeStatusService: readIntFromFile io exception:/sys/class/power_supply/usb/fast_chg_type: open failed: ENOENT (No such file or directory)
+10-05 03:33:44.793   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294221): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36735 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:44.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294222): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36759 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:44.904 28428 28428 W milo-handler-th: type=1400 audit(0.0:294223): avc: denied { setattr } for name="stat" dev="proc" ino=4515055 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:44.917 12056 12243 D TapHttp.: newSslSocketFactory isSupported
+10-05 03:33:44.971 12056 12243 V NativeCrypto: Registering org/oconscrypt/NativeCrypto's 295 native methods...
+10-05 03:33:44.994   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:44.995 12056 12243 D TapHttp : newSslSocketFactory config sessionReuse:nullisConscryptPreferred:false isSupported:true
+10-05 03:33:45.060 12056 12243 I OPlusScanner.OScannerImpl: init loggable=false
+10-05 03:33:45.176   943  1058 I ANDR-PERF-LM: Core: lmMain() 391: runAsync for AppClassifier returned
+10-05 03:33:45.176   943  1058 I ANDR-PERF-LM: Core: lmMain() 381: Calling runAsync for GameOptimization
+10-05 03:33:45.176   943  1058 I ANDR-PERF-LM: Core: lmMain() 391: runAsync for GameOptimization returned
+10-05 03:33:45.176   943  1058 I ANDR-PERF-LM: Core: lmMain() 373: Waiting on trigger Queue
+10-05 03:33:45.176   943  1058 I ANDR-PERF-LM: WQ: pop() 31: LMTriggerQ pop() size=0
+10-05 03:33:45.176   943   943 D ANDR-PERF-LM: Feature: getData() 112: data.data = 0
+10-05 03:33:45.176   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.google.android.packageinstaller feature:AppClassifier feedback = 0
+10-05 03:33:45.177 15451 12619 D SharedPreferencesImpl: Time required to fsync /data/user/0/com.coloros.sau/shared_prefs/removed_data_app.xml: [<1: 0, <2: 0, <4: 0, <8: 0, <16: 2, <32: 7, <64: 12, <128: 6, <256: 3, <512: 0, <1024: 1, <2048: 0, <4096: 1, <8192: 0, <16384: 0, >=16384: 0]
+10-05 03:33:45.177 12639 12639 E ANR_LOG : >>> msg's executing time is too long
+10-05 03:33:45.178 12639 12639 E ANR_LOG : Blocked msg = { when=-3s309ms what=110 target=android.app.ActivityThread$H obj=AppBindData{appInfo=ApplicationInfo{a6d5624 com.google.android.packageinstaller}} } , cost  = 3304 ms
+10-05 03:33:45.178 12639 12639 E ANR_LOG : >>>Current msg List is:
+10-05 03:33:45.178 12639 12639 E ANR_LOG : Current msg <1> = { when=-3s306ms what=9999 target=android.app.ActivityThread$H }
+10-05 03:33:45.178 12639 12639 E ANR_LOG : Current msg <2> = { when=-3s303ms what=113 target=android.app.ActivityThread$H obj=ReceiverData{intent=Intent { act=android.intent.action.PACKAGE_ADDED dat=package:com.generalsx.generalszh flg=0x5000010 pkg=com.google.android.packageinstaller cmp=com.google.android.packageinstaller/com.android.packageinstaller.PackageInstalledReceiver (has extras) } packageName=com.google.android.packageinstaller resultCode=0 resultData=null resultExtras=null} }
+10-05 03:33:45.178 12639 12639 E ANR_LOG : >>>CURRENT MSG DUMP OVER<<<
+10-05 03:33:45.180   943   943 I ANDR-PERF-LM: LMPerfGlue: perfmodule_submit_request() 132: perfmodule_submit_request()
+10-05 03:33:45.181   943   943 I ANDR-PERF-LM: Core: getInstance() 84: LM getInstance
+10-05 03:33:45.181   943   943 D ANDR-PERF-LM: Feature: lookup() 101: Feature Name = AppClassifier, total featuers = 3, featureFound = 1
+10-05 03:33:45.181   943   943 D ANDR-PERF-LM: Feature: getData() 112: data.data = 0
+10-05 03:33:45.181   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.daemon.shelper feature:AppClassifier feedback = 0
+10-05 03:33:45.182 12611 12611 E ANR_LOG : >>> msg's executing time is too long
+10-05 03:33:45.182 12611 12611 E ANR_LOG : Blocked msg = { when=-3s430ms what=110 target=android.app.ActivityThread$H obj=AppBindData{appInfo=ApplicationInfo{731bdaf com.daemon.shelper}} } , cost  = 3424 ms
+10-05 03:33:45.182 12611 12611 E ANR_LOG : >>>Current msg List is:
+10-05 03:33:45.182 12611 12611 E ANR_LOG : Current msg <1> = { when=-3s427ms what=113 target=android.app.ActivityThread$H obj=ReceiverData{intent=Intent { act=oppo.intent.action.PACKAGE_ADDED dat=package:com.generalsx.generalszh flg=0x5000010 cmp=com.daemon.shelper/.wc.MonoitoringRecevier (has extras) } packageName=com.daemon.shelper resultCode=0 resultData=null resultExtras=null} }
+10-05 03:33:45.183 12611 12611 E ANR_LOG : Current msg <2> = { when=-3s426ms what=9999 target=android.app.ActivityThread$H }
+10-05 03:33:45.183 12611 12611 E ANR_LOG : >>>CURRENT MSG DUMP OVER<<<
+10-05 03:33:45.183  4897  4897 E ANR_LOG : >>> msg's executing time is too long
+10-05 03:33:45.183  4897  4897 E ANR_LOG : Blocked msg = { when=-3s695ms what=0 target=android.app.ActivityThread$H callback=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA } , cost  = 3614 ms
+10-05 03:33:45.183  4897  4897 E ANR_LOG : >>>Current msg List is:
+10-05 03:33:45.183  4897  4897 E ANR_LOG : Current msg <1> = { when=-3s695ms what=0 target=android.app.ActivityThread$H callback=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA }
+10-05 03:33:45.183  4897  4897 E ANR_LOG : Current msg <2> = { when=-3s695ms what=0 target=android.app.ActivityThread$H callback=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA }
+10-05 03:33:45.183  4897  4897 E ANR_LOG : Current msg <3> = { when=0 what=18 target=com.android.nfc.NfcService$NfcServiceHandler obj=3 }
+10-05 03:33:45.183  4897  4897 E ANR_LOG : Current msg <4> = { when=+1h11m27s343ms what=15 target=com.android.nfc.NfcService$NfcServiceHandler }
+10-05 03:33:45.183  4897  4897 E ANR_LOG : >>>CURRENT MSG DUMP OVER<<<
+10-05 03:33:45.184 17216 12603 D SharedPreferencesImpl: Time required to fsync /data/user/0/com.google.android.gms/shared_prefs/AppDataSearch-main-icing-settings.xml: [<1: 0, <2: 0, <4: 1, <8: 3, <16: 4, <32: 16, <64: 18, <128: 7, <256: 2, <512: 0, <1024: 0, <2048: 0, <4096: 1, <8192: 0, <16384: 0, >=16384: 0]
+10-05 03:33:45.185  4897  4897 D RegisteredNfcFServicesCache: Service unchanged, not updating
+10-05 03:33:45.186  1215  5013 D OpenID  : check auth getOpenId --> pkg = com.coloros.gamespace , uid = 10201 , only check pkg = true
+10-05 03:33:45.190  3279  3317 D OplusNotificationManager: getOpenid--pkg:com.coloros.gamespace,uid:10201,type:GUID
+10-05 03:33:45.190  4602  4621 E OpenID  : com.coloros.gamespace:GUID:ret:T
+10-05 03:33:45.195  1215  1558 W Looper  : Slow dispatch took 3654ms android.fg h=android.os.Handler c=com.android.server.om.-$$Lambda$OverlayManagerService$OverlayChangeListener$u9oeN2C0PDMo0pYiLqfMBkwuMNA@71f687f m=0
+10-05 03:33:45.195   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:45.195  1215  1558 W Looper  : Slow delivery took 3748ms android.fg h=android.os.Handler c=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA@b70604c m=0
+10-05 03:33:45.197  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.197  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.198  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.198  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.199  1215  1558 V AlarmManager: set(null) : type=3 when=119683817whenElapsed119683817maxWhen =119726105 win=42288 interval=0 flags=0x8 pkg = android
+10-05 03:33:45.206 32639 12020 I Finsky:background: [9965] Wrote row to frosting DB: 2763
+10-05 03:33:45.226 29945 30065 I Finsky  : [9739] AIM: AppInfoManager-Perf > ItemModel > CacheSize=102, cacheHitCount=0, cacheMissCount=0, total appsWithNoServerDataCount=6. Missed  in cache (limit 10) : []
+10-05 03:33:45.227  2639  2639 D Avrcp_ext: buildBrowsablePlayerList 
+10-05 03:33:45.231  2639  2639 D Avrcp_ext: Adding media player info for com.google.android.youtube with id 1
+10-05 03:33:45.231  2639  2639 V Avrcp_ext: updateCurrentMediaState: mMediaController: null
+10-05 03:33:45.231  2639  2639 V Avrcp_ext: isMusicActive: false getBluetoothPlayState: 2
+10-05 03:33:45.231  2639  2639 V Avrcp_ext: updateCurrentMediaState: isPlaying = false
+10-05 03:33:45.232  2639  2639 V Avrcp_ext: Media update: id -1-->-1? [MediaAttributes: none] : [MediaAttributes: none]
+10-05 03:33:45.232  2639  2639 V Avrcp_ext: newPlayStatus:2 mReportedPlayStatus:-1
+10-05 03:33:45.232  2639  2639 V Avrcp_ext: updatePlaybackState, state: PlaybackState {state=2, position=-1, buffered position=0, speed=0.0, updated=119627466, actions=0, custom actions=[], active item id=-1, error=null} device: null
+10-05 03:33:45.232  2639  2639 V Avrcp_ext: Device: no name: 
+10-05 03:33:45.232  2639  2639 I chatty  : uid=1002(bluetooth) com.android.bluetooth identical 3 lines
+10-05 03:33:45.232  2639  2639 V Avrcp_ext: Device: no name: 
+10-05 03:33:45.232  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.232  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.232  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.232  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.232  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.232  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.232  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.232 29945 30066 I Finsky  : [9740] AIM: AppInfoManager-Perf > getApps > data collection finished
+10-05 03:33:45.232  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.232 29945 30066 I Finsky  : [9740] AIM: AppInfoManager-Perf > maybeDestroyAppInfoManager is called. actives = 0
+10-05 03:33:45.232  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.232  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.233  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.233  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.234  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.234  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.234  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.234  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.234  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.234  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.235  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.235  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.235  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.235  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.236  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.236  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.236  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.236  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.237  4341  4378 D DateUtils: country : 
+10-05 03:33:45.243  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.243  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.243  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.245  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.245  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.245  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.245  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.246  1215  2277 I InputReader: Reconfiguring input devices, changes=KEYBOARD_LAYOUTS | 
+10-05 03:33:45.246  2661 25872 D OplusDynamicProvider: Provider call, method = getSwitchData, uriStr = content://com.coloros.AodDynamicProvider/getSwitchData, bundle = null
+10-05 03:33:45.249  2661 25872 D OplusDynamicProvider: Provider call, method = getSwitchData, uriStr = content://com.coloros.systemui.qs.personality.PersonalityCoverImageProvider/getSwitchData, bundle = null
+10-05 03:33:45.251 29945 29945 I Finsky  : [2] ancq - Received: android.intent.action.PACKAGE_CHANGED, [00_MLH2HmfW0H_boomXxhdeGEBvtHeCD6ASDpte8w4s]
+10-05 03:33:45.252  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.252  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.252  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.253  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.253  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.253  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.253  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.260 17216 12577 I gle.android.gm: Explicit concurrent copying GC freed 109104(5441KB) AllocSpace objects, 4(144KB) LOS objects, 30% free, 55MB/79MB, paused 276us total 330.704ms
+10-05 03:33:45.261 22732 11681 D TileUtils: isPermissionGranted: activityInfoPkgName: app.revanced.android.gms, permissionActivityGranted: false
+10-05 03:33:45.261 22732 11681 D TileUtils: isPermissionGranted: granted: false
+10-05 03:33:45.263  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.263  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.263  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: Unable to load component info ResolveInfo{8fae272 com.termux.api/.NfcActivity m=0x108000}
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: org.xmlpull.v1.XmlPullParserException: No android.nfc.action.TECH_DISCOVERED meta-data
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at com.android.nfc.RegisteredComponentCache.parseComponentInfo(RegisteredComponentCache.java:164)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at com.android.nfc.RegisteredComponentCache.generateComponentsList(RegisteredComponentCache.java:139)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at com.android.nfc.RegisteredComponentCache$1.onReceive(RegisteredComponentCache.java:66)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0$LoadedApk$ReceiverDispatcher$Args(LoadedApk.java:1688)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA.run(Unknown Source:2)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.os.Handler.handleCallback(Handler.java:938)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.os.Looper.loop(Looper.java:254)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at android.app.ActivityThread.main(ActivityThread.java:8243)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at java.lang.reflect.Method.invoke(Native Method)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:612)
+10-05 03:33:45.264  4897  4897 W RegisteredComponentCache: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1006)
+10-05 03:33:45.264  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.264  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.264  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.264  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.264  2639  2639 D Avrcp_ext: Enter sendPlayPosNotificationRsp
+10-05 03:33:45.264  2639  2639 I chatty  : uid=1002(bluetooth) com.android.bluetooth identical 3 lines
+10-05 03:33:45.264  2639  2639 D Avrcp_ext: Enter sendPlayPosNotificationRsp
+10-05 03:33:45.264  2639  2639 V Avrcp_ext: Exit updatePlayerStateAndPosition
+10-05 03:33:45.264  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.269  2639  2639 D Avrcp_ext: Adding media player info for com.exteragram.messenger with id 2
+10-05 03:33:45.269  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.270  4341  4378 D DateUtils: country : 
+10-05 03:33:45.272  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.272  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.273  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.273  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.273  2639  2639 D Avrcp_ext: Adding media player info for com.greentech.quran with id 3
+10-05 03:33:45.273  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.273  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.273  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.274  2639  2639 D Avrcp_ext: Adding media player info for com.mmmoussa.iqra with id 4
+10-05 03:33:45.274  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.274  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.274  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.274  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.274  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.275  4897  5662 D Nfc-AidGroup: callTargetMethod failed
+10-05 03:33:45.275  4897  5662 D NfcAidGroup: Non Empty aid group creation
+10-05 03:33:45.275  2639  2639 D Avrcp_ext: Adding media player info for com.namaztime with id 5
+10-05 03:33:45.275  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.276 32467 12533 W Role    : Cannot find resource for default holder: config_systemActivityRecognizer
+10-05 03:33:45.277  4778 18966 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.277  6316 22825 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.278  2639  2639 D Avrcp_ext: Adding media player info for com.spotify.music with id 6
+10-05 03:33:45.278  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.280 29945 12039 I Finsky  : [9878] SCH: Received scheduling request: Id: 12-1, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-05 03:33:45.281  2639  2639 D Avrcp_ext: Adding media player info for com.ss.android.tt.creator with id 7
+10-05 03:33:45.281  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.281 22732 11681 D TileUtils: isPermissionGranted: activityInfoPkgName: com.google.android.verifier, permissionActivityGranted: false
+10-05 03:33:45.281  6316 22825 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.281 22732 11681 D TileUtils: isPermissionGranted: granted: false
+10-05 03:33:45.282  4778 18966 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.283  2639  2639 D Avrcp_ext: Adding media player info for com.ss.android.tt.creator with id 7
+10-05 03:33:45.283  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.283  6316 22825 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.284  4778 18966 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.284  2639  2639 D Avrcp_ext: Adding media player info for com.ss.android.tt.creator with id 7
+10-05 03:33:45.284  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.285  2639  2639 D Avrcp_ext: Adding media player info for com.ss.android.tt.creator with id 7
+10-05 03:33:45.285  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.287  2639  2639 D Avrcp_ext: Adding media player info for com.yandex.browser.beta with id 8
+10-05 03:33:45.287  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.288  2639  2639 D Avrcp_ext: Adding media player info for com.zhiliaoapp.musically with id 9
+10-05 03:33:45.288  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.289  1215  3628 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10125; state: DISABLED
+10-05 03:33:45.290  1215  1692 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10125; state: ENABLED
+10-05 03:33:45.290  2639  2639 D Avrcp_ext: Adding media player info for com.zhiliaoapp.musically with id 9
+10-05 03:33:45.290  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.293  2639  2639 D Avrcp_ext: Adding media player info for com.zhiliaoapp.musically with id 9
+10-05 03:33:45.293  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.296  4341  4378 D DateUtils: country : 
+10-05 03:33:45.297  2639  2639 D Avrcp_ext: Adding media player info for com.zhiliaoapp.musically with id 9
+10-05 03:33:45.297  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.301  2639  2639 D Avrcp_ext: Adding media player info for org.telegram.messenger with id 10
+10-05 03:33:45.301  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.304  2639  2639 D Avrcp_ext: Adding media player info for org.telegram.messenger.web with id 11
+10-05 03:33:45.304  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.309  2639  2639 W Avrcp_ext: playState object null, sending STOPPED
+10-05 03:33:45.313  2639  2639 D Avrcp_ext: Adding media player info for org.videolan.vlc with id 12
+10-05 03:33:45.313  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.313  4768  4830 I [0]DCS-StrategyManager: isNeedUpload: false, type: 2006, appID: 20058, logTag: 200581, eventID: app_change_to_installed_state
+10-05 03:33:45.314  4768  4830 W [0]DCS  : Record event failed. DCS reject event: [appId=20058,logTag=200581,eventId=app_change_to_installed_state] . Pls check server config.
+10-05 03:33:45.315  2639  2639 D Avrcp_ext: Adding media player info for ru.ozon.app.android with id 13
+10-05 03:33:45.315  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.317 32639 32639 I Finsky:background: [2] ancg - Received: android.intent.action.PACKAGE_CHANGED, [00_MLH2HmfW0H_boomXxhdeGEBvtHeCD6ASDpte8w4s]
+10-05 03:33:45.319  4778 18966 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.319 29945 29945 I Finsky  : [2] AIM: AppInfoCacheUpdater -> invalidating apps: [com.generalsx.generalszh]
+10-05 03:33:45.319 29945 29945 I Finsky  : [2] AIM: AppInfoManager-Perf > getApps > called for 1 apps
+10-05 03:33:45.319  6316 22825 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.generalsx.generalszh. Reason: op android:read_external_storage
+10-05 03:33:45.320 29945 30068 I Finsky  : [9742] AIM: AppInfoManager-Perf > OnDeviceAppInfo > cacheHitCount=0, cacheMissCount=1. Missed  in cache (limit 10) : [com.generalsx.generalszh]
+10-05 03:33:45.322  2639  2639 D Avrcp_ext: Adding media player info for ru.ozon.hire with id 14
+10-05 03:33:45.322  2639  2639 D Avrcp_ext: Added MediaPlayerController/MediaPlayerPackage
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: updateCurrentMediaState: mMediaController: null
+10-05 03:33:45.322 29945 30021 I Finsky  : [9728] RECEIVER_PACKAGE_MONITOR#logWorkEndAndFinishGoAsync: SUCCESS
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: isMusicActive: false getBluetoothPlayState: 2
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: updateCurrentMediaState: isPlaying = false
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: Media update: id -1-->-1? [MediaAttributes: none] : [MediaAttributes: none]
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: newPlayStatus:2 mReportedPlayStatus:-1
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: updatePlaybackState, state: PlaybackState {state=2, position=-1, buffered position=0, speed=0.0, updated=119627556, actions=0, custom actions=[], active item id=-1, error=null} device: null
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: Device: no name: 
+10-05 03:33:45.322  2639  2639 I chatty  : uid=1002(bluetooth) com.android.bluetooth identical 3 lines
+10-05 03:33:45.322  2639  2639 V Avrcp_ext: Device: no name: 
+10-05 03:33:45.324 29945 30065 I Finsky  : [9739] AIM: Got app ownership map. App counts: . Unique apps: 0
+10-05 03:33:45.324 29945 30065 E Finsky  : [9739] [Counters] attempted to use a non-positive increment for: 4752
+10-05 03:33:45.325 29945 30066 I Finsky  : [9740] AIM: AppInfoManager-Perf > OnDeviceAppInfo > cacheHitCount=1, cacheMissCount=0. Missed  in cache (limit 10) : []
+10-05 03:33:45.325 29945 30066 E Finsky  : [9740] [Counters] attempted to use a non-positive increment for: 4753
+10-05 03:33:45.326 29945 30065 I Finsky  : [9739] AIM: Got app ownership map. App counts: . Unique apps: 0
+10-05 03:33:45.326 29945 30065 E Finsky  : [9739] [Counters] attempted to use a non-positive increment for: 4752
+10-05 03:33:45.326 29945 30065 E Finsky  : [9739] [Counters] attempted to use a non-positive increment for: 4753
+10-05 03:33:45.328  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.328  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.328  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.330  3468  3468 I DataReceiver: onReceive intent= Intent { act=android.intent.action.PACKAGE_CHANGED dat=package:com.generalsx.generalszh flg=0x5000010 cmp=com.coloros.notificationmanager/.receiver.DataReceiver (has extras) }
+10-05 03:33:45.330  3468  3631 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1158 android.content.ContextWrapper.sendBroadcast:483 android.content.ContextWrapper.sendBroadcast:483 com.coloros.notificationmanager.AppModificationReceiver.notifyAppModified:42 com.coloros.notificationmanager.receiver.DataReceiver.processBroadcast:70 
+10-05 03:33:45.331  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.331  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.331  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.331  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.331  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.331  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.331  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.332  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.332  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.332  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.332  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.333  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.333  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.333  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.333  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.333  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.333  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.333  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 4
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 8
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 112
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 159
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 161
+10-05 03:33:45.334  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 182
+10-05 03:33:45.334  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 200
+10-05 03:33:45.334  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 217
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 229
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 274
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 325
+10-05 03:33:45.334  1215  3609 E IntervalStats: Unable to parse usage stats package 328
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 329
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 330
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 333
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 336
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 338
+10-05 03:33:45.335  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 341
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 342
+10-05 03:33:45.335  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 345
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 346
+10-05 03:33:45.335  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 347
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 351
+10-05 03:33:45.335  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 353
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 355
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 356
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 358
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 362
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 363
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 364
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 373
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 376
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 377
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 387
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 388
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 389
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 390
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 391
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 395
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 400
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 403
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 404
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 405
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 408
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 409
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 410
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 413
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 414
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 429
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 430
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 431
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 457
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 459
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 460
+10-05 03:33:45.335  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 462
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 465
+10-05 03:33:45.335  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 475
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 476
+10-05 03:33:45.335  2639  2639 D HeadsetService: isScoOrCallActive(): Call Active:falseCall is Ringing:falseSCO is Active:false
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 477
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 479
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 494
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 495
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 500
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 502
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 503
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 506
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 508
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 510
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 512
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 513
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 536
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 539
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 542
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 559
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 560
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 561
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 581
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 583
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 584
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 585
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 586
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 590
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 595
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 596
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 611
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 627
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 630
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 631
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 634
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 635
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 636
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 652
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 653
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 654
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 656
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 664
+10-05 03:33:45.335  1215  3609 E IntervalStats: Unable to parse usage stats package 665
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 666
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 667
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 668
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 669
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 674
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 675
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 677
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 681
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 682
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 683
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 684
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 690
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 691
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 693
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 694
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 695
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 697
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 700
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 701
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 704
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 705
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 731
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 739
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 740
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 741
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 748
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 755
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 760
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 784
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 785
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 786
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 794
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 795
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 797
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 802
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 804
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 808
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 812
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 814
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 815
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 816
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 821
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 822
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 824
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 827
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 837
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 843
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 846
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 850
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 851
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 852
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 853
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 854
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 857
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 861
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 862
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 864
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 871
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 875
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 876
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 883
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 891
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 894
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 903
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 904
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 906
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 907
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 908
+10-05 03:33:45.336  2639  2639 E HeadsetStateMachine: returning mCurrentState as Disconnected
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 910
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 911
+10-05 03:33:45.336  2639  2639 D HeadsetService:  isAudioOn: The number of audio connected devices 0
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 915
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 924
+10-05 03:33:45.336  2639  2639 I Avrcp_ext: updatePlayStatusForDevice: device: null
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 925
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 926
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 928
+10-05 03:33:45.336  2639  2639 I Avrcp_ext: Exit updatePlayStatusForDevice
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 929
+10-05 03:33:45.336  2639  2639 D Avrcp_ext: Enter sendPlayPosNotificationRsp
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 931
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 934
+10-05 03:33:45.336  2639  2639 I chatty  : uid=1002(bluetooth) com.android.bluetooth identical 3 lines
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 935
+10-05 03:33:45.336  2639  2639 D Avrcp_ext: Enter sendPlayPosNotificationRsp
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 938
+10-05 03:33:45.336  2639  2639 V Avrcp_ext: Exit updatePlayerStateAndPosition
+10-05 03:33:45.336  2639  2639 D Avrcp_ext: Exit handlePackageModified
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 939
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 941
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 942
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 943
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 944
+10-05 03:33:45.336  1215  3609 E IntervalStats: Unable to parse usage stats package 946
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 948
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 965
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 966
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 972
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 974
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 975
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 976
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 979
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 982
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 983
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 987
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 989
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 990
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 993
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 996
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 998
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 999
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1003
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1008
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1009
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1013
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1015
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1017
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1023
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1024
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1029
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1032
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1033
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1041
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1087
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1103
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1112
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1113
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1130
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1141
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1144
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1145
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1146
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1153
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1203
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1218
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1265
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1266
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1268
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1276
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1293
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1297
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1298
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1303
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1304
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1306
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1332
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1333
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1337
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1339
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1368
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1369
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1397
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1398
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1408
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1409
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1410
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1411
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1428
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1437
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1450
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1455
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1458
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1487
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1489
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1511
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1513
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1514
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1516
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1517
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1518
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1553
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1563
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1565
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1566
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1567
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1568
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1587
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1597
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1621
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1623
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1625
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1627
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1661
+10-05 03:33:45.337  1215  3609 E IntervalStats: Unable to parse usage stats package 1694
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1698
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1699
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1700
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1706
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1707
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1708
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1712
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1713
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1801
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1840
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1852
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1856
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1857
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1858
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1919
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1923
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1982
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 1998
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2000
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2003
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2006
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2008
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2009
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2010
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2013
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2014
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2015
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2016
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2017
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2018
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2020
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2026
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2032
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2035
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2041
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2043
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2045
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2046
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2047
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2048
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2049
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2050
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2051
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2052
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2053
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2054
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2055
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2056
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2057
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2058
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2059
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2060
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2061
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2062
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2063
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2064
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2065
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2066
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2067
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2068
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2069
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2070
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2071
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2072
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2074
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2075
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2077
+10-05 03:33:45.338  1215  3609 E IntervalStats: Unable to parse usage stats package 2078
+10-05 03:33:45.339  1215  3609 E IntervalStats: Unable to parse usage stats package 2118
+10-05 03:33:45.339  1215  3609 E IntervalStats: Unable to parse usage stats package 2119
+10-05 03:33:45.339  1215  3609 E IntervalStats: Unable to parse usage stats package 2120
+10-05 03:33:45.339  1215  3609 E IntervalStats: Unable to parse usage stats package 2124
+10-05 03:33:45.341   904  1887 D audio_hw_primary: adev_get_parameters:get_pid
+10-05 03:33:45.341   904  1887 D audio_hw_spkr_prot: fbsp_get_parameters: Speaker protection disabled
+10-05 03:33:45.341   904  1887 D audio_hw_extn: audio_extn_fm_get_parameters: Enter
+10-05 03:33:45.341   904  1887 D audio_hw_extn: audio_extn_get_parameters: returns 
+10-05 03:33:45.341   904  1887 D audio_hw_primary: adev_get_parameters: exit: returns - 
+10-05 03:33:45.349   975 30967 I hash_map_utils: key: 'get_pid' value: ''
+10-05 03:33:45.362  1215  1558 I RoleManagerService: Granting default roles...
+10-05 03:33:45.368  1215  4999 D PackageManager: multi app -> queryIntentContentProvidersInternal of [Intent { act=com.android.settings.action.IA_SETTINGS }] for multi app user(999)
+10-05 03:33:45.371 28428 30644 I OplusFeedbackInfo: [sendFPSInfo:L314] mInputBufCnt = 0 fps, mOutputBufCnt = 0 fps, mRenderFrameCnt = 0 fps
+10-05 03:33:45.373  1320  1432 D AtlasService: clientsCount 1
+10-05 03:33:45.373  1320  1432 D AtlasService: notify 1025 to client
+10-05 03:33:45.374  4049 26493 D OppoAtlas_jni: JNIAtlasListener::notify msg 1025 ext1 0 ext2 0
+10-05 03:33:45.375  4897  4897 D RegisteredServicesCache:  Reading service state data always from file
+10-05 03:33:45.376  4897  4897 D RegisteredServicesCache: ServiceStateFileVersion=1.0
+10-05 03:33:45.376  4897  4897 E RegisteredServicesCache: Next Tag=services
+10-05 03:33:45.376  4897  4897 E RegisteredServicesCache: installedServices no uidString 
+10-05 03:33:45.376  4897  4897 I chatty  : uid=1027(nfc) com.android.nfc identical 1 line
+10-05 03:33:45.376  4897  4897 E RegisteredServicesCache: installedServices no uidString 
+10-05 03:33:45.376  4897  4897 E RegisteredServicesCache:  Writing service state Data Always
+10-05 03:33:45.381  1215  1215 W Looper  : Slow dispatch took 169ms main h=android.app.ActivityThread$H c=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA@7f10325 m=0
+10-05 03:33:45.384 17216 12603 W Bundle  : Key identifier expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.390 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.390 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.390 17216 12603 W Bundle  : Key name expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.390  1215  2229 I SecurityPermissionService: updateCachedPermission pkgName:com.generalsx.generalszh, userId:0, delete:false
+10-05 03:33:45.390 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.390 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.390 17216 12603 W Bundle  : Key image expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.390 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.390 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.390 17216 12603 W Bundle  : Key dateModified expected Parcelable[] but value was a [J.  The default value <null> was returned.
+10-05 03:33:45.390 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.390 17216 12603 W Bundle  : java.lang.ClassCastException: long[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.390 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.393   904  1887 D audio_hw_primary: adev_get_parameters:get_pid
+10-05 03:33:45.393   904  1887 D audio_hw_spkr_prot: fbsp_get_parameters: Speaker protection disabled
+10-05 03:33:45.393   904  1887 D audio_hw_extn: audio_extn_fm_get_parameters: Enter
+10-05 03:33:45.393   904  1887 D audio_hw_extn: audio_extn_get_parameters: returns 
+10-05 03:33:45.393   904  1887 D audio_hw_primary: adev_get_parameters: exit: returns - 
+10-05 03:33:45.394   975 30967 I hash_map_utils: key: 'get_pid' value: ''
+10-05 03:33:45.396   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:45.396  1215  3039 I ColorHansManager : pkg: ru.mail.mailapp,state: R -> F
+10-05 03:33:45.396 32639   808 I Finsky:background: [9920] RECEIVER_PACKAGE_MONITOR_BACKGROUND#logWorkEndAndFinishGoAsync: SUCCESS
+10-05 03:33:45.397 32639   812 I Finsky:background: [9923] RECEIVER_ENGAGE_PACKAGE_CHANGED#logWorkEndAndFinishGoAsync: SKIPPED_PRECONDITIONS_UNMET
+10-05 03:33:45.397 32467 32483 I PermissionControllerServiceImpl: Updating user sensitive for uid 10889
+10-05 03:33:45.397  1215  3039 I ColorHansManager : freeze uid: 10507 package: ru.mail.mailapp reason: Wakelock scene: LcdOnScene
+10-05 03:33:45.405 22732 11681 D LauncherUtils: isLaunchersImpleMode: curLauncherMode = 2
+10-05 03:33:45.405 22732 11681 D FingerprintItemController: getItemTitle, resId = 2131888898
+10-05 03:33:45.405 22732 11681 D FontDisplayItemController: getItemTitle, resId = 2131888927
+10-05 03:33:45.406  1215  1558 W Looper  : Drained
+10-05 03:33:45.415  1215  4961 I ActivityManager: Killing 9885:com.coloros.oshare/u0a176 (adj 999): empty #31
+10-05 03:33:45.417   943   943 I ANDR-PERF-LM: LMPerfGlue: perfmodule_submit_request() 132: perfmodule_submit_request()
+10-05 03:33:45.417   943   943 I ANDR-PERF-LM: Core: getInstance() 84: LM getInstance
+10-05 03:33:45.417   943   943 I ANDR-PERF-LM: WQ: push() 59: LMTriggerQ push() size=0
+10-05 03:33:45.417   943   943 I ANDR-PERF-LM: WQ: push() 61: LMTriggerQ push() done size=1
+10-05 03:33:45.418   943  1058 I ANDR-PERF-LM: WQ: pop() 42: LMTriggerQ pop() done size=0
+10-05 03:33:45.418   943  1058 I ANDR-PERF-LM: Core: lmMain() 373: Waiting on trigger Queue
+10-05 03:33:45.418   943  1058 I ANDR-PERF-LM: WQ: pop() 31: LMTriggerQ pop() size=0
+10-05 03:33:45.419  3155  3155 D CarrierSvcBindHelper: No carrier app for: 0
+10-05 03:33:45.419  4897  4897 D RegisteredNfcFServicesCache: Service unchanged, not updating
+10-05 03:33:45.420  3155  3155 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPackageNamesForIntentAndPhone: No UICC
+10-05 03:33:45.420  3155  3155 D CarrierSvcBindHelper: No carrier app for: 1
+10-05 03:33:45.420  3155  3155 D ImsResolver: maybeAddedImsService, packageName: com.generalsx.generalszh
+10-05 03:33:45.427  1215  3038 I OppoBasePowerManagerService: setWakeLockStateForHans find out in ws: PARTIAL_WAKE_LOCK              '*job*/ru.mail.mailapp/androidx.work.impl.background.systemjob.SystemJobService' ACQ=-4m26s439ms LONG (uid=1000 pid=1215 ws=WorkSource{10507}) disable: true
+10-05 03:33:45.427 29945 30068 I Finsky  : [9742] SCH: Scheduling phonesky job Id: 1-1337, CT: 1791144678074, Constraints: [{ L: 43180959, D: 86380959, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-05 03:33:45.427 29945 30068 I Finsky  : [9742] SCH: Scheduling phonesky job Id: 34-340, CT: 1791110262948, Constraints: [{ L: 79198058, D: 1375198058, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-05 03:33:45.428 29945 30068 I Finsky  : [9742] SCH: Scheduling phonesky job Id: 34-341, CT: 1791110263520, Constraints: [{ L: 604800000, D: 2591999715, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-05 03:33:45.428 29945 30066 I Finsky  : [9740] AIM: AppInfoManager-Perf > ItemModel > CacheSize=102, cacheHitCount=0, cacheMissCount=0, total appsWithNoServerDataCount=6. Missed  in cache (limit 10) : []
+10-05 03:33:45.429  1215  3038 I ColorHansManager : unfreeze uid: 10507 package: ru.mail.mailapp reason: Wakelock scene: LcdOnScene
+10-05 03:33:45.430  1215  3038 I ColorHansManager : pkg: ru.mail.mailapp,state: F -> R
+10-05 03:33:45.430  1215  3038 D OppoBasePowerManagerService: pending job for 10507 fail for charge and screen
+10-05 03:33:45.430 17216 12691 I Fitness : (REDACTED) OnPackageChangedOperation got intent: %s
+10-05 03:33:45.459   786   786 D Zygote  : Forked child process 12768
+10-05 03:33:45.462 32639 12020 I Finsky:background: [9965] Wrote row to frosting DB: 2764
+10-05 03:33:45.468  1215  4961 D DisplayManagerService: Display listener for pid 9885 died.
+10-05 03:33:45.468   785   785 I Zygote  : Process 9885 exited due to signal 9 (Killed)
+10-05 03:33:45.469  1215  1692 W ActivityManager: Slow operation: 180ms so far, now at startProcess: returned from zygote!
+10-05 03:33:45.470 29945 30066 I Finsky  : [9740] SCH: Scheduling 1 system job(s)
+10-05 03:33:45.470 29945 30066 I Finsky  : [9740] SCH: Scheduling system job Id: 9527, L: 27433563, D: 70633563, C: false, I: false, N: 1
+10-05 03:33:45.470 29945 30035 I Finsky  : [9734] WM::SCH: Logging work initialize for 12-1
+10-05 03:33:45.473  1215  5008 V AlarmManager: set(PendingIntent{4253917: PendingIntentRecord{3268bf3 com.google.android.gms/com.google.android.gms.scheduler broadcastIntent}}) : type=3 when=119634709whenElapsed119634709maxWhen =119634709 win=0 interval=0 flags=0x0 pkg = com.google.android.gms
+10-05 03:33:45.477 29945 30070 I Finsky  : [9744] AIM: AppInfoManager-Perf > ItemModel > CacheSize=102, cacheHitCount=0, cacheMissCount=0, total appsWithNoServerDataCount=6. Missed  in cache (limit 10) : []
+10-05 03:33:45.479 29945 30070 I Finsky  : [9744] AIM: AppInfoManager-Perf > ItemModel > CacheSize=102, cacheHitCount=0, cacheMissCount=0, total appsWithNoServerDataCount=6. Missed  in cache (limit 10) : []
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.coloros.simsettings but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package audioserver but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.google.android.gsf but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.google.android.youtube but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package ru.yandex.yandexmaps but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.whatsapp but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.483 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.ss.android.tt.creator but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.zhiliaoapp.musically but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.pinterest but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.yandex.browser.beta but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package ru.mail.mailapp but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.google.android.gsf but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 22927 12767 I SP.UsageAccessUtils: AppOp permission exists for package com.whatsapp but package doesn't exist or did not request UsageStats access
+10-05 03:33:45.484 29945 30065 I Finsky  : [9739] AIM: AppInfoManager-Perf > getApps > data collection finished
+10-05 03:33:45.484 29945 30065 I Finsky  : [9739] AIM: AppInfoManager-Perf > maybeDestroyAppInfoManager is called. actives = 0
+10-05 03:33:45.484   943   943 I ANDR-PERF-LM: LMPerfGlue: perfmodule_submit_request() 132: perfmodule_submit_request()
+10-05 03:33:45.484   943   943 I ANDR-PERF-LM: Core: getInstance() 84: LM getInstance
+10-05 03:33:45.484   943   943 I ANDR-PERF-LM: WQ: push() 59: LMTriggerQ push() size=0
+10-05 03:33:45.484   943   943 I ANDR-PERF-LM: WQ: push() 61: LMTriggerQ push() done size=1
+10-05 03:33:45.484   943  1058 I ANDR-PERF-LM: WQ: pop() 42: LMTriggerQ pop() done size=0
+10-05 03:33:45.484   943  1058 I ANDR-PERF-LM: Core: lmMain() 373: Waiting on trigger Queue
+10-05 03:33:45.484   943  1058 I ANDR-PERF-LM: WQ: pop() 31: LMTriggerQ pop() size=0
+10-05 03:33:45.487 17216 12691 I Fitness : (REDACTED) OnPackageChangedOperation got intent: %s
+10-05 03:33:45.492  1215  1713 I libprocessgroup: Successfully killed process cgroup uid 10176 pid 9885 in 75ms
+10-05 03:33:45.492 12162 12215 I ProvidersCache: Provider returned no roots. Possibly naughty: org.nextcloud.documents
+10-05 03:33:45.508  1215  1692 W ActivityManager: Slow operation: 219ms so far, now at startProcess: done updating battery stats
+10-05 03:33:45.508  1215  1692 W ActivityManager: Slow operation: 219ms so far, now at startProcess: building log message
+10-05 03:33:45.508  1215  1692 I ActivityManager: Start proc 12768:com.coloros.uxdesign/u0a125 for service {com.coloros.uxdesign/com.coloros.uxdesign.icon.service.LaunchIconService}
+10-05 03:33:45.508  1215  1692 W ActivityManager: Slow operation: 219ms so far, now at startProcess: starting to update pids map
+10-05 03:33:45.509  1215  1692 W ActivityManager: Slow operation: 220ms so far, now at startProcess: done updating pids map
+10-05 03:33:45.520 17216 12620 I Fitness : (REDACTED) FitCleanupIntentOperation received Intent %s
+10-05 03:33:45.543 32639 12020 I Finsky:background: [9965] Wrote row to frosting DB: 2765
+10-05 03:33:45.584 17216 12620 I Fitness : (REDACTED) FitCleanupIntentOperation received Intent %s
+10-05 03:33:45.597   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:45.654 32639 12020 I Finsky:background: [9965] Wrote row to frosting DB: 2766
+10-05 03:33:45.660 32639 32656 W ding:backgroun: Reducing the number of considered missed Gc histogram windows from 164 to 100
+10-05 03:33:45.664  4026 12700 D EventBus: No subscribers registered for event class com.coloros.deepthinker.common.proton.learn.schedule.a.c
+10-05 03:33:45.664  4026 12700 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+10-05 03:33:45.735  3176  3176 W Launcher.AlphabeticalAppsList: updateAdapterItems
+10-05 03:33:45.735  3176  3176 W Launcher.AlphabeticalAppsList: drawAppSort cost to muchTime sortCost = 1 sectionUpdateCost = 0 adapterUpdateCost = 0
+10-05 03:33:45.736  3176  3176 W Launcher.AlphabeticalAppsList: updateAdapterItems
+10-05 03:33:45.736  3176  3176 W Launcher.AlphabeticalAppsList: drawAppSort cost to muchTime sortCost = 0 sectionUpdateCost = 0 adapterUpdateCost = 0
+10-05 03:33:45.741  4026 12698 D EventBus: No subscribers registered for event class com.coloros.deepthinker.common.proton.learn.schedule.a.c
+10-05 03:33:45.741  4026 12698 D EventBus: No subscribers registered for event class org.greenrobot.eventbus.NoSubscriberEvent
+10-05 03:33:45.767 17216 12603 W Bundle  : Key identifier expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.767 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.767 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.767 17216 12603 W Bundle  : Key name expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.767 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.767 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.767 17216 12603 W Bundle  : Key image expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.767 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.767 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.767 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.768 17216 12603 W Bundle  : Key dateModified expected Parcelable[] but value was a [J.  The default value <null> was returned.
+10-05 03:33:45.768 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.768 17216 12603 W Bundle  : java.lang.ClassCastException: long[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.768 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.782  1215  1215 W Looper  : Slow dispatch took 401ms main h=android.app.ActivityThread$H c=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA@bdbcda0 m=0
+10-05 03:33:45.783  1215  1215 E SyntheticPasswordManager: fromBytes: data = [B@efd7d59 data.length = 89
+10-05 03:33:45.784  1215  1215 W DevicePolicyManager: Unknown user type: UserInfo{999:MultiApp:4000418}
+10-05 03:33:45.784  1215  1215 W Looper  : Slow delivery took 567ms main h=android.os.Handler c=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA@9f5ad1e m=0
+10-05 03:33:45.785 32467 32483 I PermissionControllerServiceImpl: Updating user sensitive for uid 10889
+10-05 03:33:45.798   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:45.840  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:45.845 17216 12603 W Bundle  : Key identifier expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.845 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.845 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):6)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.845 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.845 17216 12603 W Bundle  : Key name expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.847 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.847 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):6)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.847 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.848 17216 12603 W Bundle  : Key image expected Parcelable[] but value was a [Ljava.lang.String;.  The default value <null> was returned.
+10-05 03:33:45.848 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.848 17216 12603 W Bundle  : java.lang.ClassCastException: java.lang.String[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):6)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.848 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.848 17216 12603 W Bundle  : Key dateModified expected Parcelable[] but value was a [J.  The default value <null> was returned.
+10-05 03:33:45.849 17216 12603 W Bundle  : Attempt to cast generated internal exception:
+10-05 03:33:45.849 17216 12603 W Bundle  : java.lang.ClassCastException: long[] cannot be cast to android.os.Parcelable[]
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at android.os.Bundle.getParcelableArray(Bundle.java:1034)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at lxb.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):14)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at com.google.firebase.appindexing.internal.Thing.h(:com.google.android.gms@263635022@26.36.35 (150400-991383798):5)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmru.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):593)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmru.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):63)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmrn.i(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmqe.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):19)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmrp.f(:com.google.android.gms@263635022@26.36.35 (150400-991383798):28)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmqe.g(:com.google.android.gms@263635022@26.36.35 (150400-991383798):3)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmql.a(:com.google.android.gms@263635022@26.36.35 (150400-991383798):10)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmyi.k(:com.google.android.gms@263635022@26.36.35 (150400-991383798):103)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at cmyf.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):71)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:462)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at blmx.d(:com.google.android.gms@263635022@26.36.35 (150400-991383798):50)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at blmx.c(:com.google.android.gms@263635022@26.36.35 (150400-991383798):6)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at blmx.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):33)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at blsw.run(:com.google.android.gms@263635022@26.36.35 (150400-991383798):8)
+10-05 03:33:45.849 17216 12603 W Bundle  : 	at java.lang.Thread.run(Thread.java:923)
+10-05 03:33:45.869  3176  3176 W Launcher.AlphabeticalAppsList: updateAdapterItems
+10-05 03:33:45.869  3176  3176 W Launcher.AlphabeticalAppsList: drawAppSort cost to muchTime sortCost = 0 sectionUpdateCost = 0 adapterUpdateCost = 0
+10-05 03:33:45.877  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.877  1215  1558 I chatty  : uid=1000(system) android.fg identical 2 lines
+10-05 03:33:45.877  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.878  1215  1558 D OplusLocationStatistics: on recordTaskMark, key:gnssLocationRequest
+10-05 03:33:45.878  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.878  1215  1558 I chatty  : uid=1000(system) android.fg identical 2 lines
+10-05 03:33:45.878  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.878  1215  1558 D OplusLocationStatistics: on recordTaskMark, key:gnssLocationRequest
+10-05 03:33:45.894 32467 12533 W Role    : Cannot find resource for default holder: config_systemActivityRecognizer
+10-05 03:33:45.914 28428 28428 W milo-handler-th: type=1400 audit(0.0:294224): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36735 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:45.914 28428 28428 W milo-handler-th: type=1400 audit(0.0:294225): avc: denied { setattr } for name="time_in_state" dev="sysfs" ino=36759 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:object_r:sysfs_devices_system_cpu:s0 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:45.914 28428 28428 W milo-handler-th: type=1400 audit(0.0:294226): avc: denied { setattr } for name="stat" dev="proc" ino=4515055 scontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tcontext=u:r:untrusted_app:s0:c4,c257,c512,c768 tclass=file permissive=0 app=com.rezvorck.tiktokplugin
+10-05 03:33:45.949  1215  1228 I system_server: Background young concurrent copying GC freed 195309(27MB) AllocSpace objects, 15(1848KB) LOS objects, 23% free, 77MB/101MB, paused 1.456ms total 141.231ms
+10-05 03:33:45.952  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:45.968  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.969  1215  1558 I chatty  : uid=1000(system) android.fg identical 2 lines
+10-05 03:33:45.969  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.969  1215  1215 W NotificationService: Removed summary didn't match old notification: old=0|com.cyberportalx|100|null|10760, removed=0|com.cyberportalx|100|null|10760
+10-05 03:33:45.969  1215  1558 D OplusLocationStatistics: on recordTaskMark, key:gnssLocationRequest
+10-05 03:33:45.969  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.969  1215  1558 I chatty  : uid=1000(system) android.fg identical 2 lines
+10-05 03:33:45.970  1215  1558 D OplusGnssWhiteListProxy: on get OplusGnssWhiteListProxy!
+10-05 03:33:45.970  1215  1558 D OplusLocationStatistics: on recordTaskMark, key:gnssLocationRequest
+10-05 03:33:45.979 29945 12506 I Finsky  : [9884] SCH: job service finished with id 9523.
+10-05 03:33:45.983 29945 30070 I Finsky  : [9744] SCH: Scheduling phonesky job Id: 12-1, CT: 1791160425280, Constraints: [{ L: 15000, D: 86400000, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+10-05 03:33:45.999   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:46.018 29945 30068 I Finsky  : [9742] SCH: Scheduling 1 system job(s)
+10-05 03:33:46.018 29945 30068 I Finsky  : [9742] SCH: Scheduling system job Id: 9527, L: 14262, D: 70633015, C: false, I: false, N: 1
+10-05 03:33:46.080 12056 12227 W System.err: SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+10-05 03:33:46.081 12056 12227 W System.err: SLF4J: Defaulting to no-operation (NOP) logger implementation
+10-05 03:33:46.081 12056 12227 W System.err: SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+10-05 03:33:46.166 17216 17216 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.potokens.service.START dat=chimera-action: cmp=com.google.android.gms/.chimera.GmsApiService }
+10-05 03:33:46.201   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:46.217 10904 10904 E ANR_LOG : >>> msg's executing time is too long
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Blocked msg = { when=-4s688ms what=0 target=android.app.ActivityThread$H callback=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA } , cost  = 4686 ms
+10-05 03:33:46.217 10904 10904 E ANR_LOG : >>>Current msg List is:
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Current msg <1> = { when=-4s687ms what=0 target=android.app.ActivityThread$H callback=android.app.-$$Lambda$LoadedApk$ReceiverDispatcher$Args$_BumDX2UKsnxLVrE6UJsJZkotuA }
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Current msg <2> = { when=-3s822ms what=0 target=android.os.Handler callback=a5.a }
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Current msg <3> = { when=+49m29s217ms what=0 target=android.os.Handler callback=ai.u }
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Current msg <4> = { when=+21h49m20s265ms what=0 target=android.os.Handler callback=ai.u }
+10-05 03:33:46.217 10904 10904 E ANR_LOG : Current msg <5> = { when=+21d16h37m10s414ms what=0 target=android.os.Handler callback=ai.u }
+10-05 03:33:46.217 10904 10904 E ANR_LOG : >>>CURRENT MSG DUMP OVER<<<
+10-05 03:33:46.230  1215  1672 W Searchables: No web search activity found
+10-05 03:33:46.238  1215  1228 I system_server: Background young concurrent copying GC freed 156148(15MB) AllocSpace objects, 7(3928KB) LOS objects, 12% free, 89MB/101MB, paused 695us total 102.298ms
+10-05 03:33:46.291 12768 12768 E oloros.uxdesig: Unknown bits set in runtime_flags: 0x40000000
+10-05 03:33:46.305 12768 12768 W oloros.uxdesig: Using default instruction set features for ARM CPU variant (cortex-a9) using conservative defaults
+10-05 03:33:46.307  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:46.308  2523  2898 I chatty  : uid=1000(system) Binder:2523_3 identical 1 line
+10-05 03:33:46.311  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:46.318  1215  2366 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1143 com.android.server.job.controllers.OppoCpuController.notifyHighCpuEventForApp:388 com.android.server.job.controllers.OppoCpuController.handleCpuUpdate:334 com.android.server.job.controllers.OppoCpuController.access$1000:59 com.android.server.job.controllers.OppoCpuController$CpuTrackerHandler.handleMessage:258 
+10-05 03:33:46.341 12768 12768 E oloros.uxdesig: Not starting debugger since process cannot load the jdwp agent.
+10-05 03:33:46.378 28428 30644 I OplusFeedbackInfo: [sendFPSInfo:L314] mInputBufCnt = 0 fps, mOutputBufCnt = 0 fps, mRenderFrameCnt = 0 fps
+10-05 03:33:46.379  1320  1432 D AtlasService: clientsCount 1
+10-05 03:33:46.379  1320  1432 D AtlasService: notify 1025 to client
+10-05 03:33:46.379  4049 26493 D OppoAtlas_jni: JNIAtlasListener::notify msg 1025 ext1 0 ext2 0
+10-05 03:33:46.380 12768 12768 E RefClass: java.lang.reflect.InvocationTargetException
+10-05 03:33:46.402   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:46.460  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:46.474 12768 12768 I oplus.android.OplusFrameworkFactoryImpl: get feature:IOplusScreenModeFeature
+10-05 03:33:46.474 12768 12768 I oplus.android.OplusFrameworkFactoryImpl: getOplusScreenModeFeature
+10-05 03:33:46.490 12768 12768 E libc    : Access denied finding property "ro.odm.prev.product.name"
+10-05 03:33:46.492  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:46.513  2523  2898 D OplusCoreAppService: isPackageContainsOplusCertificates be called
+10-05 03:33:46.559  1215  1215 W Looper  : Slow dispatch took 568ms main h=com.android.server.job.JobSchedulerService$JobHandler c=null m=3
+10-05 03:33:46.578 12768 12768 E LoadedApk: Unable to instantiate appComponentFactory
+10-05 03:33:46.578 12768 12768 E LoadedApk: java.lang.ClassNotFoundException: Didn't find class "androidx.core.app.CoreComponentFactory" on path: DexPathList[[zip file "/system/system_ext/app/UXDesign/UXDesign.apk"],nativeLibraryDirectories=[/system/system_ext/app/UXDesign/lib/arm, /system/system_ext/app/UXDesign/UXDesign.apk!/lib/armeabi-v7a, /system/lib, /system/system_ext/lib, /vendor/lib, /odm/lib, /system/lib, /system/system_ext/lib, /vendor/lib, /odm/lib]]
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:207)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at java.lang.ClassLoader.loadClass(ClassLoader.java:379)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at java.lang.ClassLoader.loadClass(ClassLoader.java:312)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.LoadedApk.createAppFactory(LoadedApk.java:286)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.LoadedApk.createOrUpdateClassLoaderLocked(LoadedApk.java:981)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.LoadedApk.getClassLoader(LoadedApk.java:1034)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.LoadedApk.getResources(LoadedApk.java:1266)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ContextImpl.createAppContext(ContextImpl.java:2748)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ContextImpl.createAppContext(ContextImpl.java:2740)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:7103)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ActivityThread.access$1600(ActivityThread.java:293)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2145)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.os.Looper.loop(Looper.java:254)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at android.app.ActivityThread.main(ActivityThread.java:8243)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at java.lang.reflect.Method.invoke(Native Method)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:612)
+10-05 03:33:46.578 12768 12768 E LoadedApk: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1006)
+10-05 03:33:46.594 12750 12750 W screencap: type=1400 audit(0.0:294227): avc: denied { read } for name="u:object_r:vendor_mm_video_prop:s0" dev="tmpfs" ino=10193 scontext=u:r:shell:s0 tcontext=u:object_r:vendor_mm_video_prop:s0 tclass=file permissive=0
+10-05 03:33:46.603   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:46.605 12750 12750 D OplusUtils: OplusUtils [83]: 
+10-05 03:33:46.607 12750 12750 E libc    : Access denied finding property "persist.vendor.debug.en.drpcrpt"
+10-05 03:33:46.610 12768 12768 I Perf    : Connecting to perf service.
+10-05 03:33:46.622 17216 11674 I NearbyMediums: No BLE Fast/GATT advertisements found in the latest cycle.
+10-05 03:33:46.622 17216 11674 I NearbyMediums: Current Tracked Scanning Clients are : {NearbyConnections.EnvironmentMonitor, NearbySharing}
+10-05 03:33:46.642 12768 12768 D NetworkSecurityConfig: Using Network Security Config from resource network_security_config debugBuild: false
+10-05 03:33:46.646 12768 12768 D NetworkSecurityConfig: Using Network Security Config from resource network_security_config debugBuild: false
+10-05 03:33:46.737 19676  6964 I NearbyMediums: No BLE Fast/GATT advertisements found in the latest cycle.
+10-05 03:33:46.737 19676  6964 I NearbyMediums: Current Tracked Scanning Clients are : {NearbyConnections.EnvironmentMonitor, NearbySharing}
+10-05 03:33:46.746   943   943 I ANDR-PERF-LM: LMPerfGlue: perfmodule_submit_request() 132: perfmodule_submit_request()
+10-05 03:33:46.746   943   943 I ANDR-PERF-LM: Core: getInstance() 84: LM getInstance
+10-05 03:33:46.746   943   943 D ANDR-PERF-LM: Feature: lookup() 101: Feature Name = AppClassifier, total featuers = 3, featureFound = 1
+10-05 03:33:46.746   943   943 D ANDR-PERF-LM: Feature: getData() 112: data.data = 0
+10-05 03:33:46.746   943   943 I ANDR-PERF-LM: FeedbackAPI: getFeedback() 60: app:com.coloros.uxdesign feature:AppClassifier feedback = 0
+10-05 03:33:46.751 12768 12792 I OplusFeatureCache: Milliseconds spent on init(): 3
+10-05 03:33:46.792  1215  1672 W Searchables: No web search activity found
+10-05 03:33:46.804   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:46.848 28428 29128 D ThreadBooster: [Scene Stop] After reset priority, aoapp.musically priority is -20
+10-05 03:33:46.848 28428 29128 D ThreadBooster: [Scene Start] After adjust priority,  aoapp.musically priority is -20, tid: 28428
+10-05 03:33:46.941  4602  4621 E OpenID  : com.coloros.uxdesign:DUID:ret:T
+10-05 03:33:46.944  1215  1672 W Searchables: No web search activity found
+10-05 03:33:46.954 12768 12795 D AppFeatureProviderUtils: getStringForFeature: https://guif-eu.coloros.com
+10-05 03:33:47.006   581   581 E SELinux : avc:  denied  { find } for pid=32467 uid=10228 name=tethering scontext=u:r:permissioncontroller_app:s0:c228,c256,c512,c768 tcontext=u:object_r:tethering_service:s0 tclass=service_manager permissive=0
+10-05 03:33:47.024  1215  3609 V AlarmManager: set(null) : type=3 when=119643055whenElapsed119643055maxWhen =119653402 win=10347 interval=0 flags=0x0 pkg = android
+10-05 03:33:47.042  1215  1215 W Looper  : Slow dispatch took 483ms main h=com.android.server.job.JobSchedulerService$JobHandler c=null m=3
+10-05 03:33:47.046 29945 30034 I Finsky  : [9733] [ContentSync] finished, scheduled=true
+10-05 03:33:47.074  2661  2661 D InterruptionStateProvider: No alerting: filtered notification: 0|com.cyberportalx|100|null|10760
+10-05 03:33:47.085  1215  1215 W Looper  : Drained
