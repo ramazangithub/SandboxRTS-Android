@@ -135,7 +135,7 @@ static Int theFlashCount = 0;
 
 // GeneralsX @android r005: temporary red clear colour to verify the swapchain reaches the display
 #if defined(__ANDROID__)
-#define AOW_ANDROID_CLEAR_COLOR Vector3( 1.0f, 0.0f, 0.0f )
+#define AOW_ANDROID_CLEAR_COLOR Vector3( 0.0f, 0.0f, 0.0f )
 #else
 #define AOW_ANDROID_CLEAR_COLOR Vector3( 0.0f, 0.0f, 0.0f )
 #endif

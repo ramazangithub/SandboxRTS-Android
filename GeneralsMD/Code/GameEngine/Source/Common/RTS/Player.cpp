@@ -3040,6 +3040,9 @@ Upgrade *Player::findUpgrade( const UpgradeTemplate *upgradeTemplate )
 //=================================================================================================
 Bool Player::hasUpgradeComplete( const UpgradeTemplate *upgradeTemplate ) const
 {
+	// GeneralsX @android r007: missing upgrade templates (e.g. Upgrade_GLAWorkerShoes) crashed unit voice responses
+	if (upgradeTemplate == nullptr)
+		return FALSE;
 	const UpgradeMaskType& testMask = upgradeTemplate->getUpgradeMask();
 	return hasUpgradeComplete( testMask );
 }
@@ -3059,6 +3062,8 @@ Bool Player::hasUpgradeComplete( const UpgradeMaskType& testMask ) const
 //=================================================================================================
 Bool Player::hasUpgradeInProduction( const UpgradeTemplate *upgradeTemplate )
 {
+	if (upgradeTemplate == nullptr)
+		return FALSE;
 	const UpgradeMaskType& testMask = upgradeTemplate->getUpgradeMask();
 	return m_upgradesInProgress.testForAll( testMask );
 }

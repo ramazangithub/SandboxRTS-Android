@@ -48,6 +48,7 @@
 #include "StdDevice/Common/StdLocalFileSystem.h"
 #include "StdDevice/Common/StdBIGFileSystem.h"
 #include "Common/GlobalData.h"
+#include "Common/MessageStream.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdio>
@@ -172,6 +173,7 @@ struct TouchState {
 	Uint64 downTicks = 0;
 	bool thresholdCrossed = false;      // finger1 passed the drag threshold, LMB not yet committed
 	Uint64 thresholdCrossedTicks = 0;   // when it crossed, for the second-finger grace window
+	bool oneFingerPan = false;             // r007: PAN driven by finger1 only
 	Uint64 lastTapTicks = 0;               // commit time of the previous clean tap
 	float lastTapX = 0.0f, lastTapY = 0.0f; // position of the previous clean tap
 	float panLastX = 0.0f, panLastY = 0.0f;   // previous pan centroid (per-event delta)
@@ -328,6 +330,25 @@ void beginPan(SDL3Mouse *mouse, SDL_Window *window, int winW, int winH)
 	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.panX, s_touch.panY);
 	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
 	                   s_touch.panX, s_touch.panY, SDL_BUTTON_RIGHT);
+	s_touch.oneFingerPan = false;
+	s_touch.phase = TouchState::PAN;
+}
+
+// GeneralsX @android r007: 1-finger drag = camera pan (RMB scroll anchored at the
+// press point). Drag-box selection moved to long-press + drag.
+void beginOneFingerPan(SDL3Mouse *mouse, SDL_Window *window)
+{
+	s_touch.panX = s_touch.downX;
+	s_touch.panY = s_touch.downY;
+	s_touch.panLastX = s_touch.lastX;
+	s_touch.panLastY = s_touch.lastY;
+	s_touch.panAccumX = s_touch.lastX - s_touch.downX;
+	s_touch.panAccumY = s_touch.lastY - s_touch.downY;
+	s_touch.finger2 = (SDL_FingerID)~(SDL_FingerID)0;
+	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.panX, s_touch.panY);
+	sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
+	                   s_touch.panX, s_touch.panY, SDL_BUTTON_RIGHT);
+	s_touch.oneFingerPan = true;
 	s_touch.phase = TouchState::PAN;
 }
 
@@ -411,8 +432,24 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				s_touch.thresholdCrossedTicks = SDL_GetTicks();
 			}
 		}
+		else if (s_touch.phase == TouchState::LONGPRESSED && event.tfinger.fingerID == s_touch.finger1) {
+			// r007: long-press armed the box (LMB already down) - dragging grows it
+			const float moved = SDL_fabsf(px - s_touch.downX) + SDL_fabsf(py - s_touch.downY);
+			if (moved >= gestureThresholdPx(window)) {
+				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, px, py);
+				s_touch.phase = TouchState::DRAGGING;
+			}
+		}
 		else if (s_touch.phase == TouchState::DRAGGING && event.tfinger.fingerID == s_touch.finger1) {
 			sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, px, py);
+		}
+		else if (s_touch.phase == TouchState::PAN && s_touch.oneFingerPan) {
+			if (event.tfinger.fingerID == s_touch.finger1) {
+				s_touch.panAccumX += px - s_touch.panLastX;
+				s_touch.panAccumY += py - s_touch.panLastY;
+				s_touch.panLastX = px;
+				s_touch.panLastY = py;
+			}
 		}
 		else if (s_touch.phase == TouchState::TWO_PENDING) {
 			// Classify: pan (centroid travel) vs pinch (distance change) —
@@ -497,12 +534,16 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 						(now - s_touch.lastTapTicks) <= DOUBLE_TAP_MS &&
 						SDL_fabsf(s_touch.downX - s_touch.lastTapX) <= slop &&
 						SDL_fabsf(s_touch.downY - s_touch.lastTapY) <= slop;
-					const Uint8 clicks = dbl ? 2 : 1;
-					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
-					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
-					                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT, 0.0f, clicks);
-					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-					                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT, 0.0f, clicks);
+					if (dbl && TheMessageStream) {
+						// r007: double tap = select all own units on screen (same as the Q hotkey)
+						TheMessageStream->appendMessage(GameMessage::MSG_META_SELECT_ALL);
+					} else {
+						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
+						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
+						                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT, 0.0f, 1);
+						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+						                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT, 0.0f, 1);
+					}
 					// Reset after a double so a triple-tap doesn't chain; otherwise
 					// anchor this tap for the next one.
 					s_touch.lastTapTicks = dbl ? 0 : now;
@@ -512,6 +553,10 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				break;
 			case TouchState::DRAGGING:
 				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP, px, py, SDL_BUTTON_LEFT);
+				break;
+			case TouchState::LONGPRESSED:
+				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+				                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
 				break;
 			case TouchState::PAN:
 				// GeneralsX @android FadiLabib 07/07/2026 - Release RMB at the last
@@ -540,12 +585,11 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 {
 	if (s_touch.phase == TouchState::PENDING &&
 	    (SDL_GetTicks() - s_touch.downTicks) >= LONG_PRESS_MS) {
-		// No LMB was sent yet (deferred), so this is a pure right-click.
+		// r007: long-press arms the selection box: LMB goes down at the press
+		// point, the following drag grows the green box, lift selects.
 		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
 		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
-		                   s_touch.downX, s_touch.downY, SDL_BUTTON_RIGHT);
-		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-		                   s_touch.downX, s_touch.downY, SDL_BUTTON_RIGHT);
+		                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
 		s_touch.phase = TouchState::LONGPRESSED;
 	}
 
@@ -554,11 +598,8 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 	// second finger, this really is a single-finger drag: commit it now.
 	if (s_touch.phase == TouchState::PENDING && s_touch.thresholdCrossed &&
 	    (SDL_GetTicks() - s_touch.thresholdCrossedTicks) >= SECOND_FINGER_GRACE_MS) {
-		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
-		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
-		                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
-		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.lastX, s_touch.lastY);
-		s_touch.phase = TouchState::DRAGGING;
+		// r007: a plain 1-finger drag moves the camera (box select = long-press + drag)
+		beginOneFingerPan(mouse, window);
 	}
 
 	// Flush one frame's worth of pan travel as an RMB-scroll offset from the fixed

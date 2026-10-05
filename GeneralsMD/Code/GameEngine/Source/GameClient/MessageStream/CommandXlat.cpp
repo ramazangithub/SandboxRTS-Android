@@ -589,7 +589,7 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					// Special case for GLA worker to use a different set of move voices when he has received the worker shoes upgrade
 					Player *player = obj->getControllingPlayer();
 					static const UpgradeTemplate *workerShoeTemplate = TheUpgradeCenter->findUpgrade( "Upgrade_GLAWorkerShoes" );
-					if (player && player->hasUpgradeComplete(workerShoeTemplate))
+					if (player && workerShoeTemplate && player->hasUpgradeComplete(workerShoeTemplate))
 					{
 						if (obj->isKindOf(KINDOF_INFANTRY) && obj->isKindOf(KINDOF_DOZER) && obj->isKindOf(KINDOF_HARVESTER)) // Only Workers fit all 3
 						{

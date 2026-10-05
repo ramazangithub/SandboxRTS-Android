@@ -12,7 +12,8 @@
         <activity
             android:name=".GeneralsXZHActivity"
             android:exported="true"
-            android:screenOrientation="landscape"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode"
             android:launchMode="singleInstance">
             <intent-filter>
