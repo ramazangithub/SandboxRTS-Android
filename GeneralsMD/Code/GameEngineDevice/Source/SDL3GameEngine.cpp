@@ -193,6 +193,7 @@ struct TouchState {
 	float panLastX = 0.0f, panLastY = 0.0f;   // previous pan centroid (per-event delta)
 	float panAccumX = 0.0f, panAccumY = 0.0f; // finger delta accrued since last frame flush
 	float velX = 0.0f, velY = 0.0f;           // r010: smoothed per-frame pan offset
+	Uint64 panStartTicks = 0;                // r012: pan ease-in
 	bool gliding = false;                     // r010: inertia after lift (RMB still held)
 	float glideX = 0.0f, glideY = 0.0f;
 	float f1x = 0.0f, f1y = 0.0f, f2x = 0.0f, f2y = 0.0f; // normalized per finger
@@ -240,6 +241,8 @@ const float GLIDE_DECAY = 0.86f;  // per-frame decay
 const float ROTATE_SIGN = 1.0f;   // camera yaw follows the finger twist
 const float ROTATE_DEADZONE = 0.10f; // rad of twist before rotation engages
 const Uint64 TAP_MAX_MS = 450;    // longer presses are not taps (no flick double-taps)
+const Uint64 PAN_RAMP_MS = 140;   // r012: first frames of a pan ease in (no jump)
+const float PAN_MAX_FRAC = 0.08f; // r012: max finger travel applied per frame, fraction of window
 // r010: inertia - after lift the camera keeps ~10% of the swipe momentum
 
 // GeneralsX @android FadiLabib 07/07/2026 - Edge-hold scroll. A pure 1:1 drag can
@@ -249,18 +252,15 @@ const Uint64 TAP_MAX_MS = 450;    // longer presses are not taps (no flick doubl
 // in that direction so the engine's RMB joystick keeps scrolling (a slow, fixed
 // velocity — this is the knob if it feels too fast/slow), letting you traverse
 // the whole map by parking your fingers at the edge. Normal drags never reach it.
-const float EDGE_MARGIN_FRAC = 0.10f;        // within 10% of the left/right/top edge = "at the edge"
 // The 3D view is full-screen height but the control bar is painted over the
 // bottom strip, so fingers stop at the play area and never reach a 6% bottom
 // band. Trigger the bottom edge higher up, above the control bar.
-const float EDGE_MARGIN_BOTTOM_FRAC = 0.18f; // bottom trigger band (clears the control bar)
 // The engine's RMB scroll speed is proportional to the cursor's offset from the
 // anchor measured in INTERNAL display pixels, and internal res now tracks the
 // panel (see SDL3Main's -xres/-yres). A fixed pixel offset therefore scrolls at
 // wildly different speeds per resolution (5px was fine at the old 4:3 internal
 // res, ~5% of keyboard-scroll speed at native res). Express it as a fraction of
 // window width so the feel is resolution-independent. This is the speed knob.
-const float EDGE_SCROLL_FRAC = 0.015f;       // per-frame edge push, fraction of window width
 
 // GeneralsX @android FadiLabib 07/07/2026 - Gesture thresholds in PHYSICAL size,
 // not pixels. The old fixed 8 px is ~0.7 mm on a Tab S7+ (2800x1752 @ ~274 ppi):
@@ -433,6 +433,7 @@ void beginPan(SDL3Mouse *mouse, SDL_Window *window, int winW, int winH)
 	s_touch.rotLast = fingerAngle(winW, winH);
 	s_touch.rotAccum = wrapAngle(s_touch.rotLast - s_touch.rot0);
 	s_touch.oneFingerPan = false;
+	s_touch.panStartTicks = SDL_GetTicks();
 	s_touch.phase = TouchState::PAN;
 }
 
@@ -444,9 +445,11 @@ void beginOneFingerPan(SDL3Mouse *mouse, SDL_Window *window)
 	s_touch.panY = s_touch.downY;
 	s_touch.panLastX = s_touch.lastX;
 	s_touch.panLastY = s_touch.lastY;
-	// r011: the movement made during the threshold/grace window is applied too
-	s_touch.panAccumX = s_touch.lastX - s_touch.downX;
-	s_touch.panAccumY = s_touch.lastY - s_touch.downY;
+	// r012: the threshold/grace travel is NOT applied in one frame any more (that
+	// was the jump/teleport on the first swipe); the pan starts from here.
+	s_touch.panAccumX = 0.0f;
+	s_touch.panAccumY = 0.0f;
+	s_touch.panStartTicks = SDL_GetTicks();
 	s_touch.wvX = s_touch.wvY = 0.0f;
 	s_touch.rotActive = false;
 	s_touch.finger2 = (SDL_FingerID)~(SDL_FingerID)0;
@@ -776,15 +779,17 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 
 		int winW = 0, winH = 0;
 		SDL_GetWindowSize(window, &winW, &winH);
-		const float marginX = EDGE_MARGIN_FRAC * (float)winW;
-		const float marginTop = EDGE_MARGIN_FRAC * (float)winH;
-		const float marginBottom = EDGE_MARGIN_BOTTOM_FRAC * (float)winH;
-		const float edgePush = EDGE_SCROLL_FRAC * (float)winW;
-		// finger parked at an edge = keep dragging that way
-		if (s_touch.panLastX < marginX)                         sdx -= edgePush;
-		else if (s_touch.panLastX > (float)winW - marginX)      sdx += edgePush;
-		if (s_touch.panLastY < marginTop)                       sdy -= edgePush;
-		else if (s_touch.panLastY > (float)winH - marginBottom) sdy += edgePush;
+		// r012: no edge auto-scroll on touch (PC mechanic, fought the finger).
+		// Ease the first frames in and clamp spikes so the first swipe is smooth.
+		const Uint64 panAge = SDL_GetTicks() - s_touch.panStartTicks;
+		if (panAge < PAN_RAMP_MS) {
+			const float r = 0.35f + 0.65f * (float)panAge / (float)PAN_RAMP_MS;
+			sdx *= r;
+			sdy *= r;
+		}
+		const float maxD = PAN_MAX_FRAC * (float)(winW > winH ? winW : winH);
+		if (sdx > maxD) sdx = maxD; else if (sdx < -maxD) sdx = -maxD;
+		if (sdy > maxD) sdy = maxD; else if (sdy < -maxD) sdy = -maxD;
 
 		float wx = 0.0f, wy = 0.0f;
 		touchScrollScreen(window, sdx, sdy, &wx, &wy);

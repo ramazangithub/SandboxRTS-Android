@@ -593,6 +593,9 @@ void GameLODManager::applyStaticLODLevel(StaticGameLODLevel level)
 		requestedTrees = m_memPassed;
 	}
 
+#if defined(__ANDROID__)
+	lodInfo->m_useShadowVolumes = TRUE; // r012: real-time shadows on mobile
+#endif
 	if (TheGlobalData)
 	{
 		TheWritableGlobalData->m_maxParticleCount=lodInfo->m_maxParticleCount;

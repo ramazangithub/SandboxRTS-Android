@@ -114,6 +114,9 @@ void LookAtTranslator::stopScrolling()
 //-----------------------------------------------------------------------------
 Bool LookAtTranslator::canScrollAtScreenEdge() const
 {
+#if defined(__ANDROID__)
+	return false; // r012: touch has no cursor parked at the edge
+#endif
 	if (!TheMouse->isCursorCaptured())
 		return false;
 

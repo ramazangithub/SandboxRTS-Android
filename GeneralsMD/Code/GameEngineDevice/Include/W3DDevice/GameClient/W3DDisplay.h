@@ -169,6 +169,7 @@ protected:
 	virtual void onFlush() override;
 
 	Byte m_initialized;												///< TRUE when system is initialized
+	void gxUpdateDayNight(); ///< r012: smooth day/night cycle
 	LightClass *m_myLight[LightEnvironmentClass::MAX_LIGHTS];										///< light hack for now
 	Render2DClass *m_2DRender;								///< interface for common 2D functions
 	IRegion2D m_clipRegion;									///< the clipping region for images

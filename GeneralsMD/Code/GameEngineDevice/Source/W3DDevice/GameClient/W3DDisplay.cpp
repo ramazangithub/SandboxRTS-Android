@@ -80,6 +80,7 @@ static void drawFramerateBar();
 #include "W3DDevice/GameClient/W3DDynamicLight.h"
 #include "W3DDevice/GameClient/W3DProfilerFrameCapture.h"
 #include "W3DDevice/GameClient/HeightMap.h"
+#include "W3DDevice/GameClient/W3DShadow.h"
 #include "W3DDevice/GameClient/WorldHeightMap.h"
 #include "W3DDevice/GameClient/W3DScene.h"
 #include "W3DDevice/GameClient/W3DTerrainTracks.h"
@@ -1965,6 +1966,7 @@ void W3DDisplay::draw()
 		return;
 
 	updateAverageFPS();
+	gxUpdateDayNight();
 	if (TheGlobalData->m_enableDynamicLOD && TheGameLogic->getShowDynamicLOD())
 	{
 		DynamicGameLODLevel lod=TheGameLODManager->findDynamicLODLevel(m_averageFPS);
@@ -2410,6 +2412,142 @@ void W3DDisplay::enableLetterBox(Bool enable)
 				TheTacticalView->setZoomLimited( 1 );
 			}
 		}
+	}
+}
+
+// W3DDisplay::gxUpdateDayNight ==============================================
+/** r012: smooth day/night cycle. One full day = 10 minutes of game time
+  * (18000 logic frames at 30 fps). The map's four lighting sets
+  * (morning / afternoon / evening / night) are captured once per game and
+  * interpolated: the light direction moves continuously (shadows crawl), the
+  * colours hold on each key for a while and then blend into the next one.
+  * Objects + scene lights update every frame (cheap), shadows every 0.5 s,
+  * terrain vertex lighting every 3 s (full relight is the expensive part). */
+//=============================================================================
+void W3DDisplay::gxUpdateDayNight()
+{
+	if (!TheGameLogic || !TheWritableGlobalData || !TheGameLogic->isInGame() || TheGameLogic->isInShellGame())
+		return;
+
+	static GlobalData::TerrainLighting s_keyT[4][MAX_GLOBAL_LIGHTS];
+	static GlobalData::TerrainLighting s_keyO[4][MAX_GLOBAL_LIGHTS];
+	static Bool s_have = FALSE;
+	static UnsignedInt s_lastFrame = 0;
+	static UnsignedInt s_lastTerrain = 0;
+	static UnsignedInt s_lastShadow = 0;
+	static Int s_slot = TIME_OF_DAY_AFTERNOON;
+
+	const UnsignedInt frame = TheGameLogic->getFrame();
+	if (!s_have || frame < s_lastFrame)
+	{
+		// fallback palette for maps that leave a time-of-day set empty
+		static const Real defs[4][9] = {
+			{ .46f,.40f,.38f,  .95f,.74f,.55f,  -.80f, .35f,-.50f },
+			{ .52f,.47f,.44f,  .86f,.80f,.72f,  -.45f, .30f,-.85f },
+			{ .44f,.32f,.30f,  .98f,.55f,.34f,   .80f, .25f,-.45f },
+			{ .20f,.22f,.32f,  .30f,.34f,.52f,   .35f,-.50f,-.80f } };
+		s_slot = (Int)TheGlobalData->m_timeOfDay;
+		if (s_slot < TIME_OF_DAY_FIRST || s_slot >= TIME_OF_DAY_COUNT)
+			s_slot = TIME_OF_DAY_AFTERNOON;
+		for (Int k = 0; k < 4; ++k)
+		{
+			const Int tod = TIME_OF_DAY_FIRST + k;
+			for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
+			{
+				s_keyT[k][i] = TheGlobalData->m_terrainLighting[tod][i];
+				s_keyO[k][i] = TheGlobalData->m_terrainObjectsLighting[tod][i];
+			}
+			const GlobalData::TerrainLighting &l0 = s_keyO[k][0];
+			const Real sum = l0.ambient.red + l0.ambient.green + l0.ambient.blue + l0.diffuse.red + l0.diffuse.green + l0.diffuse.blue;
+			if (sum <= 0.001f)
+			{
+				for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
+				{
+					GlobalData::TerrainLighting l;
+					const Real sc = (i == 0) ? 1.0f : 0.0f;
+					l.ambient.red = defs[k][0] * sc; l.ambient.green = defs[k][1] * sc; l.ambient.blue = defs[k][2] * sc;
+					l.diffuse.red = defs[k][3] * sc; l.diffuse.green = defs[k][4] * sc; l.diffuse.blue = defs[k][5] * sc;
+					l.lightPos.x = defs[k][6]; l.lightPos.y = defs[k][7]; l.lightPos.z = defs[k][8];
+					s_keyT[k][i] = l;
+					s_keyO[k][i] = l;
+				}
+			}
+		}
+		s_have = TRUE;
+		s_lastTerrain = frame;
+		s_lastShadow = frame;
+	}
+	s_lastFrame = frame;
+
+	const Real CYCLE_FRAMES = 18000.0f;
+	Real t = (Real)frame / CYCLE_FRAMES * 4.0f + (Real)(s_slot - TIME_OF_DAY_FIRST);
+	t = fmodf(t, 4.0f);
+	Int seg = (Int)t;
+	if (seg > 3) seg = 3;
+	const Real f = t - (Real)seg;
+	const Int a = seg;
+	const Int b = (seg + 1) & 3;
+	// colours: hold 35% of the segment, then smoothstep into the next key
+	Real w = (f < 0.35f) ? 0.0f : (f - 0.35f) / 0.65f;
+	w = w * w * (3.0f - 2.0f * w);
+
+	for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
+	{
+		for (Int pass = 0; pass < 2; ++pass)
+		{
+			const GlobalData::TerrainLighting &la = pass ? s_keyO[a][i] : s_keyT[a][i];
+			const GlobalData::TerrainLighting &lb = pass ? s_keyO[b][i] : s_keyT[b][i];
+			GlobalData::TerrainLighting r;
+			r.ambient.red   = la.ambient.red   + (lb.ambient.red   - la.ambient.red)   * w;
+			r.ambient.green = la.ambient.green + (lb.ambient.green - la.ambient.green) * w;
+			r.ambient.blue  = la.ambient.blue  + (lb.ambient.blue  - la.ambient.blue)  * w;
+			r.diffuse.red   = la.diffuse.red   + (lb.diffuse.red   - la.diffuse.red)   * w;
+			r.diffuse.green = la.diffuse.green + (lb.diffuse.green - la.diffuse.green) * w;
+			r.diffuse.blue  = la.diffuse.blue  + (lb.diffuse.blue  - la.diffuse.blue)  * w;
+			// direction: linear over the whole segment -> the sun never stops
+			Real x = la.lightPos.x + (lb.lightPos.x - la.lightPos.x) * f;
+			Real y = la.lightPos.y + (lb.lightPos.y - la.lightPos.y) * f;
+			Real z = la.lightPos.z + (lb.lightPos.z - la.lightPos.z) * f;
+			if (z > -0.2f) z = -0.2f; // keep the light above the ground
+			const Real len = sqrtf(x * x + y * y + z * z);
+			if (len > 0.0001f) { x /= len; y /= len; z /= len; }
+			r.lightPos.x = x; r.lightPos.y = y; r.lightPos.z = z;
+			if (pass)
+				TheWritableGlobalData->m_terrainObjectsLighting[s_slot][i] = r;
+			else
+				TheWritableGlobalData->m_terrainLighting[s_slot][i] = r;
+		}
+	}
+	TheWritableGlobalData->setTimeOfDay((TimeOfDay)s_slot);
+
+	// objects: every frame
+	const GlobalData::TerrainLighting *ol = &TheGlobalData->m_terrainObjectsLighting[s_slot][0];
+	if (m_3DScene)
+		m_3DScene->Set_Ambient_Light(Vector3(ol->ambient.red, ol->ambient.green, ol->ambient.blue));
+	for (Int i = 0; i < LightEnvironmentClass::MAX_LIGHTS && i < MAX_GLOBAL_LIGHTS; ++i)
+	{
+		if (m_myLight[i])
+		{
+			ol = &TheGlobalData->m_terrainObjectsLighting[s_slot][i];
+			m_myLight[i]->Set_Ambient(Vector3(0.0f, 0.0f, 0.0f));
+			m_myLight[i]->Set_Diffuse(Vector3(ol->diffuse.red, ol->diffuse.green, ol->diffuse.blue));
+			m_myLight[i]->Set_Specular(Vector3(0, 0, 0));
+			Matrix3D mtx;
+			mtx.Set(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(ol->lightPos.x, ol->lightPos.y, ol->lightPos.z), Vector3(0, 0, 0));
+			m_myLight[i]->Set_Transform(mtx);
+		}
+	}
+	// shadows follow the sun
+	if (TheW3DShadowManager && frame - s_lastShadow >= 15)
+	{
+		TheW3DShadowManager->setTimeOfDay((TimeOfDay)s_slot);
+		s_lastShadow = frame;
+	}
+	// terrain vertex lighting
+	if (TheTerrainRenderObject && frame - s_lastTerrain >= 90)
+	{
+		TheTerrainRenderObject->setTimeOfDay((TimeOfDay)s_slot);
+		s_lastTerrain = frame;
 	}
 }
 
