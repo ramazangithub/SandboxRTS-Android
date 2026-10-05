@@ -439,7 +439,30 @@ public:
 	// This function is only for use by the AIUpdateModuleData::parseLocomotorSet function.
 	AIUpdateModuleData *friend_getAIModuleInfo();
 
+#if defined(__ANDROID__)
+	// r012: sandbox objects ship with Shadow = NONE; give units, buildings, trees,
+	// wrecks and rocks real shadow volumes (grass/bushes/small props stay shadowless).
+	static bool gxWantsShadow(const char *n)
+	{
+		static const char *const k[] = { "CubeTank", "EnemyPanther", "PantherFactory", "VHouse", "VRuin", "VTower",
+			"VTree", "VWreck", "VRock", "VBoulder", "VChunk", "VBarricade", nullptr };
+		if (!n) return false;
+		for (int i = 0; k[i]; ++i) {
+			const char *a = k[i]; const char *b = n;
+			while (*a && *a == *b) { ++a; ++b; }
+			if (!*a) return true;
+		}
+		return false;
+	}
+	ShadowType getShadowType() const
+	{
+		if ((ShadowType)m_shadowType == SHADOW_NONE && gxWantsShadow(m_nameString.str()))
+			return SHADOW_VOLUME;
+		return (ShadowType)m_shadowType;
+	}
+#else
 	ShadowType getShadowType() const { return (ShadowType)m_shadowType; }
+#endif
 	Real getShadowSizeX() const { return m_shadowSizeX; }
 	Real getShadowSizeY() const { return m_shadowSizeY; }
 	Real getShadowOffsetX() const { return m_shadowOffsetX; }
