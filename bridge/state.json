@@ -1,12 +1,12 @@
 {
-  "round": 6,
-  "turn": "builder",
-  "commit": "8e222ce",
-  "release_tag": "android-v0.6.0-r006",
-  "apk": "GeneralsZH-Android-r006.apk",
+  "round": 7,
+  "turn": "tester",
+  "commit": "cd3ce45",
+  "release_tag": "android-v0.7.0-r007",
+  "apk": "GeneralsZH-Android-*.apk",
   "stubs_changed": false,
-  "status": "crash",
-  "updated_by": "tester",
-  "updated_at": "2026-10-05T00:12:00Z",
+  "status": "ready",
+  "updated_by": "builder",
+  "updated_at": "2026-10-05T00:21:48Z",
   "mode": "cloud_release"
 }
