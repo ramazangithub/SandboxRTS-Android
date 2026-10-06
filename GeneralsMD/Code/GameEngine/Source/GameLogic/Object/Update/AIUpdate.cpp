@@ -220,6 +220,43 @@ static void gxPatrolStep( AIUpdateInterface *ai, Object *obj )
 		p.legStart = now;
 	}
 }
+// r026: formation front - once the unit has arrived and stopped, turn it toward the given point
+struct GxFace { Coord3D dest; Coord3D face; UnsignedInt t; };
+static std::map<ObjectID, GxFace> s_gxFace;
+void GX_SetFace( ObjectID id, const Coord3D *dest, const Coord3D *face )
+{
+	GxFace f;
+	f.dest = *dest;
+	f.face = *face;
+	f.t = TheGameLogic->getFrame();
+	s_gxFace[ id ] = f;
+}
+static void gxFaceStep( AIUpdateInterface *ai, Object *obj )
+{
+	if( s_gxFace.empty() || ai == nullptr || obj == nullptr )
+		return;
+	std::map<ObjectID, GxFace>::iterator it = s_gxFace.find( obj->getID() );
+	if( it == s_gxFace.end() )
+		return;
+	const UnsignedInt now = TheGameLogic->getFrame();
+	if( ( now + (UnsignedInt)obj->getID() ) % 6 != 0 )
+		return;
+	if( now - it->second.t > 30 * 90 )
+	{
+		s_gxFace.erase( it );
+		return;
+	}
+	if( now - it->second.t < 15 )
+		return;
+	const Coord3D *p = obj->getPosition();
+	const Real dx = p->x - it->second.dest.x, dy = p->y - it->second.dest.y;
+	if( dx * dx + dy * dy > 30.0f * 30.0f || !ai->isIdle() )
+		return;
+	Coord3D f = it->second.face;
+	s_gxFace.erase( it );
+	ai->aiFacePosition( &f, CMD_FROM_AI );
+}
+
 static Bool gxIsMoveCmd( Int c )
 {
 	switch( c )
@@ -1173,7 +1210,10 @@ UpdateSleepTime AIUpdateInterface::update()
 
 	// SandboxRTS r022: hold mode - a chase or any other path is dropped at once
 	if (getObject() != nullptr && !getObject()->isEffectivelyDead())
+	{
 		gxPatrolStep(this, getObject());
+		gxFaceStep(this, getObject());   // r026
+	}
 	if (getObject() != nullptr && !getObject()->isEffectivelyDead() && GX_IsHold(getObject()->getID()) && getPath() != nullptr)
 		aiIdle(CMD_FROM_AI);
 

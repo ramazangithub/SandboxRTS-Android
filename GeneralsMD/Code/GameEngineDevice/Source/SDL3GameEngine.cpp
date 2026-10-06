@@ -56,11 +56,15 @@ Bool AndroidHud_HandleTap(Int x, Int y);   // InGameUI.cpp (r009 touch HUD)
 void AndroidHud_SelectOnScreen();          // InGameUI.cpp (r011 double tap)
 Bool AndroidHud_DoubleTapGround(Int x, Int y);   // InGameUI.cpp (r022 aggressive move)
 Bool AndroidHud_HandleLongPress(Int x, Int y);   // InGameUI.cpp (r022 group slots)
+Bool AndroidHud_FaceDrag(Int x, Int y);          // InGameUI.cpp (r026 formation front)
+void AndroidHud_FaceEnd(Int x, Int y, Bool cancel);
 #else
 static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
 static inline void AndroidHud_SelectOnScreen() {}
 static inline Bool AndroidHud_DoubleTapGround(Int, Int) { return FALSE; }
 static inline Bool AndroidHud_HandleLongPress(Int, Int) { return FALSE; }
+static inline Bool AndroidHud_FaceDrag(Int, Int) { return FALSE; }
+static inline void AndroidHud_FaceEnd(Int, Int, Bool) {}
 #endif
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -554,11 +558,20 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 			}
 		}
 		else if (s_touch.phase == TouchState::LONGPRESSED && event.tfinger.fingerID == s_touch.finger1) {
+			if (s_hudLongPress) {
+				// r026: HUD owns this press (formation front drag) - no box, no mouse
+				int fw = 0, fh = 0;
+				SDL_GetWindowSize(window, &fw, &fh);
+				const float fsx = (TheDisplay && fw > 0) ? (float)TheDisplay->getWidth() / (float)fw : 1.0f;
+				const float fsy = (TheDisplay && fh > 0) ? (float)TheDisplay->getHeight() / (float)fh : 1.0f;
+				AndroidHud_FaceDrag((Int)(px * fsx), (Int)(py * fsy));
+			} else {
 			// r007: long-press armed the box (LMB already down) - dragging grows it
 			const float moved = SDL_fabsf(px - s_touch.downX) + SDL_fabsf(py - s_touch.downY);
 			if (moved >= gestureThresholdPx(window)) {
 				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, px, py);
 				s_touch.phase = TouchState::DRAGGING;
+			}
 			}
 		}
 		else if (s_touch.phase == TouchState::DRAGGING && event.tfinger.fingerID == s_touch.finger1) {
@@ -723,8 +736,14 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP, px, py, SDL_BUTTON_LEFT);
 				break;
 			case TouchState::LONGPRESSED:
-				if (s_hudLongPress)
+				if (s_hudLongPress) {
 					s_hudLongPress = false;
+					int uw = 0, uh = 0;
+					SDL_GetWindowSize(window, &uw, &uh);
+					const float usx = (TheDisplay && uw > 0) ? (float)TheDisplay->getWidth() / (float)uw : 1.0f;
+					const float usy = (TheDisplay && uh > 0) ? (float)TheDisplay->getHeight() / (float)uh : 1.0f;
+					AndroidHud_FaceEnd((Int)(px * usx), (Int)(py * usy), event.type == SDL_EVENT_FINGER_CANCELED);
+				}
 				else
 					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
 					                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);

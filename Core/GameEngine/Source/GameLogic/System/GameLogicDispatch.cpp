@@ -1986,6 +1986,7 @@ void GX_SetBlind( ObjectID id, Bool on );
 void GX_MarkCancel( ObjectID id );
 
 void GX_PatrolCreate( const ObjectID *ids, Int nIds, const Coord3D *pts, Int nPts );
+void GX_SetFace( ObjectID id, const Coord3D *dest, const Coord3D *face );
 Bool GX_IsHold( ObjectID id );
 bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelectedGroup)
 {
@@ -2009,6 +2010,31 @@ bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &cu
 					AIUpdateInterface *ai = o ? o->getAIUpdateInterface() : nullptr;
 					if( ai && !o->isEffectivelyDead() && !GX_IsHold( oid ) )
 						ai->aiMoveToPosition( &dest, CMD_FROM_PLAYER );
+					break;
+				}
+			}
+			return true;
+		}
+		// r026: 8 = move one unit to its formation slot, then turn its front toward a point
+		if( gxMode == 8 )
+		{
+			if( msg->getArgumentCount() >= 4 )
+			{
+				const ObjectID oid = msg->getArgument( 1 )->objectID;
+				Coord3D dest = msg->getArgument( 2 )->location;
+				Coord3D face = msg->getArgument( 3 )->location;
+				const VecObjectID sel = currentlySelectedGroup->getAllIDs();
+				for( size_t k = 0; k < sel.size(); ++k )
+				{
+					if( sel[k] != oid )
+						continue;
+					Object *o = TheGameLogic->findObjectByID( oid );
+					AIUpdateInterface *ai = o ? o->getAIUpdateInterface() : nullptr;
+					if( ai && !o->isEffectivelyDead() && !GX_IsHold( oid ) )
+					{
+						ai->aiMoveToPosition( &dest, CMD_FROM_PLAYER );
+						GX_SetFace( oid, &dest, &face );
+					}
 					break;
 				}
 			}

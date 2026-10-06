@@ -4578,6 +4578,372 @@ static Bool androidHudTapCmdRow(Int x, Int y)
 }
 
 // ---- group slots (top-right) ------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// r026: minimap (top-left) with a live camera trapezoid, tap = jump the camera there
+// ------------------------------------------------------------------------------------------------
+void AndroidHud_NoteOrder(const Coord3D *pos, Bool aggressive);
+
+static void androidHudMiniGeometry(Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	s = h * 40 / 100;
+	x = h / 30;
+	y = h / 30;
+}
+
+static Bool androidHudMiniRect(Int &mx, Int &my, Int &mw, Int &mh, Region3D &ext)
+{
+	if (TheTerrainLogic == nullptr)
+		return FALSE;
+	TheTerrainLogic->getExtent(&ext);
+	const Real W = ext.hi.x - ext.lo.x;
+	const Real H = ext.hi.y - ext.lo.y;
+	if (W <= 1.0f || H <= 1.0f)
+		return FALSE;
+	Int x, y, s;
+	androidHudMiniGeometry(x, y, s);
+	const Int pad = s / 40 + 2;
+	const Int inner = s - pad * 2;
+	if (W >= H) { mw = inner; mh = (Int)(inner * H / W); }
+	else { mh = inner; mw = (Int)(inner * W / H); }
+	if (mw < 8 || mh < 8)
+		return FALSE;
+	mx = x + (s - mw) / 2;
+	my = y + (s - mh) / 2;
+	return TRUE;
+}
+
+static void androidHudMiniToPx(const Region3D &e, Int mx, Int my, Int mw, Int mh, Real wx, Real wy, Int &px, Int &py)
+{
+	Real fx = (wx - e.lo.x) / (e.hi.x - e.lo.x);
+	Real fy = (wy - e.lo.y) / (e.hi.y - e.lo.y);
+	if (fx < 0.0f) fx = 0.0f;
+	if (fx > 1.0f) fx = 1.0f;
+	if (fy < 0.0f) fy = 0.0f;
+	if (fy > 1.0f) fy = 1.0f;
+	px = mx + (Int)(fx * mw);
+	py = my + mh - (Int)(fy * mh);
+}
+
+// tap inside the minimap square: move the camera there (always consumes the tap)
+static Bool androidHudMiniTap(Int x, Int y)
+{
+	Int gx, gy, gs;
+	androidHudMiniGeometry(gx, gy, gs);
+	if (x < gx || x > gx + gs || y < gy || y > gy + gs)
+		return FALSE;
+	Int mx, my, mw, mh;
+	Region3D e;
+	if (!androidHudMiniRect(mx, my, mw, mh, e) || TheTacticalView == nullptr)
+		return TRUE;
+	Real fx = (Real)(x - mx) / (Real)mw;
+	Real fy = (Real)(my + mh - y) / (Real)mh;
+	if (fx < 0.0f) fx = 0.0f;
+	if (fx > 1.0f) fx = 1.0f;
+	if (fy < 0.0f) fy = 0.0f;
+	if (fy > 1.0f) fy = 1.0f;
+	Coord3D p;
+	p.x = e.lo.x + fx * (e.hi.x - e.lo.x);
+	p.y = e.lo.y + fy * (e.hi.y - e.lo.y);
+	p.z = TheTerrainLogic->getGroundHeight(p.x, p.y);
+	TheTacticalView->lookAt(&p);
+	return TRUE;
+}
+
+static const Int kMiniN = 32;
+static UnsignedInt s_miniCol[kMiniN * kMiniN];
+static Real s_miniKey = -12345.0f;
+static UnsignedInt s_miniFrame = 0;
+
+static void androidHudMiniTerrain(const Region3D &e)
+{
+	const Real key = e.hi.x * 7.0f + e.hi.y * 13.0f + e.lo.x * 3.0f + e.lo.y;
+	const UnsignedInt f = TheGameLogic->getFrame();
+	const Bool same = (key == s_miniKey) && f >= s_miniFrame;
+	s_miniFrame = f;
+	if (same)
+		return;
+	s_miniKey = key;
+	static Real hs[kMiniN * kMiniN];
+	static Bool wet[kMiniN * kMiniN];
+	Real lo = 1.0e9f, hi = -1.0e9f;
+	const Real W = e.hi.x - e.lo.x, H = e.hi.y - e.lo.y;
+	for (Int j = 0; j < kMiniN; ++j)
+		for (Int i = 0; i < kMiniN; ++i)
+		{
+			const Real wx = e.lo.x + ((Real)i + 0.5f) / (Real)kMiniN * W;
+			const Real wy = e.lo.y + ((Real)j + 0.5f) / (Real)kMiniN * H;
+			const Int k = j * kMiniN + i;
+			Real wz = 0.0f;
+			wet[k] = TheTerrainLogic->isUnderwater(wx, wy, &wz);
+			hs[k] = TheTerrainLogic->getGroundHeight(wx, wy);
+			if (!wet[k])
+			{
+				if (hs[k] < lo) lo = hs[k];
+				if (hs[k] > hi) hi = hs[k];
+			}
+		}
+	const Real span = (hi - lo) > 1.0f ? (hi - lo) : 1.0f;
+	for (Int k = 0; k < kMiniN * kMiniN; ++k)
+	{
+		if (wet[k])
+		{
+			s_miniCol[k] = GameMakeColor(28, 44, 62, 235);
+			continue;
+		}
+		const Real t = (hs[k] - lo) / span;
+		const Int c = 40 + (Int)(t * 80.0f);
+		s_miniCol[k] = GameMakeColor(c, c * 92 / 100, c * 80 / 100, 235);
+	}
+}
+
+static void androidHudDrawMini()
+{
+	Int gx, gy, gs;
+	androidHudMiniGeometry(gx, gy, gs);
+	androidHudPlate(gx, gy, gs, FALSE);
+	Int mx, my, mw, mh;
+	Region3D e;
+	if (!androidHudMiniRect(mx, my, mw, mh, e))
+		return;
+	androidHudMiniTerrain(e);
+	for (Int j = 0; j < kMiniN; ++j)
+	{
+		const Int y0 = my + mh - (j + 1) * mh / kMiniN;
+		const Int y1 = my + mh - j * mh / kMiniN;
+		for (Int i = 0; i < kMiniN; ++i)
+		{
+			const Int x0 = mx + i * mw / kMiniN;
+			const Int x1 = mx + (i + 1) * mw / kMiniN;
+			TheDisplay->drawFillRect(x0, y0, x1 - x0, y1 - y0, s_miniCol[j * kMiniN + i]);
+		}
+	}
+	// units: own = white (selected = gold), enemies = orange
+	Player *lp = ThePlayerList ? ThePlayerList->getLocalPlayer() : nullptr;
+	const Int ur = gs / 110 + 1;
+	for (Object *o = TheGameLogic->getFirstObject(); o != nullptr; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead())
+			continue;
+		const Bool st = o->isKindOf(KINDOF_STRUCTURE);
+		if (!st && !o->isKindOf(KINDOF_VEHICLE))
+			continue;
+		UnsignedInt c;
+		if (o->isLocallyControlled())
+		{
+			const Drawable *d = o->getDrawable();
+			c = (d && d->isSelected()) ? GameMakeColor(230, 190, 70, 255) : GameMakeColor(241, 240, 236, 255);
+		}
+		else if (lp && o->getTeam() && lp->getRelationship(o->getTeam()) == ENEMIES)
+			c = GameMakeColor(255, 90, 31, 255);
+		else
+			continue;
+		Int px, py;
+		androidHudMiniToPx(e, mx, my, mw, mh, o->getPosition()->x, o->getPosition()->y, px, py);
+		const Int r = st ? ur + 1 : ur;
+		TheDisplay->drawFillRect(px - r, py - r, r * 2 + 1, r * 2 + 1, c);
+	}
+	// camera: the four screen corners projected on the ground -> trapezoid (wide far edge, narrow near edge)
+	if (TheTacticalView != nullptr)
+	{
+		const Int sw = (Int)TheDisplay->getWidth();
+		const Int sh = (Int)TheDisplay->getHeight();
+		ICoord2D sc[4];
+		sc[0].x = 0;  sc[0].y = 0;
+		sc[1].x = sw; sc[1].y = 0;
+		sc[2].x = sw; sc[2].y = sh;
+		sc[3].x = 0;  sc[3].y = sh;
+		Int px[4], py[4];
+		for (Int k = 0; k < 4; ++k)
+		{
+			Coord3D w;
+			TheTacticalView->screenToTerrain(&sc[k], &w);
+			androidHudMiniToPx(e, mx, my, mw, mh, w.x, w.y, px[k], py[k]);
+		}
+		const UnsignedInt cc = GameMakeColor(241, 240, 236, 255);
+		for (Int k = 0; k < 4; ++k)
+			TheDisplay->drawLine(px[k], py[k], px[(k + 1) % 4], py[(k + 1) % 4], 2.0f, cc);
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// r026: formation facing - long press on the ground with units selected, drag = front direction
+// ------------------------------------------------------------------------------------------------
+static Bool s_faceOn = FALSE;
+static Coord3D s_faceA, s_faceB;
+
+static void androidHudFaceUnits(std::vector<Object *> &out)
+{
+	out.clear();
+	const DrawableList *list = TheInGameUI ? TheInGameUI->getAllSelectedDrawables() : nullptr;
+	if (list == nullptr)
+		return;
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		Object *o = d ? const_cast<Object *>(d->getObject()) : nullptr;
+		if (o == nullptr || o->isEffectivelyDead() || !o->isLocallyControlled() || o->getAIUpdateInterface() == nullptr)
+			continue;
+		if (o->isKindOf(KINDOF_STRUCTURE))
+			continue;
+		out.push_back(o);
+	}
+}
+
+// direction of the front (unit vector) for the current drag
+static void androidHudFaceDir(const std::vector<Object *> &u, Real &fx, Real &fy)
+{
+	Real dx = s_faceB.x - s_faceA.x, dy = s_faceB.y - s_faceA.y;
+	Real len = (Real)sqrt((double)(dx * dx + dy * dy));
+	if (len < 15.0f)
+	{
+		// short drag: face the way the group travels
+		Real cx = 0.0f, cy = 0.0f;
+		for (size_t k = 0; k < u.size(); ++k) { cx += u[k]->getPosition()->x; cy += u[k]->getPosition()->y; }
+		if (!u.empty()) { cx /= (Real)u.size(); cy /= (Real)u.size(); }
+		dx = s_faceA.x - cx; dy = s_faceA.y - cy;
+		len = (Real)sqrt((double)(dx * dx + dy * dy));
+		if (len < 1.0f) { dx = 0.0f; dy = 1.0f; len = 1.0f; }
+	}
+	fx = dx / len;
+	fy = dy / len;
+}
+
+static void androidHudFaceSlots(const Coord3D &dest, Real fx, Real fy, Int n, std::vector<Coord3D> &out)
+{
+	out.clear();
+	if (n <= 0)
+		return;
+	Int cols = (Int)ceil(sqrt((double)n));
+	if (cols < 1) cols = 1;
+	const Int rows = (n + cols - 1) / cols;
+	const Real sp = 26.0f;
+	const Real rx = fy, ry = -fx;  // right-hand side of the front
+	for (Int k = 0; k < n; ++k)
+	{
+		const Int row = k / cols;
+		const Int col = k % cols;
+		const Int inRow = (row == rows - 1) ? (n - row * cols) : cols;
+		const Real side = ((Real)col - (Real)(inRow - 1) * 0.5f) * sp;
+		const Real back = ((Real)row - (Real)(rows - 1) * 0.5f) * sp;
+		Coord3D p;
+		p.x = dest.x + rx * side - fx * back;
+		p.y = dest.y + ry * side - fy * back;
+		p.z = TheTerrainLogic ? TheTerrainLogic->getGroundHeight(p.x, p.y) : dest.z;
+		out.push_back(p);
+	}
+}
+
+static Bool androidHudFaceBegin(Int x, Int y)
+{
+	if (s_gxMode != 0 || TheTacticalView == nullptr || TheInGameUI->getSelectCount() <= 0)
+		return FALSE;
+	if (androidHudOnCmdRow(x, y))
+		return FALSE;
+	std::vector<Object *> u;
+	androidHudFaceUnits(u);
+	if (u.empty())
+		return FALSE;
+	ICoord2D sp; sp.x = x; sp.y = y;
+	TheTacticalView->screenToTerrain(&sp, &s_faceA);
+	s_faceB = s_faceA;
+	s_faceOn = TRUE;
+	return TRUE;
+}
+
+Bool AndroidHud_FaceDrag(Int x, Int y)
+{
+	if (!s_faceOn || TheTacticalView == nullptr)
+		return FALSE;
+	ICoord2D sp; sp.x = x; sp.y = y;
+	TheTacticalView->screenToTerrain(&sp, &s_faceB);
+	return TRUE;
+}
+
+void AndroidHud_FaceEnd(Int x, Int y, Bool cancel)
+{
+	if (!s_faceOn)
+		return;
+	s_faceOn = FALSE;
+	if (cancel || TheMessageStream == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+		return;
+	AndroidHud_FaceDrag(x, y);
+	s_faceOn = FALSE;
+	std::vector<Object *> u;
+	androidHudFaceUnits(u);
+	if (u.empty())
+		return;
+	Real fx, fy;
+	androidHudFaceDir(u, fx, fy);
+	std::vector<Coord3D> slots;
+	androidHudFaceSlots(s_faceA, fx, fy, (Int)u.size(), slots);
+	// front slots first, each takes the nearest free unit
+	std::vector<Bool> used(u.size(), FALSE);
+	for (size_t s = 0; s < slots.size(); ++s)
+	{
+		Int best = -1;
+		Real bd = 1.0e18f;
+		for (size_t k = 0; k < u.size(); ++k)
+		{
+			if (used[k])
+				continue;
+			const Real dx = u[k]->getPosition()->x - slots[s].x;
+			const Real dy = u[k]->getPosition()->y - slots[s].y;
+			const Real d2 = dx * dx + dy * dy;
+			if (d2 < bd) { bd = d2; best = (Int)k; }
+		}
+		if (best < 0)
+			break;
+		used[best] = TRUE;
+		Coord3D face = slots[s];
+		face.x += fx * 300.0f;
+		face.y += fy * 300.0f;
+		GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
+		m->appendIntegerArgument(8);
+		m->appendObjectIDArgument(u[best]->getID());
+		m->appendLocationArgument(slots[s]);
+		m->appendLocationArgument(face);
+	}
+	AndroidHud_NoteOrder(&s_faceA, FALSE);
+}
+
+static void androidHudDrawFace()
+{
+	if (!s_faceOn || TheTacticalView == nullptr)
+		return;
+	std::vector<Object *> u;
+	androidHudFaceUnits(u);
+	if (u.empty())
+		return;
+	Real fx, fy;
+	androidHudFaceDir(u, fx, fy);
+	std::vector<Coord3D> slots;
+	androidHudFaceSlots(s_faceA, fx, fy, (Int)u.size(), slots);
+	const UnsignedInt gold = GameMakeColor(230, 190, 70, 230);
+	const Int hs = TheDisplay ? (Int)TheDisplay->getHeight() / 90 + 2 : 8;
+	for (size_t k = 0; k < slots.size(); ++k)
+	{
+		ICoord2D sp;
+		if (TheTacticalView->worldToScreen(&slots[k], &sp))
+			TheDisplay->drawOpenRect(sp.x - hs, sp.y - hs, hs * 2, hs * 2, 2.0f, gold);
+	}
+	// arrow from the centre of the formation toward the front
+	const Real rx = fy, ry = -fx;
+	Coord3D tail = s_faceA, tip = s_faceA, l = s_faceA, r = s_faceA;
+	tip.x += fx * 70.0f; tip.y += fy * 70.0f;
+	l.x += fx * 50.0f - rx * 14.0f; l.y += fy * 50.0f - ry * 14.0f;
+	r.x += fx * 50.0f + rx * 14.0f; r.y += fy * 50.0f + ry * 14.0f;
+	ICoord2D a, b, c, d;
+	const Bool ok = TheTacticalView->worldToScreen(&tail, &a) & TheTacticalView->worldToScreen(&tip, &b)
+		& TheTacticalView->worldToScreen(&l, &c) & TheTacticalView->worldToScreen(&r, &d);
+	if (!ok)
+		return;
+	const UnsignedInt w = GameMakeColor(241, 240, 236, 255);
+	TheDisplay->drawLine(a.x, a.y, b.x, b.y, 4.0f, w);
+	TheDisplay->drawLine(c.x, c.y, b.x, b.y, 4.0f, w);
+	TheDisplay->drawLine(d.x, d.y, b.x, b.y, 4.0f, w);
+}
+
 static std::vector<ObjectID> s_gxGroups[5];
 
 static void androidHudGroupGeometry(Int i, Int &x, Int &y, Int &s)
@@ -4652,13 +5018,44 @@ static Int androidHudGroupHit(Int x, Int y)
 }
 
 // tap: empty slot + selection = store it; filled slot = select that group
+static void androidHudGroupCenter(Int i)
+{
+	if (TheTacticalView == nullptr || androidHudGroupPrune(i) <= 0)
+		return;
+	Coord3D c; c.x = c.y = c.z = 0.0f;
+	Int n = 0;
+	for (size_t j = 0; j < s_gxGroups[i].size(); ++j)
+	{
+		Object *o = TheGameLogic->findObjectByID(s_gxGroups[i][j]);
+		if (o == nullptr || o->isEffectivelyDead())
+			continue;
+		c.x += o->getPosition()->x; c.y += o->getPosition()->y; c.z += o->getPosition()->z;
+		++n;
+	}
+	if (n <= 0)
+		return;
+	c.x /= (Real)n; c.y /= (Real)n; c.z /= (Real)n;
+	TheTacticalView->lookAt(&c);
+}
+
 static Bool androidHudTapGroups(Int x, Int y)
 {
 	const Int i = androidHudGroupHit(x, y);
 	if (i < 0)
 		return FALSE;
+	// r026: second tap on the same slot within ~0.4 s = fly the camera to that group
+	static Int s_gTapSlot = -1;
+	static UnsignedInt s_gTapFrame = 0;
+	const UnsignedInt fr = TheGameClient ? TheGameClient->getFrame() : 0;
+	const Bool dbl = (i == s_gTapSlot) && (fr - s_gTapFrame) <= 24;
+	s_gTapSlot = dbl ? -1 : i;
+	s_gTapFrame = fr;
 	if (androidHudGroupPrune(i) > 0)
+	{
 		androidHudGroupSelect(i);
+		if (dbl)
+			androidHudGroupCenter(i);
+	}
 	else if (TheInGameUI->getSelectCount() > 0)
 		androidHudGroupSave(i);
 	return TRUE;
@@ -4669,9 +5066,15 @@ Bool AndroidHud_HandleLongPress(Int x, Int y)
 {
 	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return FALSE;
+	if (androidHudMiniTap(x, y))
+		return TRUE;
 	const Int i = androidHudGroupHit(x, y);
 	if (i < 0)
-		return androidHudModeTap(x, y, TRUE);
+	{
+		if (androidHudModeTap(x, y, TRUE))
+			return TRUE;
+		return androidHudFaceBegin(x, y);  // r026: drag sets the formation front
+	}
 	if (TheInGameUI->getSelectCount() > 0)
 		androidHudGroupSave(i);
 	else
@@ -5016,6 +5419,8 @@ void AndroidHud_Draw()
 {
 	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return;
+	androidHudDrawMini();   // r026
+	androidHudDrawFace();   // r026
 	{
 		// r011: select-all-army button: 3x2 squad of small blocks
 		Int ax, ay, as;
@@ -5126,6 +5531,8 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 			return TRUE;
 		}
 	}
+	if (androidHudMiniTap(x, y))
+		return TRUE;
 	if (androidHudTapGroups(x, y))
 		return TRUE;
 	if (TheInGameUI->getSelectCount() <= 0)
