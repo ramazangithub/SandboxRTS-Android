@@ -451,6 +451,9 @@ Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statu
 	//Real scaleFuzziness = thingTemplate->getInstanceScaleFuzziness();
 	//Real fuzzyScale = ( 1.0f + GameClientRandomValueReal( -scaleFuzziness, scaleFuzziness ));
 	m_instanceScale = thingTemplate->getAssetScale();// * fuzzyScale;
+	// r024: ground vehicles 20% smaller (more room on the map)
+	if (thingTemplate->isKindOf(KINDOF_VEHICLE) && !thingTemplate->isKindOf(KINDOF_AIRCRAFT))
+		m_instanceScale *= 0.8f;
 
 	// initially not bound to an object
 	m_object = nullptr;

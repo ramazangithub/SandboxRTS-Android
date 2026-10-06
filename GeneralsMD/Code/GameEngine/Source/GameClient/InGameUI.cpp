@@ -103,6 +103,7 @@
 
 // r016: day/night speed multiplier, read by W3DDisplay's day/night cycle.
 float g_gxDayTimeScale = 1.0f;
+float g_gxNight = 0.0f; // r024: set by W3DDisplay day cycle
 #if defined(__ANDROID__)
 #include <time.h>
 #include <ctype.h>
@@ -4446,7 +4447,7 @@ static std::vector<GxGridCell> s_gxGridCells;
 static Coord3D s_gxPatrolPts[10];
 static Int s_gxPatrolN = 0;
 static UnsignedInt s_gxModeSig = 0;
-static const Real kGxCell = 40.0f;
+static const Real kGxCell = 28.0f; // r024: was 40
 static UnsignedInt androidHudSelSig();
 static Bool androidHudModeTap(Int x, Int y, Bool longPress);
 

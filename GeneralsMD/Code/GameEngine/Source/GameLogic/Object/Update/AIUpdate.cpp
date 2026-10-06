@@ -148,7 +148,7 @@ void GX_PatrolCreate( const ObjectID *ids, Int nIds, const Coord3D *pts, Int nPt
 		const Int b = r * cols, e = std::min( n, b + cols );
 		std::sort( objs.begin() + b, objs.begin() + e, gxByX );
 	}
-	const Real sp = 38.0f;
+	const Real sp = 28.0f; // r024: was 38
 	for( Int k = 0; k < n; ++k )
 	{
 		GxPatrolMember m;

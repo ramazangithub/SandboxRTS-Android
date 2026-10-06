@@ -3051,9 +3051,12 @@ void W3DModelDraw::setModelState(const ModelConditionInfo* newState)
 				TheGlobalData->m_makeTrackMarks &&
 				!m_trackRenderObject &&
 				TheTerrainTracksRenderObjClassSystem != nullptr &&
-				!getW3DModelDrawModuleData()->m_trackFile.isEmpty())
+				(!getW3DModelDrawModuleData()->m_trackFile.isEmpty() ||
+				 (draw && draw->isKindOf(KINDOF_VEHICLE) && !draw->isKindOf(KINDOF_AIRCRAFT))))
 		{
-			m_trackRenderObject = TheTerrainTracksRenderObjClassSystem->bindTrack(m_renderObject, 1.0f*MAP_XY_FACTOR, getW3DModelDrawModuleData()->m_trackFile.str());
+			// r024: vehicles without TrackMarks in INI get the stock tank tread texture
+			const char *gxTrack = getW3DModelDrawModuleData()->m_trackFile.isEmpty() ? "EXTnkTrack.tga" : getW3DModelDrawModuleData()->m_trackFile.str();
+			m_trackRenderObject = TheTerrainTracksRenderObjClassSystem->bindTrack(m_renderObject, 1.0f*MAP_XY_FACTOR, gxTrack);
 			if (draw && m_trackRenderObject)
 				m_trackRenderObject->setOwnerDrawable(draw);
 		}

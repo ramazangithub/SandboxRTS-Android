@@ -2246,6 +2246,9 @@ void W3DView::setCameraHeightAboveGroundLimitsToDefault(Real heightScale)
 	}
 
 	m_maxHeightAboveGround = TheGlobalData->m_maxCameraHeight * aspectRatioScale * heightScale;
+#ifdef __ANDROID__
+	m_maxHeightAboveGround = 250.0f; // r024
+#endif
 	m_minHeightAboveGround = TheGlobalData->m_minCameraHeight * aspectRatioScale;
 
 	if (m_minHeightAboveGround > m_maxHeightAboveGround)
@@ -2260,6 +2263,9 @@ void W3DView::setDefaultView(Real pitch, Real angle, Real maxHeight)
 	//	m_defaultAngle = angle * M_PI/180.0f;
 	setDefaultPitch(pitch);
 	m_maxHeightAboveGround = TheGlobalData->m_maxCameraHeight*maxHeight;
+#ifdef __ANDROID__
+	m_maxHeightAboveGround = 250.0f; // r024
+#endif
 	if (m_minHeightAboveGround > m_maxHeightAboveGround)
 		m_maxHeightAboveGround = m_minHeightAboveGround;
 }
@@ -2693,6 +2699,10 @@ void W3DView::initHeightForMap()
 #endif
 
 	resetPivotToGround();
+#ifdef __ANDROID__
+	m_heightAboveGround = 180.0f; // r024: start height
+	m_recalcCamera = true;
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------

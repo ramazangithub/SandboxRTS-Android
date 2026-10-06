@@ -113,6 +113,7 @@ static void drawFramerateBar();
 
 #include "GameLogic/ScriptEngine.h"		// For TheScriptEngine - jkmcd
 #include "GameLogic/GameLogic.h"
+#include "GameLogic/Object.h"
 #ifdef DUMP_PERF_STATS
 #include "GameLogic/PartitionManager.h"
 #endif
@@ -2478,6 +2479,37 @@ void W3DDisplay::gxUpdateDayNight()
 		s_lastTerrain = frame;
 		s_lastShadow = frame;
 	}
+
+	// r024: night headlights - a warm light pool ahead of every ground vehicle
+	{
+		extern float g_gxNight;
+		static UnsignedInt s_hlFrame = 0;
+		if (g_gxNight > 0.12f && TheGameLogic && frame != s_hlFrame)
+		{
+			s_hlFrame = frame;
+			Int budget = 48;
+			const Real k = g_gxNight;
+			for (Object *o = TheGameLogic->getFirstObject(); o && budget > 0; o = o->getNextObject())
+			{
+				if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead())
+					continue;
+				if (((frame + (UnsignedInt)o->getID()) % 8) != 0)
+					continue;
+				--budget;
+				const Coord3D *p = o->getPosition();
+				const Real ang = o->getOrientation();
+				const Real c = cosf(ang), s = sinf(ang);
+				const Real r = o->getGeometryInfo().getMajorRadius();
+				RGBColor col; col.red = 1.0f * k; col.green = 0.88f * k; col.blue = 0.62f * k;
+				Coord3D q;
+				q.x = p->x + c * (r + 26.0f); q.y = p->y + s * (r + 26.0f); q.z = p->z + 6.0f;
+				createLightPulse(&q, &col, 16.0f, 34.0f, 1, 10);
+				RGBColor dim; dim.red = col.red * 0.55f; dim.green = col.green * 0.55f; dim.blue = col.blue * 0.55f;
+				q.x = p->x + c * (r + 60.0f); q.y = p->y + s * (r + 60.0f);
+				createLightPulse(&q, &dim, 12.0f, 30.0f, 1, 10);
+			}
+		}
+	}
 	s_lastFrame = frame;
 
 	// r014: real time, not logic frames (logic runs at render rate on Android, so
@@ -2510,6 +2542,11 @@ void W3DDisplay::gxUpdateDayNight()
 	const Int b = (seg + 1) & 3;
 	// colours: hold 35% of the segment, then smoothstep into the next key
 	Real w = f * f * (3.0f - 2.0f * f); // r014: continuous blend across the segment
+	{
+		// r024: 0 = day, 1 = deep night (evening->night ramps up, night->morning down)
+		extern float g_gxNight;
+		g_gxNight = (a == 2) ? w : (a == 3) ? (1.0f - w) : 0.0f;
+	}
 
 	for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
 	{
