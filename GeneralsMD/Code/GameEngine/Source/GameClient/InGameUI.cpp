@@ -106,6 +106,7 @@ float g_gxDayTimeScale = 1.0f;
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
+#include <android/log.h>
 #endif
 
 
@@ -3785,16 +3786,50 @@ static Bool gxIsShowcaseMap()
 	return strstr(low, "campaign00") != nullptr;
 }
 
-static void gxShowcaseOrder(Bool localSide, const Coord3D &dst, Bool attack)
+static Bool gxIsShowcaseUnit(Object *o)
+{
+	return !o->isEffectivelyDead() && !o->isKindOf(KINDOF_STRUCTURE) && o->getAIUpdateInterface() != nullptr;
+}
+
+// r020: pick the two armies: side A = local player if it owns units, else the
+// player with the most units; side B = the player with the most units among the rest.
+static void gxShowcaseSides(Player *&sideA, Player *&sideB, Int &unitCount)
 {
 	Player *local = ThePlayerList->getLocalPlayer();
 	Player *neutral = ThePlayerList->getNeutralPlayer();
+	Player *pl[16];
+	Int cnt[16];
+	Int n = 0;
+	unitCount = 0;
 	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
 	{
-		if (o->isEffectivelyDead() || !o->isKindOf(KINDOF_VEHICLE)) continue;
+		if (!gxIsShowcaseUnit(o)) continue;
 		Player *p = o->getControllingPlayer();
 		if (p == nullptr || p == neutral) continue;
-		if ((p == local) != (localSide == TRUE)) continue;
+		++unitCount;
+		Int i = 0;
+		for (; i < n; ++i) if (pl[i] == p) break;
+		if (i == n) { if (n >= 16) continue; pl[n] = p; cnt[n] = 0; ++n; }
+		++cnt[i];
+	}
+	sideA = nullptr; sideB = nullptr;
+	for (Int i = 0; i < n; ++i) if (pl[i] == local) sideA = local;
+	if (sideA == nullptr)
+	{
+		Int best = -1;
+		for (Int i = 0; i < n; ++i) if (cnt[i] > best) { best = cnt[i]; sideA = pl[i]; }
+	}
+	Int best = -1;
+	for (Int i = 0; i < n; ++i) if (pl[i] != sideA && cnt[i] > best) { best = cnt[i]; sideB = pl[i]; }
+}
+
+static void gxShowcaseOrder(Player *side, const Coord3D &dst, Bool attack)
+{
+	if (side == nullptr) return;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (!gxIsShowcaseUnit(o)) continue;
+		if (o->getControllingPlayer() != side) continue;
 		AIUpdateInterface *ai = o->getAIUpdateInterface();
 		if (!ai) continue;
 		if (attack) ai->aiAttackMoveToPosition(&dst, NO_MAX_SHOTS_LIMIT, CMD_FROM_SCRIPT);
@@ -3814,15 +3849,17 @@ static Bool gxShowcaseUpdate(Int w, Int h)
 	static Real s_ang = 0.0f, s_zoom = 1.0f;
 	static DisplayString *s_cap = nullptr;
 	static Int s_capFontH = -1, s_capStage = -2;
+	static Player *s_sideA = nullptr, *s_sideB = nullptr;
+	static double s_waitT = 0.0;
 
 	if (!TheGameLogic || !TheGameLogic->isInGame() || TheGameLogic->isInShellGame() || !TheTacticalView || !ThePlayerList || !ThePlayerList->getLocalPlayer())
 	{
-		s_active = FALSE; s_done = FALSE; s_prevNs = 0; s_lastFrame = 0;
+		s_active = FALSE; s_done = FALSE; s_prevNs = 0; s_lastFrame = 0; s_waitT = 0.0;
 		g_gxDayTimeScale = 1.0f;
 		return FALSE;
 	}
 	const UnsignedInt frame = TheGameLogic->getFrame();
-	if (frame < s_lastFrame) { s_active = FALSE; s_done = FALSE; g_gxDayTimeScale = 1.0f; }
+	if (frame < s_lastFrame) { s_active = FALSE; s_done = FALSE; s_waitT = 0.0; g_gxDayTimeScale = 1.0f; }
 	s_lastFrame = frame;
 	if (s_done) return FALSE;
 
@@ -3835,8 +3872,32 @@ static Bool gxShowcaseUpdate(Int w, Int h)
 	if (dt > 0.1) dt = 0.1;
 	if (TheGameLogic->isGamePaused()) dt = 0.0;
 
+	if (!s_active)
+	{
+		if (!gxIsShowcaseMap())
+		{
+			__android_log_print(ANDROID_LOG_INFO, "GXShowcase", "map '%s' is not campaign00 - showcase off", TheGlobalData->m_mapName.str());
+			s_done = TRUE;
+			return FALSE;
+		}
+		Int units = 0;
+		gxShowcaseSides(s_sideA, s_sideB, units);
+		if (s_sideA == nullptr)
+		{
+			// objects may not exist yet on the first drawn frames: wait, give up after 30 s
+			s_waitT += dt;
+			if (s_waitT > 30.0)
+			{
+				__android_log_print(ANDROID_LOG_INFO, "GXShowcase", "no units found after 30 s - showcase off");
+				s_done = TRUE;
+			}
+			return FALSE;
+		}
+		__android_log_print(ANDROID_LOG_INFO, "GXShowcase", "start: %d units, sideB %s", units, s_sideB ? "yes" : "no");
+	}
+
 	// live centroids
-	Player *local = ThePlayerList->getLocalPlayer();
+	Player *local = s_sideA;
 	Player *neutral = ThePlayerList->getNeutralPlayer();
 	Coord3D pc, ec, fc;
 	pc.zero(); ec.zero(); fc.zero();
@@ -3852,9 +3913,9 @@ static Bool gxShowcaseUpdate(Int w, Int h)
 			if (p == local) { fc.x += pos->x; fc.y += pos->y; fc.z += pos->z; ++nf; }
 			continue;
 		}
-		if (!o->isKindOf(KINDOF_VEHICLE)) continue;
+		if (o->getAIUpdateInterface() == nullptr) continue;
 		if (p == local) { pc.x += pos->x; pc.y += pos->y; pc.z += pos->z; ++np; }
-		else { ec.x += pos->x; ec.y += pos->y; ec.z += pos->z; ++ne; }
+		else if (p == s_sideB) { ec.x += pos->x; ec.y += pos->y; ec.z += pos->z; ++ne; }
 	}
 	if (np) { pc.x /= np; pc.y /= np; pc.z /= np; }
 	if (ne) { ec.x /= ne; ec.y /= ne; ec.z /= ne; }
@@ -3862,7 +3923,6 @@ static Bool gxShowcaseUpdate(Int w, Int h)
 
 	if (!s_active)
 	{
-		if (!gxIsShowcaseMap() || np == 0) { s_done = TRUE; return FALSE; }
 		s_active = TRUE;
 		s_t = 0.0;
 		s_stage = -1;
@@ -3894,13 +3954,13 @@ static Bool gxShowcaseUpdate(Int w, Int h)
 			Coord3D a, b;
 			a.x = s_pBase.x + (s_center.x - s_pBase.x) * 0.45f; a.y = s_pBase.y + (s_center.y - s_pBase.y) * 0.45f; a.z = s_center.z;
 			b.x = s_eBase.x + (s_center.x - s_eBase.x) * 0.45f; b.y = s_eBase.y + (s_center.y - s_eBase.y) * 0.45f; b.z = s_center.z;
-			gxShowcaseOrder(TRUE, a, FALSE);
-			gxShowcaseOrder(FALSE, b, FALSE);
+			gxShowcaseOrder(s_sideA, a, FALSE);
+			gxShowcaseOrder(s_sideB, b, FALSE);
 		}
 		else if (stage == 3)
 		{
-			gxShowcaseOrder(TRUE, s_center, TRUE);
-			gxShowcaseOrder(FALSE, s_center, TRUE);
+			gxShowcaseOrder(s_sideA, s_center, TRUE);
+			gxShowcaseOrder(s_sideB, s_center, TRUE);
 		}
 	}
 
