@@ -4185,6 +4185,71 @@ static Bool androidHudSiege(Bool *anyDeployed)
 	return found;
 }
 
+// r021: number of selected siege units that are not sieged / sieged
+static void androidHudSiegeCounts(Int &up, Int &down)
+{
+	up = 0; down = 0;
+	if (TheInGameUI == nullptr || TheInGameUI->getSelectCount() <= 0)
+		return;
+	const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
+	if (list == nullptr)
+		return;
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		Object *obj = d ? const_cast<Object *>(d->getObject()) : nullptr;
+		if (obj == nullptr || obj->isEffectivelyDead())
+			continue;
+		AIUpdateInterface *ai = obj->getAIUpdateInterface();
+		OverchargeBehaviorInterface *siege = ai ? ai->getOverchargeBehaviorInterface() : nullptr;
+		if (siege == nullptr)
+			continue;
+		if (siege->isOverchargeActive()) ++down; else ++up;
+	}
+}
+
+// r021: siege (left) and pack-up (right) buttons; one of them alone sits in the centre
+static void androidHudSiegePair(Int up, Int down, Int &upX, Int &downX, Int &y, Int &s)
+{
+	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	s = h / 7;
+	y = h - s - h / 30;
+	const Int gap = h / 40;
+	if (up > 0 && down > 0) { upX = w / 2 - s - gap / 2; downX = w / 2 + gap / 2; }
+	else { upX = w / 2 - s / 2; downX = upX; }
+}
+
+static void androidHudCount(DisplayString *&ds, Int &last, Int &lastH, Int n, Int x, Int y, Int s, Bool dark)
+{
+	if (TheDisplayStringManager == nullptr || TheWindowManager == nullptr)
+		return;
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	if (ds == nullptr) ds = TheDisplayStringManager->newDisplayString();
+	if (ds == nullptr) return;
+	if (lastH != h)
+	{
+		GameFont *font = TheWindowManager->winFindFont(AsciiString("Arial"), h / 34, TRUE);
+		if (font) ds->setFont(font);
+		lastH = h; last = -1;
+	}
+	if (last != n)
+	{
+		wchar_t buf[8];
+		Int v = n > 999 ? 999 : n, p = 7;
+		buf[p] = 0;
+		do { buf[--p] = (wchar_t)(L'0' + v % 10); v /= 10; } while (v > 0 && p > 0);
+		UnicodeString str;
+		str.set((const WideChar *)(buf + p));
+		ds->setText(str);
+		last = n;
+	}
+	Int tw = 0, th = 0;
+	ds->getSize(&tw, &th);
+	const UnsignedInt col = dark ? GameMakeColor(150, 156, 164, 255) : GameMakeColor(245, 247, 250, 255);
+	ds->draw(x + s - tw - s / 12, y + s - th - s / 20, col, GameMakeColor(0, 0, 0, 255));
+}
+
 static void androidHudGeometry(Int &siegeX, Int &siegeY, Int &siegeS, Int &crossX, Int &crossY, Int &crossS)
 {
 	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
@@ -4295,13 +4360,34 @@ void AndroidHud_Draw()
 		return;
 	Int sx, sy, ss, cx, cy, cs;
 	androidHudGeometry(sx, sy, ss, cx, cy, cs);
-	Bool deployed = FALSE;
-	if (androidHudSiege(&deployed))
+	Int sUp = 0, sDown = 0;
+	androidHudSiegeCounts(sUp, sDown);
+	Int upX, downX, by, bs;
+	androidHudSiegePair(sUp, sDown, upX, downX, by, bs);
+	static DisplayString *s_upNum = nullptr, *s_downNum = nullptr;
+	static Int s_upLast = -1, s_downLast = -1, s_upH = -1, s_downH = -1;
+	for (Int btn = 0; btn < 2; ++btn)
 	{
-		androidHudPlate(sx, sy, ss, deployed);
-		const UnsignedInt icon = deployed ? GameMakeColor(240, 205, 90, 255) : GameMakeColor(205, 212, 200, 255);
-		const Int mx = sx + ss / 2, my = sy + ss / 2, r = ss * 36 / 100;
-		// round cage: ring + two vertical and two horizontal bars
+		const Bool dark = (btn == 1);
+		const Int n = dark ? sDown : sUp;
+		if (n <= 0) continue;
+		const Int bx = dark ? downX : upX;
+		if (dark)
+		{
+			// darker grey plate: pack up
+			TheDisplay->drawFillRect(bx, by, bs, bs, GameMakeColor(8, 10, 13, 225));
+			TheDisplay->drawOpenRect(bx, by, bs, bs, 2.0f, GameMakeColor(72, 78, 86, 255));
+		}
+		else
+		{
+			// bright plate: siege
+			TheDisplay->drawFillRect(bx, by, bs, bs, GameMakeColor(30, 36, 44, 215));
+			TheDisplay->drawOpenRect(bx, by, bs, bs, 2.0f, GameMakeColor(225, 230, 236, 255));
+			TheDisplay->drawLine(bx + 3, by + 3, bx + bs - 4, by + 3, 1.0f, GameMakeColor(240, 244, 248, 220));
+			TheDisplay->drawLine(bx + 3, by + 3, bx + 3, by + bs - 4, 1.0f, GameMakeColor(240, 244, 248, 220));
+		}
+		const UnsignedInt icon = dark ? GameMakeColor(118, 124, 132, 255) : GameMakeColor(245, 247, 250, 255);
+		const Int mx = bx + bs / 2, my = by + bs / 2, r = bs * 36 / 100;
 		androidHudCircle(mx, my, r, 20, 2.5f, icon);
 		for (Int k = -1; k <= 1; k += 2)
 		{
@@ -4310,6 +4396,20 @@ void AndroidHud_Draw()
 			TheDisplay->drawLine(mx + o, my - half, mx + o, my + half, 1.5f, icon);
 			TheDisplay->drawLine(mx - half, my + o, mx + half, my + o, 1.5f, icon);
 		}
+		if (dark)
+		{
+			// up chevron = stand up / pack up
+			const Int c = r / 2;
+			TheDisplay->drawFillRect(mx - c - 2, my - c / 2 - 3, 2 * c + 5, c + 6, GameMakeColor(8, 10, 13, 255));
+			TheDisplay->drawLine(mx - c, my + c / 2, mx, my - c / 2, 3.0f, icon);
+			TheDisplay->drawLine(mx, my - c / 2, mx + c, my + c / 2, 3.0f, icon);
+			androidHudCount(s_downNum, s_downLast, s_downH, n, bx, by, bs, TRUE);
+			continue;
+		}
+		androidHudCount(s_upNum, s_upLast, s_upH, n, bx, by, bs, FALSE);
+		if (TRUE)
+		{
+		const Int sx2 = bx, sy2 = by, ss2 = bs; (void)sx2; (void)sy2; (void)ss2;
 		// crosshair: small ring + 4 ticks
 		const Int cr = r / 3;
 		androidHudCircle(mx, my, cr, 12, 2.0f, icon);
@@ -4317,7 +4417,9 @@ void AndroidHud_Draw()
 		TheDisplay->drawLine(mx + cr / 2, my, mx + cr + r / 4, my, 2.0f, icon);
 		TheDisplay->drawLine(mx, my - cr - r / 4, mx, my - cr / 2, 2.0f, icon);
 		TheDisplay->drawLine(mx, my + cr / 2, mx, my + cr + r / 4, 2.0f, icon);
+		}
 	}
+	(void)sx; (void)sy; (void)ss;
 	// deselect "X"
 	androidHudPlate(cx, cy, cs, FALSE);
 	const UnsignedInt xcol = GameMakeColor(205, 212, 200, 255);
@@ -4352,12 +4454,29 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 		TheInGameUI->deselectAllDrawables();
 		return TRUE;
 	}
-	if (x >= sx - pad && x <= sx + ss + pad && y >= sy - pad && y <= sy + ss + pad && androidHudSiege(nullptr))
 	{
-		if (TheMessageStream)
-			TheMessageStream->appendMessage(GameMessage::MSG_META_DEPLOY);
-		return TRUE;
+		Int sUp = 0, sDown = 0;
+		androidHudSiegeCounts(sUp, sDown);
+		Int upX, downX, by, bs;
+		androidHudSiegePair(sUp, sDown, upX, downX, by, bs);
+		const Int bpad = bs / 8;
+		if (y >= by - bpad && y <= by + bs + bpad)
+		{
+			Int mode = 0;
+			if (sUp > 0 && x >= upX - bpad && x <= upX + bs + bpad) mode = 1;
+			else if (sDown > 0 && x >= downX - bpad && x <= downX + bs + bpad) mode = 2;
+			if (mode != 0)
+			{
+				if (TheMessageStream)
+				{
+					GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
+					m->appendIntegerArgument(mode);
+				}
+				return TRUE;
+			}
+		}
 	}
+	(void)sx; (void)sy; (void)ss;
 	return FALSE;
 }
 #endif // __ANDROID__

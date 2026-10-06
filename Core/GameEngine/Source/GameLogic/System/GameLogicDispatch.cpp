@@ -54,6 +54,8 @@
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Locomotor.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/Module/BehaviorModule.h"
+#include "GameLogic/Module/OverchargeBehavior.h"
 #include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/ObjectIter.h"
 //#include "GameLogic/PartitionManager.h"
@@ -1978,6 +1980,30 @@ bool GameLogic::onSell(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelec
 
 bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelectedGroup)
 {
+	// SandboxRTS r021: optional int argument: 1 = siege only the not-sieged units,
+	// 2 = pack up only the sieged ones; no argument = old toggle (D hotkey)
+	if( currentlySelectedGroup && msg && msg->getArgumentCount() > 0 )
+	{
+		const Int mode = msg->getArgument( 0 )->integer;
+		const VecObjectID ids = currentlySelectedGroup->getAllIDs();
+		for( size_t k = 0; k < ids.size(); ++k )
+		{
+			Object *obj = TheGameLogic->findObjectByID( ids[k] );
+			if( obj == nullptr || obj->isEffectivelyDead() )
+				continue;
+			for( BehaviorModule **bmi = obj->getBehaviorModules(); *bmi; ++bmi )
+			{
+				OverchargeBehaviorInterface *obi = (*bmi)->getOverchargeBehaviorInterface();
+				if( obi == nullptr )
+					continue;
+				if( mode == 1 && !obi->isOverchargeActive() )
+					obi->enable( TRUE );
+				else if( mode == 2 && obi->isOverchargeActive() )
+					obi->enable( FALSE );
+			}
+		}
+		return true;
+	}
 	// use the selected group
 	if( currentlySelectedGroup )
 		currentlySelectedGroup->groupToggleOvercharge( CMD_FROM_PLAYER );
