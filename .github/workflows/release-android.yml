@@ -102,14 +102,15 @@ jobs:
           path: GeneralsZH-Android-*.apk
 
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/android-v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" GeneralsZH-Android-*.apk \
-            --title "Android $GITHUB_REF_NAME" \
-            --generate-notes \
-            --notes "Debug-signed APK for sideloading (arm64, Adreno GPUs — see README).
-
-          **You need your own Zero Hour game assets** — this APK ships none.
-          Push assets with \`scripts/build/android/push-assets-android.sh\`."
+          if [[ "$GITHUB_REF" == refs/tags/android-v* ]]; then
+            TAG="$GITHUB_REF_NAME"; PRE=""
+          else
+            TAG="build-${GITHUB_RUN_NUMBER}"; PRE="--prerelease"
+          fi
+          cp GeneralsZH-Android-*.apk GeneralsZH-Android.apk
+          gh release create "$TAG" GeneralsZH-Android.apk --target "$GITHUB_SHA" $PRE \
+            --title "Android $TAG" \
+            --notes "Debug-signed APK (arm64). Commit ${GITHUB_SHA}. You need your own Zero Hour game assets."
