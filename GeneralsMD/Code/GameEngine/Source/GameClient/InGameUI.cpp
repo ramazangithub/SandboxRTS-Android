@@ -84,6 +84,7 @@
 #include "GameLogic/Weapon.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/GameLogic.h"
+#include "GameLogic/TerrainLogic.h"
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/ScriptEngine.h"
 #include "GameLogic/Module/ContainModule.h"
@@ -4216,8 +4217,13 @@ static void androidHudSiegePair(Int up, Int down, Int &upX, Int &downX, Int &y, 
 	s = h / 7;
 	y = h - s - h / 30;
 	const Int gap = h / 40;
-	if (up > 0 && down > 0) { upX = w / 2 - s - gap / 2; downX = w / 2 + gap / 2; }
-	else { upX = w / 2 - s / 2; downX = upX; }
+	Int mid = w / 2;
+	{
+		const Int rowLeft = w - h / 30 - h / 9 - 5 * (h / 9 + h / 40);  // r023: keep clear of the command row
+		if (mid + s + gap > rowLeft - gap) mid = rowLeft - 2 * gap - s;
+	}
+	if (up > 0 && down > 0) { upX = mid - s - gap / 2; downX = mid + gap / 2; }
+	else { upX = mid - s / 2; downX = upX; }
 }
 
 static void androidHudCount(DisplayString *&ds, Int &last, Int &lastH, Int n, Int x, Int y, Int s, Bool dark)
@@ -4353,7 +4359,7 @@ static Bool androidHudCmdGeometry(Int i, Int &x, Int &y, Int &s)
 	const Int gap = h / 40;
 	s = cs;
 	y = cy;
-	x = cx - (3 - i) * (s + gap);  // 0 hold, 1 blind, 2 cancel (next to the X)
+	x = cx - (5 - i) * (s + gap);  // 0 grid, 1 patrol, 2 hold, 3 blind, 4 cancel (next to the X)
 	(void)sx; (void)sy; (void)ss;
 	return TRUE;
 }
@@ -4431,38 +4437,124 @@ static void androidHudIconHand(Int mx, Int my, Int r, UnsignedInt c)
 	TheDisplay->drawLine(px, py + ph / 2, px - r * 4 / 10, py + ph / 6 - r / 4, 3.0f, c);
 }
 
+// ---- r023: placement grid + patrol modes -----------------------------------
+Int GX_PatrolGetRoute(ObjectID id, Coord3D *out, Int maxPts, Int *curIdx);
+static Int s_gxMode = 0;                       // 0 none, 1 grid placement, 2 patrol
+static std::vector<ObjectID> s_gxGridIds;      // units still waiting for a cell
+struct GxGridCell { Int cx, cy; ObjectID id; };
+static std::vector<GxGridCell> s_gxGridCells;
+static Coord3D s_gxPatrolPts[10];
+static Int s_gxPatrolN = 0;
+static UnsignedInt s_gxModeSig = 0;
+static const Real kGxCell = 40.0f;
+static UnsignedInt androidHudSelSig();
+static Bool androidHudModeTap(Int x, Int y, Bool longPress);
+
+static void androidHudModeSet(Int m)
+{
+	s_gxMode = m;
+	s_gxGridIds.clear();
+	s_gxGridCells.clear();
+	s_gxPatrolN = 0;
+	if (m != 0 && TheInGameUI)
+	{
+		const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
+		if (list)
+			for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+			{
+				const Drawable *d = *it;
+				const Object *o = d ? d->getObject() : nullptr;
+				if (o && !o->isEffectivelyDead() && o->isLocallyControlled() && !o->isKindOf(KINDOF_STRUCTURE) && o->getAIUpdateInterface())
+					s_gxGridIds.push_back(o->getID());
+			}
+		if (s_gxGridIds.empty())
+			s_gxMode = 0;
+		if (m == 2)
+			s_gxGridIds.clear();
+	}
+	s_gxModeSig = androidHudSelSig();
+}
+
+static void androidHudIconGrid(Int mx, Int my, Int r, UnsignedInt c)
+{
+	for (Int a = 0; a <= 3; ++a)
+	{
+		const Int o = -r + a * 2 * r / 3;
+		TheDisplay->drawLine(mx + o, my - r, mx + o, my + r, 2.0f, c);
+		TheDisplay->drawLine(mx - r, my + o, mx + r, my + o, 2.0f, c);
+	}
+	TheDisplay->drawFillRect(mx - r / 3 + 2, my - r / 3 + 2, 2 * r / 3 - 3, 2 * r / 3 - 3, c);
+}
+
+static void androidHudIconPatrol(Int mx, Int my, Int r, UnsignedInt c)
+{
+	const Int q = r / 3 > 2 ? r / 3 : 2;
+	TheDisplay->drawFillRect(mx - r - q / 2, my - q / 2, q, q, c);
+	TheDisplay->drawFillRect(mx + r - q / 2, my - q / 2, q, q, c);
+	const Int ty = my - r / 2, by = my + r / 2, ax = r * 6 / 10, hd = r / 3;
+	TheDisplay->drawLine(mx - ax, ty, mx + ax, ty, 2.0f, c);
+	TheDisplay->drawLine(mx + ax, ty, mx + ax - hd, ty - hd, 2.0f, c);
+	TheDisplay->drawLine(mx + ax, ty, mx + ax - hd, ty + hd, 2.0f, c);
+	TheDisplay->drawLine(mx - ax, by, mx + ax, by, 2.0f, c);
+	TheDisplay->drawLine(mx - ax, by, mx - ax + hd, by - hd, 2.0f, c);
+	TheDisplay->drawLine(mx - ax, by, mx - ax + hd, by + hd, 2.0f, c);
+}
+
 static void androidHudDrawCmdRow()
 {
 	Bool allHold = FALSE, allBlind = FALSE;
 	androidHudModeState(allHold, allBlind);
 	const UnsignedInt bg = GameMakeColor(14, 18, 24, 255);
-	for (Int i = 0; i < 3; ++i)
+	for (Int i = 0; i < 5; ++i)
 	{
 		Int x, y, s;
 		androidHudCmdGeometry(i, x, y, s);
-		const Bool active = (i == 0 && allHold) || (i == 1 && allBlind);
+		const Bool active = (i == 0 && s_gxMode == 1) || (i == 1 && s_gxMode == 2) ||
+		                    (i == 2 && allHold) || (i == 3 && allBlind);
 		androidHudPlate(x, y, s, active);
 		const UnsignedInt c = active ? kGxGold : kGxIcon;
 		const Int mx = x + s / 2, my = y + s / 2, r = s * 32 / 100;
-		if (i == 0) androidHudIconHold(mx, my, r, c);
-		else if (i == 1) androidHudIconEye(mx, my, r, c, bg);
+		if (i == 0) androidHudIconGrid(mx, my, r * 9 / 10, c);
+		else if (i == 1) androidHudIconPatrol(mx, my, r, c);
+		else if (i == 2) androidHudIconHold(mx, my, r, c);
+		else if (i == 3) androidHudIconEye(mx, my, r, c, bg);
 		else androidHudIconHand(mx, my + r / 6, r, c);
 	}
 }
 
+static Bool androidHudOnCmdRow(Int x, Int y)
+{
+	for (Int i = 0; i < 5; ++i)
+	{
+		Int bx, by, s;
+		androidHudCmdGeometry(i, bx, by, s);
+		const Int pad = s / 10;
+		if (x >= bx - pad && x <= bx + s + pad && y >= by - pad && y <= by + s + pad)
+			return TRUE;
+	}
+	Int sx, sy, ss, cx, cy, cs;
+	androidHudGeometry(sx, sy, ss, cx, cy, cs);
+	(void)sx; (void)sy; (void)ss;
+	const Int pad = cs / 4;
+	return x >= cx - pad && x <= cx + cs + pad && y >= cy - pad && y <= cy + cs + pad;
+}
+
 static Bool androidHudTapCmdRow(Int x, Int y)
 {
-	for (Int i = 0; i < 3; ++i)
+	for (Int i = 0; i < 5; ++i)
 	{
 		Int bx, by, s;
 		androidHudCmdGeometry(i, bx, by, s);
 		const Int pad = s / 10;
 		if (x >= bx - pad && x <= bx + s + pad && y >= by - pad && y <= by + s + pad)
 		{
+			if (i == 0) { androidHudModeSet(s_gxMode == 1 ? 0 : 1); return TRUE; }
+			if (i == 1) { androidHudModeSet(s_gxMode == 2 ? 0 : 2); return TRUE; }
+			if (i == 4) androidHudModeSet(0);
 			if (TheMessageStream)
 			{
 				GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
-				m->appendIntegerArgument(3 + i);
+				m->appendIntegerArgument(3 + (i - 2));
 			}
 			return TRUE;
 		}
@@ -4564,7 +4656,7 @@ Bool AndroidHud_HandleLongPress(Int x, Int y)
 		return FALSE;
 	const Int i = androidHudGroupHit(x, y);
 	if (i < 0)
-		return FALSE;
+		return androidHudModeTap(x, y, TRUE);
 	if (TheInGameUI->getSelectCount() > 0)
 		androidHudGroupSave(i);
 	else
@@ -4713,6 +4805,180 @@ Bool AndroidHud_DoubleTapGround(Int x, Int y)
 	return TRUE;
 }
 
+// ---- r023: grid / patrol drawing and taps ---------------------------------
+static Bool androidHudW2S(Real wx, Real wy, ICoord2D &out)
+{
+	Coord3D w;
+	w.x = wx; w.y = wy;
+	w.z = TheTerrainLogic ? TheTerrainLogic->getGroundHeight(wx, wy) : 0.0f;
+	return TheTacticalView->worldToScreenTriReturn(&w, &out) != View::WTS_INVALID;
+}
+
+static void androidHudWorldLine(Real x0, Real y0, Real x1, Real y1, Real width, UnsignedInt c)
+{
+	ICoord2D a, b;
+	if (androidHudW2S(x0, y0, a) && androidHudW2S(x1, y1, b))
+		TheDisplay->drawLine(a.x, a.y, b.x, b.y, width, c);
+}
+
+static void androidHudDrawCell(Int cx, Int cy, UnsignedInt c)
+{
+	const Real in = 4.0f;
+	const Real x0 = cx * kGxCell + in, y0 = cy * kGxCell + in;
+	const Real x1 = (cx + 1) * kGxCell - in, y1 = (cy + 1) * kGxCell - in;
+	androidHudWorldLine(x0, y0, x1, y0, 2.5f, c);
+	androidHudWorldLine(x1, y0, x1, y1, 2.5f, c);
+	androidHudWorldLine(x1, y1, x0, y1, 2.5f, c);
+	androidHudWorldLine(x0, y1, x0, y0, 2.5f, c);
+	ICoord2D m;
+	if (androidHudW2S((cx + 0.5f) * kGxCell, (cy + 0.5f) * kGxCell, m))
+		TheDisplay->drawFillRect(m.x - 3, m.y - 3, 7, 7, c);
+}
+
+static void androidHudDrawRoute(const Coord3D *pts, Int n, Int cur, UnsignedInt c, Bool closed)
+{
+	ICoord2D s[10];
+	Bool ok[10];
+	for (Int i = 0; i < n && i < 10; ++i)
+		ok[i] = TheTacticalView->worldToScreenTriReturn(&pts[i], &s[i]) != View::WTS_INVALID;
+	for (Int i = 0; i + 1 < n; ++i)
+		if (ok[i] && ok[i + 1]) androidHudDashed(s[i].x, s[i].y, s[i + 1].x, s[i + 1].y, c);
+	if (closed && n > 2 && ok[0] && ok[n - 1])
+		androidHudDashed(s[n - 1].x, s[n - 1].y, s[0].x, s[0].y, c);
+	for (Int i = 0; i < n; ++i)
+	{
+		if (!ok[i]) continue;
+		const UnsignedInt mc = (i == cur) ? GameMakeColor(230, 190, 70, 230) : c;
+		TheDisplay->drawOpenRect(s[i].x - 8, s[i].y - 8, 17, 17, 2.0f, mc);
+		TheDisplay->drawFillRect(s[i].x - 2, s[i].y - 2, 5, 5, mc);
+	}
+}
+
+static void androidHudDrawModes()
+{
+	if (TheTacticalView == nullptr || TheDisplay == nullptr || TheInGameUI == nullptr)
+		return;
+	if (s_gxMode != 0 && (TheInGameUI->getSelectCount() <= 0 || androidHudSelSig() != s_gxModeSig))
+		androidHudModeSet(0);
+	if (s_gxMode == 1)
+	{
+		const Int w = (Int)TheDisplay->getWidth(), h = (Int)TheDisplay->getHeight();
+		ICoord2D sc; sc.x = w / 2; sc.y = h / 2;
+		Coord3D c;
+		TheTacticalView->screenToTerrain(&sc, &c);
+		const Int bx = (Int)floorf(c.x / kGxCell), by = (Int)floorf(c.y / kGxCell);
+		const Int R = 11;
+		const UnsignedInt gc = GameMakeColor(241, 240, 236, 70);
+		for (Int i = -R; i <= R + 1; ++i)
+			for (Int j = -R; j <= R; j += 2)
+			{
+				const Real a = (bx + i) * kGxCell;
+				const Real b0 = (by + j) * kGxCell, b1 = b0 + 2 * kGxCell;
+				androidHudWorldLine(a, b0, a, b1, 1.0f, gc);
+				const Real a2 = (by + i) * kGxCell;
+				const Real c0 = (bx + j) * kGxCell, c1 = c0 + 2 * kGxCell;
+				androidHudWorldLine(c0, a2, c1, a2, 1.0f, gc);
+			}
+		const UnsignedInt cc = GameMakeColor(245, 247, 250, 235);
+		for (size_t k = 0; k < s_gxGridCells.size(); ++k)
+		{
+			androidHudDrawCell(s_gxGridCells[k].cx, s_gxGridCells[k].cy, cc);
+			const Object *o = TheGameLogic->findObjectByID(s_gxGridCells[k].id);
+			ICoord2D a, b;
+			if (o && !o->isEffectivelyDead() &&
+			    TheTacticalView->worldToScreenTriReturn(o->getPosition(), &a) != View::WTS_INVALID &&
+			    androidHudW2S((s_gxGridCells[k].cx + 0.5f) * kGxCell, (s_gxGridCells[k].cy + 0.5f) * kGxCell, b))
+				androidHudDashed(a.x, a.y, b.x, b.y, GameMakeColor(241, 240, 236, 150));
+		}
+		return;
+	}
+	if (s_gxMode == 2)
+	{
+		androidHudDrawRoute(s_gxPatrolPts, s_gxPatrolN, -1, GameMakeColor(241, 240, 236, 210), FALSE);
+		return;
+	}
+	// show the patrol route of the first selected unit that patrols
+	const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
+	if (list == nullptr)
+		return;
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		const Object *o = d ? d->getObject() : nullptr;
+		if (o == nullptr)
+			continue;
+		Coord3D pts[10];
+		Int cur = 0;
+		const Int n = GX_PatrolGetRoute(o->getID(), pts, 10, &cur);
+		if (n >= 2)
+		{
+			androidHudDrawRoute(pts, n, cur, GameMakeColor(241, 240, 236, 120), TRUE);
+			return;
+		}
+	}
+}
+
+static Bool androidHudModeTap(Int x, Int y, Bool longPress)
+{
+	if (s_gxMode == 0 || TheTacticalView == nullptr || TheMessageStream == nullptr || TheGameLogic == nullptr)
+		return FALSE;
+	if (androidHudOnCmdRow(x, y))
+		return FALSE;
+	ICoord2D sp; sp.x = x; sp.y = y;
+	Coord3D world;
+	TheTacticalView->screenToTerrain(&sp, &world);
+	if (s_gxMode == 1)
+	{
+		const Int cx = (Int)floorf(world.x / kGxCell), cy = (Int)floorf(world.y / kGxCell);
+		for (size_t k = 0; k < s_gxGridCells.size(); ++k)
+			if (s_gxGridCells[k].cx == cx && s_gxGridCells[k].cy == cy)
+				return TRUE;  // cell already taken
+		Coord3D dest;
+		dest.x = (cx + 0.5f) * kGxCell; dest.y = (cy + 0.5f) * kGxCell;
+		dest.z = TheTerrainLogic ? TheTerrainLogic->getGroundHeight(dest.x, dest.y) : world.z;
+		Int best = -1;
+		Real bd = 1.0e30f;
+		for (Int k = 0; k < (Int)s_gxGridIds.size(); ++k)
+		{
+			const Object *o = TheGameLogic->findObjectByID(s_gxGridIds[k]);
+			if (o == nullptr || o->isEffectivelyDead())
+				continue;
+			const Real dx = o->getPosition()->x - dest.x, dy = o->getPosition()->y - dest.y;
+			const Real d2 = dx * dx + dy * dy;
+			if (d2 < bd) { bd = d2; best = k; }
+		}
+		if (best < 0)
+		{
+			androidHudModeSet(0);
+			return TRUE;
+		}
+		const ObjectID id = s_gxGridIds[best];
+		GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
+		m->appendIntegerArgument(6);
+		m->appendObjectIDArgument(id);
+		m->appendLocationArgument(dest);
+		GxGridCell cell; cell.cx = cx; cell.cy = cy; cell.id = id;
+		s_gxGridCells.push_back(cell);
+		s_gxGridIds.erase(s_gxGridIds.begin() + best);
+		if (s_gxGridIds.empty())
+			s_gxMode = 0;  // everybody has a cell -> close the mode
+		return TRUE;
+	}
+	// patrol: short tap on the 2nd+ point finishes, long press keeps adding (max 10)
+	if (s_gxPatrolN < 10)
+		s_gxPatrolPts[s_gxPatrolN++] = world;
+	const Bool finish = (s_gxPatrolN >= 10) || (!longPress && s_gxPatrolN >= 2);
+	if (finish)
+	{
+		GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
+		m->appendIntegerArgument(7);
+		for (Int k = 0; k < s_gxPatrolN; ++k)
+			m->appendLocationArgument(s_gxPatrolPts[k]);
+		androidHudModeSet(0);
+	}
+	return TRUE;
+}
+
 void AndroidHud_Draw()
 {
 	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
@@ -4736,6 +5002,7 @@ void AndroidHud_Draw()
 		TheDisplay->drawLine(ox, oy + gh + gap, ox + gw, oy + gh + gap, 2.0f, icon);
 	}
 	androidHudDrawGroups();
+	androidHudDrawModes();
 	androidHudDrawOrderLine();
 	if (TheInGameUI->getSelectCount() <= 0)
 		return;
@@ -4863,6 +5130,8 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 		}
 	}
 	(void)sx; (void)sy; (void)ss;
+	if (androidHudModeTap(x, y, FALSE))
+		return TRUE;
 	return FALSE;
 }
 #endif // __ANDROID__

@@ -1985,12 +1985,49 @@ Bool GX_IsBlind( ObjectID id );
 void GX_SetBlind( ObjectID id, Bool on );
 void GX_MarkCancel( ObjectID id );
 
+void GX_PatrolCreate( const ObjectID *ids, Int nIds, const Coord3D *pts, Int nPts );
+Bool GX_IsHold( ObjectID id );
 bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelectedGroup)
 {
 	// r022: 3 = hold toggle, 4 = blind toggle, 5 = cancel all orders (blind stays)
 	if( currentlySelectedGroup && msg && msg->getArgumentCount() > 0 )
 	{
 		const Int gxMode = msg->getArgument( 0 )->integer;
+		// r023: 6 = send one unit to a grid cell, 7 = formation patrol through the given points
+		if( gxMode == 6 )
+		{
+			if( msg->getArgumentCount() >= 3 )
+			{
+				const ObjectID oid = msg->getArgument( 1 )->objectID;
+				Coord3D dest = msg->getArgument( 2 )->location;
+				const VecObjectID sel = currentlySelectedGroup->getAllIDs();
+				for( size_t k = 0; k < sel.size(); ++k )
+				{
+					if( sel[k] != oid )
+						continue;
+					Object *o = TheGameLogic->findObjectByID( oid );
+					AIUpdateInterface *ai = o ? o->getAIUpdateInterface() : nullptr;
+					if( ai && !o->isEffectivelyDead() && !GX_IsHold( oid ) )
+						ai->aiMoveToPosition( &dest, CMD_FROM_PLAYER );
+					break;
+				}
+			}
+			return true;
+		}
+		if( gxMode == 7 )
+		{
+			Coord3D pts[10];
+			Int np = 0;
+			for( Int a = 1; a < (Int)msg->getArgumentCount() && np < 10; ++a )
+				pts[np++] = msg->getArgument( a )->location;
+			const VecObjectID sel = currentlySelectedGroup->getAllIDs();
+			VecObjectID ok;
+			for( size_t k = 0; k < sel.size(); ++k )
+				if( !GX_IsHold( sel[k] ) ) ok.push_back( sel[k] );
+			if( !ok.empty() && np >= 2 )
+				GX_PatrolCreate( &ok[0], (Int)ok.size(), pts, np );
+			return true;
+		}
 		if( gxMode >= 3 && gxMode <= 5 )
 		{
 			const VecObjectID gxIds = currentlySelectedGroup->getAllIDs();
@@ -2017,7 +2054,7 @@ bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &cu
 				else if( gxMode == 4 )
 				{
 					GX_SetBlind( gxIds[k], !all );
-					if( !all && ai && ai->isAttacking() ) ai->aiIdle( CMD_FROM_PLAYER );
+					if( !all && ai && ai->isAttacking() ) ai->aiIdle( CMD_FROM_AI );
 				}
 				else
 				{

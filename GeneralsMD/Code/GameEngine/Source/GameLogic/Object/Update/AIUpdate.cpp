@@ -69,6 +69,7 @@
 #include "GameLogic/ScriptEngine.h"
 #include "GameLogic/TurretAI.h"
 #include "GameLogic/Weapon.h"
+#include "GameLogic/TerrainLogic.h"
 #include "Common/Radar.h"
 #include <set>
 
@@ -81,6 +82,144 @@ Bool GX_IsBlind( ObjectID id ) { return s_gxBlind.find( id ) != s_gxBlind.end();
 void GX_SetBlind( ObjectID id, Bool on ) { if( on ) s_gxBlind.insert( id ); else s_gxBlind.erase( id ); }
 void GX_MarkCancel( ObjectID id ) { s_gxCancel.insert( id ); }
 Bool GX_TakeCancel( ObjectID id ) { return s_gxCancel.erase( id ) != 0; }
+
+// SandboxRTS r023: formation patrol (2..10 points, endless loop, group waits for everybody)
+#include <map>
+#include <vector>
+#include <algorithm>
+static std::set<ObjectID> s_gxSieged;
+void GX_SetSieged( ObjectID id, Bool on ) { if( on ) s_gxSieged.insert( id ); else s_gxSieged.erase( id ); }
+struct GxPatrol { std::vector<Coord3D> pts; Int idx; UnsignedInt legStart; };
+struct GxPatrolMember { Int patrol; Coord3D off; Int issuedIdx; Bool arrived; };
+static std::vector<GxPatrol> s_gxPatrols;
+static std::map<ObjectID, GxPatrolMember> s_gxPatrolMembers;
+void GX_PatrolRemove( ObjectID id ) { s_gxPatrolMembers.erase( id ); }
+Int GX_PatrolGetRoute( ObjectID id, Coord3D *out, Int maxPts, Int *curIdx )
+{
+	std::map<ObjectID, GxPatrolMember>::const_iterator it = s_gxPatrolMembers.find( id );
+	if( it == s_gxPatrolMembers.end() || it->second.patrol < 0 || it->second.patrol >= (Int)s_gxPatrols.size() )
+		return 0;
+	const GxPatrol &p = s_gxPatrols[ it->second.patrol ];
+	Int n = (Int)p.pts.size();
+	if( n > maxPts ) n = maxPts;
+	for( Int i = 0; i < n; ++i ) out[i] = p.pts[i];
+	if( curIdx ) *curIdx = p.idx;
+	return n;
+}
+static bool gxByY( Object *a, Object *b ) { return a->getPosition()->y < b->getPosition()->y; }
+static bool gxByX( Object *a, Object *b ) { return a->getPosition()->x < b->getPosition()->x; }
+void GX_PatrolCreate( const ObjectID *ids, Int nIds, const Coord3D *pts, Int nPts )
+{
+	if( nIds <= 0 || nPts < 2 || TheGameLogic == nullptr )
+		return;
+	std::vector<Object*> objs;
+	Coord3D c; c.zero();
+	for( Int i = 0; i < nIds; ++i )
+	{
+		Object *o = TheGameLogic->findObjectByID( ids[i] );
+		if( o == nullptr || o->isEffectivelyDead() || o->getAIUpdateInterface() == nullptr || o->isKindOf( KINDOF_STRUCTURE ) )
+			continue;
+		objs.push_back( o );
+		c.x += o->getPosition()->x; c.y += o->getPosition()->y;
+	}
+	if( objs.empty() )
+		return;
+	const Int n = (Int)objs.size();
+	c.x /= n; c.y /= n;
+	GxPatrol p;
+	p.pts.assign( pts, pts + nPts );
+	p.legStart = TheGameLogic->getFrame();
+	p.idx = 0;
+	Real bd = 1.0e30f;
+	for( Int i = 0; i < nPts; ++i )
+	{
+		const Real dx = pts[i].x - c.x, dy = pts[i].y - c.y;
+		if( dx * dx + dy * dy < bd ) { bd = dx * dx + dy * dy; p.idx = i; }
+	}
+	const Int pid = (Int)s_gxPatrols.size();
+	s_gxPatrols.push_back( p );
+	// keep the relative layout: rows by y, then x inside every row
+	Int cols = 1;
+	while( cols * cols < n ) ++cols;
+	const Int rows = ( n + cols - 1 ) / cols;
+	std::sort( objs.begin(), objs.end(), gxByY );
+	for( Int r = 0; r < rows; ++r )
+	{
+		const Int b = r * cols, e = std::min( n, b + cols );
+		std::sort( objs.begin() + b, objs.begin() + e, gxByX );
+	}
+	const Real sp = 38.0f;
+	for( Int k = 0; k < n; ++k )
+	{
+		GxPatrolMember m;
+		m.patrol = pid;
+		m.off.zero();
+		m.off.x = ( (Real)( k % cols ) - ( cols - 1 ) * 0.5f ) * sp;
+		m.off.y = ( (Real)( k / cols ) - ( rows - 1 ) * 0.5f ) * sp;
+		m.issuedIdx = -1;
+		m.arrived = FALSE;
+		s_gxPatrolMembers[ objs[k]->getID() ] = m;
+	}
+}
+static void gxPatrolStep( AIUpdateInterface *ai, Object *obj )
+{
+	if( s_gxPatrolMembers.empty() || ai == nullptr || obj == nullptr )
+		return;
+	const ObjectID id = obj->getID();
+	std::map<ObjectID, GxPatrolMember>::iterator it = s_gxPatrolMembers.find( id );
+	if( it == s_gxPatrolMembers.end() )
+		return;
+	const UnsignedInt now = TheGameLogic->getFrame();
+	if( ( now + (UnsignedInt)id ) % 10 != 0 )
+		return;
+	GxPatrolMember &m = it->second;
+	if( m.patrol < 0 || m.patrol >= (Int)s_gxPatrols.size() )
+	{
+		s_gxPatrolMembers.erase( it );
+		return;
+	}
+	GxPatrol &p = s_gxPatrols[ m.patrol ];
+	const Int n = (Int)p.pts.size();
+	if( n < 2 || GX_IsHold( id ) )
+		return;
+	Coord3D tgt = p.pts[ p.idx ];
+	tgt.x += m.off.x; tgt.y += m.off.y;
+	if( TheTerrainLogic ) tgt.z = TheTerrainLogic->getGroundHeight( tgt.x, tgt.y );
+	const Bool sieged = s_gxSieged.find( id ) != s_gxSieged.end();
+	if( m.issuedIdx != p.idx )
+	{
+		if( !sieged && !ai->isAttacking() )
+		{
+			ai->aiAttackMoveToPosition( &tgt, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI );
+			m.issuedIdx = p.idx;
+			m.arrived = FALSE;
+		}
+		return;
+	}
+	const Real dx = obj->getPosition()->x - tgt.x, dy = obj->getPosition()->y - tgt.y;
+	if( dx * dx + dy * dy < 60.0f * 60.0f )
+		m.arrived = TRUE;
+	else if( !m.arrived && !sieged && ai->isIdle() )
+		ai->aiAttackMoveToPosition( &tgt, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI );
+	// the whole group moves on only when everybody alive reached its slot (or after 40 s)
+	Bool all = TRUE;
+	std::vector<ObjectID> gone;
+	for( std::map<ObjectID, GxPatrolMember>::iterator j = s_gxPatrolMembers.begin(); j != s_gxPatrolMembers.end(); ++j )
+	{
+		if( j->second.patrol != m.patrol )
+			continue;
+		Object *o = TheGameLogic->findObjectByID( j->first );
+		if( o == nullptr || o->isEffectivelyDead() ) { gone.push_back( j->first ); continue; }
+		if( !j->second.arrived ) all = FALSE;
+	}
+	for( size_t g = 0; g < gone.size(); ++g )
+		if( gone[g] != id ) s_gxPatrolMembers.erase( gone[g] );
+	if( all || now - p.legStart > 40 * 30 )
+	{
+		p.idx = ( p.idx + 1 ) % n;
+		p.legStart = now;
+	}
+}
 static Bool gxIsMoveCmd( Int c )
 {
 	switch( c )
@@ -1033,6 +1172,8 @@ UpdateSleepTime AIUpdateInterface::update()
 	USE_PERF_TIMER(AIUpdateInterface_update)
 
 	// SandboxRTS r022: hold mode - a chase or any other path is dropped at once
+	if (getObject() != nullptr && !getObject()->isEffectivelyDead())
+		gxPatrolStep(this, getObject());
 	if (getObject() != nullptr && !getObject()->isEffectivelyDead() && GX_IsHold(getObject()->getID()) && getPath() != nullptr)
 		aiIdle(CMD_FROM_AI);
 
@@ -2662,6 +2803,8 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 	if (parms->m_cmdSource != CMD_FROM_SCRIPT && getObject() != nullptr)
 	{
 		const ObjectID gxId = getObject()->getID();
+		if (parms->m_cmdSource == CMD_FROM_PLAYER)
+			GX_PatrolRemove(gxId);  // r023: any own order ends the patrol
 		if (GX_IsHold(gxId) && gxIsMoveCmd((Int)parms->m_cmd))
 			return;
 		if (GX_IsBlind(gxId) && parms->m_cmdSource == CMD_FROM_AI &&

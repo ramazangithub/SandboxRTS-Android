@@ -81,9 +81,11 @@ void SandboxSiegeAIUpdate::showAnimFrame()
 }
 
 //-------------------------------------------------------------------------------------------------
+void GX_SetSieged( ObjectID id, Bool on );
 void SandboxSiegeAIUpdate::setSiegeState( SandboxSiegeState s )
 {
 	Object *self = getObject();
+	if( self ) GX_SetSieged( self->getID(), s != SIEGE_TRAVEL );
 	UnsignedInt now = TheGameLogic->getFrame();
 	UnsignedInt total = getSandboxSiegeAIUpdateModuleData()->m_deployTime;
 	if( total < 1 ) total = 1;
@@ -292,7 +294,7 @@ UpdateSleepTime SandboxSiegeAIUpdate::update()
 				if( m_resumePending )
 				{
 					m_resumePending = FALSE;
-					aiAttackMoveToPosition( &m_resume, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
+					aiAttackMoveToPosition( &m_resume, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI );
 				}
 			}
 			else
