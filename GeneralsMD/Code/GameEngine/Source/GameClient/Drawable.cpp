@@ -453,7 +453,7 @@ Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statu
 	m_instanceScale = thingTemplate->getAssetScale();// * fuzzyScale;
 	// r024: ground vehicles 20% smaller (more room on the map)
 	if (thingTemplate->isKindOf(KINDOF_VEHICLE) && !thingTemplate->isKindOf(KINDOF_AIRCRAFT))
-		m_instanceScale *= 0.8f;
+		m_instanceScale *= 0.68f; // r025: 0.8 * 0.85
 
 	// initially not bound to an object
 	m_object = nullptr;

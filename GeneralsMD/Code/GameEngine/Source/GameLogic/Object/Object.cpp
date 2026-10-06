@@ -222,8 +222,8 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	// r024: ground vehicles 20% smaller footprint (matches the visual scale)
 	if (tt->isKindOf(KINDOF_VEHICLE) && !tt->isKindOf(KINDOF_AIRCRAFT))
 	{
-		m_geometryInfo.setMajorRadius(m_geometryInfo.getMajorRadius() * 0.8f);
-		m_geometryInfo.setMinorRadius(m_geometryInfo.getMinorRadius() * 0.8f);
+		m_geometryInfo.setMajorRadius(m_geometryInfo.getMajorRadius() * 0.68f);
+		m_geometryInfo.setMinorRadius(m_geometryInfo.getMinorRadius() * 0.68f);
 	}
 #if defined(RTS_DEBUG)
 	m_hasDiedAlready = false;

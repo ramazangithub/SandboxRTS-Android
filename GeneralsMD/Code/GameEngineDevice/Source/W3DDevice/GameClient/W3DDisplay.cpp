@@ -2480,34 +2480,84 @@ void W3DDisplay::gxUpdateDayNight()
 		s_lastShadow = frame;
 	}
 
-	// r024: night headlights - a warm light pool ahead of every ground vehicle
+	// r025: steady headlights - two persistent dynamic lights per ground vehicle
+	// (r024 used re-spawned light pulses, which flickered).
 	{
 		extern float g_gxNight;
-		static UnsignedInt s_hlFrame = 0;
-		if (g_gxNight > 0.12f && TheGameLogic && frame != s_hlFrame)
+		struct GxHL { ObjectID id; W3DDynamicLight *a; W3DDynamicLight *b; Bool seen; };
+		static std::vector<GxHL> s_hl;
+		static RTS3DScene *s_hlScene = nullptr;
+		static Real s_k = 0.0f;
+		if (frame < s_lastFrame || m_3DScene != s_hlScene)
 		{
-			s_hlFrame = frame;
-			Int budget = 48;
-			const Real k = g_gxNight;
+			for (size_t i = 0; i < s_hl.size(); ++i)
+			{
+				s_hl[i].a->setEnabled(false); s_hl[i].a->Release_Ref();
+				s_hl[i].b->setEnabled(false); s_hl[i].b->Release_Ref();
+			}
+			s_hl.clear();
+			s_hlScene = m_3DScene;
+			s_k = 0.0f;
+		}
+		s_k += (g_gxNight - s_k) * 0.05f; // smooth fade in / out
+		for (size_t i = 0; i < s_hl.size(); ++i)
+			s_hl[i].seen = FALSE;
+		if (m_3DScene && TheGameLogic && s_k > 0.08f)
+		{
+			const Real k = s_k;
+			Int budget = 32;
 			for (Object *o = TheGameLogic->getFirstObject(); o && budget > 0; o = o->getNextObject())
 			{
 				if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead())
 					continue;
-				if (((frame + (UnsignedInt)o->getID()) % 8) != 0)
-					continue;
 				--budget;
+				GxHL *e = nullptr;
+				for (size_t i = 0; i < s_hl.size(); ++i)
+					if (s_hl[i].id == o->getID()) { e = &s_hl[i]; break; }
+				if (e == nullptr)
+				{
+					GxHL n;
+					n.id = o->getID();
+					n.a = m_3DScene->getADynamicLight(); n.a->Add_Ref();
+					n.b = m_3DScene->getADynamicLight(); n.b->Add_Ref();
+					n.seen = FALSE;
+					s_hl.push_back(n);
+					e = &s_hl.back();
+				}
+				e->seen = TRUE;
 				const Coord3D *p = o->getPosition();
 				const Real ang = o->getOrientation();
-				const Real c = cosf(ang), s = sinf(ang);
+				const Real c = cosf(ang), sn = sinf(ang);
 				const Real r = o->getGeometryInfo().getMajorRadius();
-				RGBColor col; col.red = 1.0f * k; col.green = 0.88f * k; col.blue = 0.62f * k;
-				Coord3D q;
-				q.x = p->x + c * (r + 26.0f); q.y = p->y + s * (r + 26.0f); q.z = p->z + 6.0f;
-				createLightPulse(&q, &col, 16.0f, 34.0f, 1, 10);
-				RGBColor dim; dim.red = col.red * 0.55f; dim.green = col.green * 0.55f; dim.blue = col.blue * 0.55f;
-				q.x = p->x + c * (r + 60.0f); q.y = p->y + s * (r + 60.0f);
-				createLightPulse(&q, &dim, 12.0f, 30.0f, 1, 10);
+				W3DDynamicLight *L[2] = { e->a, e->b };
+				const Real dist[2] = { r + 20.0f, r + 52.0f };
+				const Real inner[2] = { 12.0f, 16.0f };
+				const Real width[2] = { 26.0f, 34.0f };
+				const Real gain[2] = { 1.0f, 0.6f };
+				for (Int j = 0; j < 2; ++j)
+				{
+					if (!L[j]->isEnabled())
+						L[j]->setEnabled(true); // no fade counts -> never decays
+					const Real g = k * gain[j];
+					const Vector3 col(1.0f * g, 0.9f * g, 0.68f * g);
+					L[j]->Set_Ambient(col);
+					L[j]->Set_Diffuse(col);
+					L[j]->Set_Position(Vector3(p->x + c * dist[j], p->y + sn * dist[j], p->z + 8.0f));
+					L[j]->Set_Far_Attenuation_Range(inner[j], inner[j] + width[j]);
+					L[j]->Set_Flag(LightClass::FAR_ATTENUATION, true);
+				}
 			}
+		}
+		for (size_t i = 0; i < s_hl.size(); )
+		{
+			if (!s_hl[i].seen)
+			{
+				s_hl[i].a->setEnabled(false); s_hl[i].a->Release_Ref();
+				s_hl[i].b->setEnabled(false); s_hl[i].b->Release_Ref();
+				s_hl.erase(s_hl.begin() + i);
+			}
+			else
+				++i;
 		}
 	}
 	s_lastFrame = frame;

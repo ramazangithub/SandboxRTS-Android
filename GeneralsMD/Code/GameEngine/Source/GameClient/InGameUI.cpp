@@ -4360,7 +4360,7 @@ static Bool androidHudCmdGeometry(Int i, Int &x, Int &y, Int &s)
 	const Int gap = h / 40;
 	s = cs;
 	y = cy;
-	x = cx - (5 - i) * (s + gap);  // 0 grid, 1 patrol, 2 hold, 3 blind, 4 cancel (next to the X)
+	x = cx - (6 - i) * (s + gap);  // 0 grid, 1 patrol, 2 hold, 3 blind, 4 force fire, 5 cancel (next to the X)
 	(void)sx; (void)sy; (void)ss;
 	return TRUE;
 }
@@ -4440,14 +4440,14 @@ static void androidHudIconHand(Int mx, Int my, Int r, UnsignedInt c)
 
 // ---- r023: placement grid + patrol modes -----------------------------------
 Int GX_PatrolGetRoute(ObjectID id, Coord3D *out, Int maxPts, Int *curIdx);
-static Int s_gxMode = 0;                       // 0 none, 1 grid placement, 2 patrol
+static Int s_gxMode = 0;                       // 0 none, 1 grid placement, 2 patrol, 3 force fire (r025)
 static std::vector<ObjectID> s_gxGridIds;      // units still waiting for a cell
 struct GxGridCell { Int cx, cy; ObjectID id; };
 static std::vector<GxGridCell> s_gxGridCells;
 static Coord3D s_gxPatrolPts[10];
 static Int s_gxPatrolN = 0;
 static UnsignedInt s_gxModeSig = 0;
-static const Real kGxCell = 28.0f; // r024: was 40
+static const Real kGxCell = 24.0f; // r025: was 28
 static UnsignedInt androidHudSelSig();
 static Bool androidHudModeTap(Int x, Int y, Bool longPress);
 
@@ -4470,7 +4470,7 @@ static void androidHudModeSet(Int m)
 			}
 		if (s_gxGridIds.empty())
 			s_gxMode = 0;
-		if (m == 2)
+		if (m == 2 || m == 3)
 			s_gxGridIds.clear();
 	}
 	s_gxModeSig = androidHudSelSig();
@@ -4501,17 +4501,29 @@ static void androidHudIconPatrol(Int mx, Int my, Int r, UnsignedInt c)
 	TheDisplay->drawLine(mx - ax, by, mx - ax + hd, by + hd, 2.0f, c);
 }
 
+static void androidHudIconFire(Int mx, Int my, Int r, UnsignedInt c)
+{
+	// r025: crosshair = force fire
+	const Int g = r / 3 > 2 ? r / 3 : 2;
+	TheDisplay->drawOpenRect(mx - r * 7 / 10, my - r * 7 / 10, r * 14 / 10, r * 14 / 10, 2.0f, c);
+	TheDisplay->drawLine(mx - r, my, mx - g, my, 2.0f, c);
+	TheDisplay->drawLine(mx + g, my, mx + r, my, 2.0f, c);
+	TheDisplay->drawLine(mx, my - r, mx, my - g, 2.0f, c);
+	TheDisplay->drawLine(mx, my + g, mx, my + r, 2.0f, c);
+	TheDisplay->drawFillRect(mx - 1, my - 1, 3, 3, c);
+}
+
 static void androidHudDrawCmdRow()
 {
 	Bool allHold = FALSE, allBlind = FALSE;
 	androidHudModeState(allHold, allBlind);
 	const UnsignedInt bg = GameMakeColor(14, 18, 24, 255);
-	for (Int i = 0; i < 5; ++i)
+	for (Int i = 0; i < 6; ++i)
 	{
 		Int x, y, s;
 		androidHudCmdGeometry(i, x, y, s);
 		const Bool active = (i == 0 && s_gxMode == 1) || (i == 1 && s_gxMode == 2) ||
-		                    (i == 2 && allHold) || (i == 3 && allBlind);
+		                    (i == 2 && allHold) || (i == 3 && allBlind) || (i == 4 && s_gxMode == 3);
 		androidHudPlate(x, y, s, active);
 		const UnsignedInt c = active ? kGxGold : kGxIcon;
 		const Int mx = x + s / 2, my = y + s / 2, r = s * 32 / 100;
@@ -4519,13 +4531,14 @@ static void androidHudDrawCmdRow()
 		else if (i == 1) androidHudIconPatrol(mx, my, r, c);
 		else if (i == 2) androidHudIconHold(mx, my, r, c);
 		else if (i == 3) androidHudIconEye(mx, my, r, c, bg);
+		else if (i == 4) androidHudIconFire(mx, my, r, c);
 		else androidHudIconHand(mx, my + r / 6, r, c);
 	}
 }
 
 static Bool androidHudOnCmdRow(Int x, Int y)
 {
-	for (Int i = 0; i < 5; ++i)
+	for (Int i = 0; i < 6; ++i)
 	{
 		Int bx, by, s;
 		androidHudCmdGeometry(i, bx, by, s);
@@ -4542,7 +4555,7 @@ static Bool androidHudOnCmdRow(Int x, Int y)
 
 static Bool androidHudTapCmdRow(Int x, Int y)
 {
-	for (Int i = 0; i < 5; ++i)
+	for (Int i = 0; i < 6; ++i)
 	{
 		Int bx, by, s;
 		androidHudCmdGeometry(i, bx, by, s);
@@ -4551,11 +4564,12 @@ static Bool androidHudTapCmdRow(Int x, Int y)
 		{
 			if (i == 0) { androidHudModeSet(s_gxMode == 1 ? 0 : 1); return TRUE; }
 			if (i == 1) { androidHudModeSet(s_gxMode == 2 ? 0 : 2); return TRUE; }
-			if (i == 4) androidHudModeSet(0);
+			if (i == 4) { androidHudModeSet(s_gxMode == 3 ? 0 : 3); return TRUE; }
+			if (i == 5) androidHudModeSet(0);
 			if (TheMessageStream)
 			{
 				GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
-				m->appendIntegerArgument(3 + (i - 2));
+				m->appendIntegerArgument(i == 5 ? 5 : 3 + (i - 2));
 			}
 			return TRUE;
 		}
@@ -4928,6 +4942,24 @@ static Bool androidHudModeTap(Int x, Int y, Bool longPress)
 	ICoord2D sp; sp.x = x; sp.y = y;
 	Coord3D world;
 	TheTacticalView->screenToTerrain(&sp, &world);
+	if (s_gxMode == 3)
+	{
+		// r025: force fire - shoot at whatever is under the finger, or at the ground
+		Drawable *d = TheTacticalView->pickDrawable(&sp, TRUE, PICK_TYPE_SELECTABLE);
+		const Object *t = d ? d->getObject() : nullptr;
+		if (t && !t->isEffectivelyDead())
+		{
+			GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_DO_FORCE_ATTACK_OBJECT);
+			m->appendObjectIDArgument(t->getID());
+		}
+		else
+		{
+			GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_DO_FORCE_ATTACK_GROUND);
+			m->appendLocationArgument(world);
+		}
+		androidHudModeSet(0);
+		return TRUE;
+	}
 	if (s_gxMode == 1)
 	{
 		const Int cx = (Int)floorf(world.x / kGxCell), cy = (Int)floorf(world.y / kGxCell);
