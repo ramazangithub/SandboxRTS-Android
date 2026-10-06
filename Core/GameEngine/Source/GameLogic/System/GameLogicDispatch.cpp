@@ -1978,8 +1978,57 @@ bool GameLogic::onSell(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelec
 	return true;
 }
 
+// SandboxRTS r022 unit modes (AIUpdate.cpp)
+Bool GX_IsHold( ObjectID id );
+void GX_SetHold( ObjectID id, Bool on );
+Bool GX_IsBlind( ObjectID id );
+void GX_SetBlind( ObjectID id, Bool on );
+void GX_MarkCancel( ObjectID id );
+
 bool GameLogic::onToggleOvercharge(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &currentlySelectedGroup)
 {
+	// r022: 3 = hold toggle, 4 = blind toggle, 5 = cancel all orders (blind stays)
+	if( currentlySelectedGroup && msg && msg->getArgumentCount() > 0 )
+	{
+		const Int gxMode = msg->getArgument( 0 )->integer;
+		if( gxMode >= 3 && gxMode <= 5 )
+		{
+			const VecObjectID gxIds = currentlySelectedGroup->getAllIDs();
+			Bool all = TRUE;
+			for( size_t k = 0; k < gxIds.size(); ++k )
+			{
+				Object *o = TheGameLogic->findObjectByID( gxIds[k] );
+				if( o == nullptr || o->isEffectivelyDead() )
+					continue;
+				if( gxMode == 3 && !GX_IsHold( gxIds[k] ) ) all = FALSE;
+				if( gxMode == 4 && !GX_IsBlind( gxIds[k] ) ) all = FALSE;
+			}
+			for( size_t k = 0; k < gxIds.size(); ++k )
+			{
+				Object *o = TheGameLogic->findObjectByID( gxIds[k] );
+				if( o == nullptr || o->isEffectivelyDead() )
+					continue;
+				AIUpdateInterface *ai = o->getAIUpdateInterface();
+				if( gxMode == 3 )
+				{
+					GX_SetHold( gxIds[k], !all );
+					if( !all && ai ) ai->aiIdle( CMD_FROM_PLAYER );
+				}
+				else if( gxMode == 4 )
+				{
+					GX_SetBlind( gxIds[k], !all );
+					if( !all && ai && ai->isAttacking() ) ai->aiIdle( CMD_FROM_PLAYER );
+				}
+				else
+				{
+					GX_SetHold( gxIds[k], FALSE );
+					GX_MarkCancel( gxIds[k] );
+					if( ai ) ai->aiIdle( CMD_FROM_PLAYER );
+				}
+			}
+			return true;
+		}
+	}
 	// SandboxRTS r021: optional int argument: 1 = siege only the not-sieged units,
 	// 2 = pack up only the sieged ones; no argument = old toggle (D hotkey)
 	if( currentlySelectedGroup && msg && msg->getArgumentCount() > 0 )

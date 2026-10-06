@@ -69,7 +69,34 @@
 #include "GameLogic/ScriptEngine.h"
 #include "GameLogic/TurretAI.h"
 #include "GameLogic/Weapon.h"
-#include "Common/Radar.h"									// For TheRadar
+#include "Common/Radar.h"
+#include <set>
+
+// SandboxRTS r022: per-unit player modes (not saved): hold = no driving at all,
+// blind = ignore every enemy, cancel = siege units drop a pending attack-move resume
+static std::set<ObjectID> s_gxHold, s_gxBlind, s_gxCancel;
+Bool GX_IsHold( ObjectID id ) { return s_gxHold.find( id ) != s_gxHold.end(); }
+void GX_SetHold( ObjectID id, Bool on ) { if( on ) s_gxHold.insert( id ); else s_gxHold.erase( id ); }
+Bool GX_IsBlind( ObjectID id ) { return s_gxBlind.find( id ) != s_gxBlind.end(); }
+void GX_SetBlind( ObjectID id, Bool on ) { if( on ) s_gxBlind.insert( id ); else s_gxBlind.erase( id ); }
+void GX_MarkCancel( ObjectID id ) { s_gxCancel.insert( id ); }
+Bool GX_TakeCancel( ObjectID id ) { return s_gxCancel.erase( id ) != 0; }
+static Bool gxIsMoveCmd( Int c )
+{
+	switch( c )
+	{
+		case AICMD_MOVE_TO_POSITION: case AICMD_MOVE_TO_OBJECT: case AICMD_TIGHTEN_TO_POSITION:
+		case AICMD_FOLLOW_WAYPOINT_PATH: case AICMD_FOLLOW_WAYPOINT_PATH_AS_TEAM: case AICMD_FOLLOW_USER_PATH:
+		case AICMD_FOLLOW_PATH: case AICMD_ATTACKMOVE_TO_POSITION: case AICMD_ATTACKFOLLOW_WAYPOINT_PATH:
+		case AICMD_ATTACKFOLLOW_WAYPOINT_PATH_AS_TEAM: case AICMD_HUNT: case AICMD_GUARD_POSITION:
+		case AICMD_GUARD_OBJECT: case AICMD_GUARD_AREA: case AICMD_WANDER: case AICMD_FOLLOW_WAYPOINT_PATH_EXACT:
+		case AICMD_FOLLOW_WAYPOINT_PATH_AS_TEAM_EXACT: case AICMD_MOVE_AWAY_FROM_UNIT: case AICMD_FOLLOW_PATH_APPEND:
+		case AICMD_MOVE_TO_POSITION_EVEN_IF_SLEEPING:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}									// For TheRadar
 
 #define SLEEPY_AI
 
@@ -1004,6 +1031,10 @@ UpdateSleepTime AIUpdateInterface::update()
 	//DEBUG_LOG(("AIUpdateInterface frame %d: %08lx",TheGameLogic->getFrame(),getObject()));
 
 	USE_PERF_TIMER(AIUpdateInterface_update)
+
+	// SandboxRTS r022: hold mode - a chase or any other path is dropped at once
+	if (getObject() != nullptr && !getObject()->isEffectivelyDead() && GX_IsHold(getObject()->getID()) && getPath() != nullptr)
+		aiIdle(CMD_FROM_AI);
 
 	m_isInUpdate = TRUE;
 
@@ -2626,6 +2657,18 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 
 	if (!isAllowedToRespondToAiCommands(parms))
 		return;
+
+	// SandboxRTS r022: hold = refuse every driving order; blind = no AI retaliation
+	if (parms->m_cmdSource != CMD_FROM_SCRIPT && getObject() != nullptr)
+	{
+		const ObjectID gxId = getObject()->getID();
+		if (GX_IsHold(gxId) && gxIsMoveCmd((Int)parms->m_cmd))
+			return;
+		if (GX_IsBlind(gxId) && parms->m_cmdSource == CMD_FROM_AI &&
+			(parms->m_cmd == AICMD_GUARD_RETALIATE || parms->m_cmd == AICMD_ATTACK_OBJECT ||
+			 parms->m_cmd == AICMD_ATTACK_TEAM || parms->m_cmd == AICMD_HUNT))
+			return;
+	}
 
 #ifdef ALLOW_SURRENDER
 	// surrendered items have very limited options, and only via AI cmds
@@ -4501,6 +4544,10 @@ Bool AIUpdateInterface::canAutoAcquireWhileStealthed() const
 Object* AIUpdateInterface::getNextMoodTarget( Bool calledByAI, Bool calledDuringIdle )
 {
 	Object *obj = getObject();
+
+	// SandboxRTS r022: blind mode - never pick a target by itself
+	if (obj != nullptr && GX_IsBlind(obj->getID()))
+		return nullptr;
 
 	// if we're dead, we can't attack
 	if (obj->isEffectivelyDead())

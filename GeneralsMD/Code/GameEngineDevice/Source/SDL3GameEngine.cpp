@@ -54,9 +54,13 @@
 #if defined(__ANDROID__)
 Bool AndroidHud_HandleTap(Int x, Int y);   // InGameUI.cpp (r009 touch HUD)
 void AndroidHud_SelectOnScreen();          // InGameUI.cpp (r011 double tap)
+Bool AndroidHud_DoubleTapGround(Int x, Int y);   // InGameUI.cpp (r022 aggressive move)
+Bool AndroidHud_HandleLongPress(Int x, Int y);   // InGameUI.cpp (r022 group slots)
 #else
 static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
 static inline void AndroidHud_SelectOnScreen() {}
+static inline Bool AndroidHud_DoubleTapGround(Int, Int) { return FALSE; }
+static inline Bool AndroidHud_HandleLongPress(Int, Int) { return FALSE; }
 #endif
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -243,6 +247,7 @@ const float GLIDE_START = 1.0f;   // fraction of the release world velocity
 const float GLIDE_DECAY = 0.93f;  // per-frame decay (~0.5 s coast)
 const float ROTATE_SIGN = 1.0f;   // camera yaw follows the finger twist
 const float ROTATE_DEADZONE = 0.10f; // rad of twist before rotation engages
+static bool s_hudLongPress = false;  // r022: long press consumed by a HUD slot
 const Uint64 TAP_MAX_MS = 450;    // longer presses are not taps (no flick double-taps)
 const float PAN_MAX_FRAC = 0.30f; // r014: only clamps real spikes (lost frames), never normal swipes
 // r010: inertia - after lift the camera keeps ~10% of the swipe momentum
@@ -696,8 +701,10 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 						break;
 					}
 					if (dbl && TheMessageStream) {
-						// r011: double tap = select own units visible on screen only
-						AndroidHud_SelectOnScreen();
+						// r022: double tap on the ground with units selected = aggressive move;
+						// otherwise (r011) select own units visible on screen only
+						if (!AndroidHud_DoubleTapGround((Int)(s_touch.downX * hudSX), (Int)(s_touch.downY * hudSY)))
+							AndroidHud_SelectOnScreen();
 					} else {
 						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);
 						sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_DOWN,
@@ -716,8 +723,11 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP, px, py, SDL_BUTTON_LEFT);
 				break;
 			case TouchState::LONGPRESSED:
-				sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
-				                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
+				if (s_hudLongPress)
+					s_hudLongPress = false;
+				else
+					sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_BUTTON_UP,
+					                   s_touch.downX, s_touch.downY, SDL_BUTTON_LEFT);
 				break;
 			case TouchState::PAN:
 				// r011: no mouse buttons are held during a pan any more; just coast.
@@ -762,6 +772,18 @@ void updateTouchLongPress(SDL3Mouse *mouse, SDL_Window *window)
 	}
 	if (s_touch.phase == TouchState::PENDING &&
 	    (SDL_GetTicks() - s_touch.downTicks) >= LONG_PRESS_MS) {
+		{
+			// r022: long press on a group slot = store the current selection there
+			int lw = 0, lh = 0;
+			SDL_GetWindowSize(window, &lw, &lh);
+			const float lsx = (TheDisplay && lw > 0) ? (float)TheDisplay->getWidth() / (float)lw : 1.0f;
+			const float lsy = (TheDisplay && lh > 0) ? (float)TheDisplay->getHeight() / (float)lh : 1.0f;
+			if (AndroidHud_HandleLongPress((Int)(s_touch.downX * lsx), (Int)(s_touch.downY * lsy))) {
+				s_touch.phase = TouchState::LONGPRESSED;
+				s_hudLongPress = true;
+				return;
+			}
+		}
 		// r007: long-press arms the selection box: LMB goes down at the press
 		// point, the following drag grows the green box, lift selects.
 		sendSyntheticMouse(mouse, window, SDL_EVENT_MOUSE_MOTION, s_touch.downX, s_touch.downY);

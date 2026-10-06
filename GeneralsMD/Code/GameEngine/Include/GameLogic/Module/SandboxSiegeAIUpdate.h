@@ -61,10 +61,15 @@ protected:
 	void playUnitSound( const char *name );
 	void showAnimFrame();
 	void holdFire( Bool hold );
+	Object *gxScanEnemy();					///< r022: closest living enemy inside vision range
 
 	SandboxSiegeState	m_state;
 	UnsignedInt				m_startFrame;	///< frame the current transition started
 	UnsignedInt				m_doneFrame;	///< frame the current transition ends
 	UnsignedInt				m_noAutoUntil;	///< SandboxRTS autosiege: no auto deploy before this frame (after manual Q pack-up)
 	Bool						m_keepOrder;		///< SandboxRTS autosiege: pack up without dropping the move order
+	Bool						m_hasResume;		///< r022: deployed out of an attack-move, continue it when clear
+	Bool						m_resumePending;	///< r022: packing up to continue the attack-move
+	Coord3D					m_resume;			///< r022: attack-move destination
+	UnsignedInt				m_clearSince;		///< r022: last frame an enemy was seen while deployed
 };

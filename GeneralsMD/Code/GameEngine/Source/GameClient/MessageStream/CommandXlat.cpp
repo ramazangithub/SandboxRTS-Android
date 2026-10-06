@@ -85,6 +85,9 @@
 #include "GameLogic/Module/ContainModule.h"
 
 #include "GameNetwork/NetworkInterface.h"
+#if defined(__ANDROID__)
+void AndroidHud_NoteOrder(const Coord3D *pos, Bool aggressive);	// InGameUI.cpp (r022 order line)
+#endif
 #include "GameNetwork/GameInfo.h"
 #include "GameNetwork/GameSpyOverlay.h"
 #include "GameNetwork/GameSpy/BuddyThread.h"
@@ -1027,7 +1030,13 @@ GameMessage::Type CommandTranslator::issueMoveToLocationCommand( const Coord3D *
 			if (msgType == GameMessage::MSG_DO_ATTACK_OBJECT)
 				movemsg->appendObjectIDArgument( obj->getID() );
 			else
+				{
 				movemsg->appendLocationArgument( *pos );
+#if defined(__ANDROID__)
+				if (msgType == GameMessage::MSG_DO_MOVETO || msgType == GameMessage::MSG_DO_ATTACKMOVETO || msgType == GameMessage::MSG_DO_FORCEMOVETO)
+					AndroidHud_NoteOrder(pos, msgType == GameMessage::MSG_DO_ATTACKMOVETO);
+#endif
+				}
 
 		}
 	}

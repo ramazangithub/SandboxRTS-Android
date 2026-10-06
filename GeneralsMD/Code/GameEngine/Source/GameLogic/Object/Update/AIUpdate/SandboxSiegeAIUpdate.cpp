@@ -11,6 +11,12 @@
 #include "GameLogic/Object.h"
 #include "GameLogic/WeaponSetType.h"
 #include "GameLogic/Module/SandboxSiegeAIUpdate.h"
+#include "GameLogic/AIStateMachine.h"
+#include "GameLogic/PartitionManager.h"
+#include "GameLogic/Weapon.h"
+
+Bool GX_IsBlind( ObjectID id );		// AIUpdate.cpp (r022)
+Bool GX_TakeCancel( ObjectID id );
 
 //-------------------------------------------------------------------------------------------------
 SandboxSiegeAIUpdate::SandboxSiegeAIUpdate( Thing *thing, const ModuleData* moduleData ) : AIUpdateInterface( thing, moduleData )
@@ -20,6 +26,23 @@ SandboxSiegeAIUpdate::SandboxSiegeAIUpdate( Thing *thing, const ModuleData* modu
 	m_doneFrame = 0;
 	m_noAutoUntil = 0;	// SandboxRTS autosiege
 	m_keepOrder = FALSE;
+	m_hasResume = FALSE;
+	m_resumePending = FALSE;
+	m_resume.zero();
+	m_clearSince = 0;
+}
+
+// r022: closest living enemy the tank can see
+Object *SandboxSiegeAIUpdate::gxScanEnemy()
+{
+	Object *me = getObject();
+	if( me == nullptr || ThePartitionManager == nullptr || me->isEffectivelyDead() )
+		return nullptr;
+	PartitionFilterRelationship rel( me, PartitionFilterRelationship::ALLOW_ENEMIES );
+	PartitionFilterAlive alive;
+	PartitionFilterSameMapStatus sameMap( me );
+	PartitionFilter *filters[] = { &rel, &alive, &sameMap, nullptr };
+	return ThePartitionManager->getClosestObject( me, me->getVisionRange(), FROM_BOUNDINGSPHERE_2D, filters );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -181,16 +204,40 @@ UpdateSleepTime SandboxSiegeAIUpdate::update()
 	Bool isTryingToMove = isWaitingForPath() || getPath();
 	// SandboxRTS autosiege: a move order from the player (not an attack / chase)
 	Bool playerMove = isTryingToMove && getLastCommandSource() == CMD_FROM_PLAYER && !isAttacking();
+	// r022: an attack-move (double tap) does not stop the autosiege while driving
+	const Bool attackMove = isTryingToMove && getCurrentStateID() == AI_ATTACK_MOVE_TO;
+	const Bool travelOrder = playerMove && !attackMove;
+	const ObjectID myId = getObject()->getID();
+	const Bool blind = GX_IsBlind( myId );
+	const Bool scanFrame = ((now + (UnsignedInt)myId) % 10) == 0;
+	if( GX_TakeCancel( myId ) )
+	{
+		m_hasResume = FALSE;
+		m_resumePending = FALSE;
+	}
 
 	switch( m_state )
 	{
 		case SIEGE_TRAVEL:
 		{
 			// enemy in sight -> stop and deploy by itself
-			Object *victim = getCurrentVictim();
-			if( !playerMove && now >= m_noAutoUntil && victim && !victim->isEffectivelyDead()
+			Object *victim = blind ? nullptr : getCurrentVictim();
+			// r022: player tanks deploy as soon as they see an enemy too (not only AI ones)
+			if( victim == nullptr && !blind && !travelOrder && now >= m_noAutoUntil && scanFrame )
+				victim = gxScanEnemy();
+			if( !travelOrder && now >= m_noAutoUntil && victim && !victim->isEffectivelyDead()
 				&& !getObject()->isEffectivelyDead() )
+			{
+				m_hasResume = FALSE;
+				m_resumePending = FALSE;
+				if( attackMove )
+				{
+					const Coord3D *g = getGoalPosition();
+					if( g ) { m_resume = *g; m_hasResume = TRUE; }
+				}
+				m_clearSince = now;
 				setSiegeState( SIEGE_DEPLOYING );
+			}
 			break;
 		}
 		case SIEGE_DEPLOYING:
@@ -220,13 +267,34 @@ UpdateSleepTime SandboxSiegeAIUpdate::update()
 				aiIdle( CMD_FROM_AI );	// AI chase while in siege: ignore
 			setLocomotorGoalNone();
 			showAnimFrame();
+			// r022: deployed out of an attack-move -> enemy gone for 2 s: pack up and go on
+			if( m_hasResume )
+			{
+				if( !blind && getCurrentVictim() != nullptr )
+					m_clearSince = now;
+				else if( !blind && scanFrame && gxScanEnemy() != nullptr )
+					m_clearSince = now;
+				if( now > m_clearSince + LOGICFRAMES_PER_SECOND * 2 )
+				{
+					m_resumePending = TRUE;
+					m_hasResume = FALSE;
+					setSiegeState( SIEGE_UNDEPLOYING );
+				}
+			}
 			break;
 		case SIEGE_UNDEPLOYING:
 			// keep any new move order and carry it out once packed up
 			getStateMachine()->setTemporaryState( AI_BUSY, UPDATE_SLEEP_NONE );
 			setLocomotorGoalNone();
 			if( now >= m_doneFrame )
+			{
 				setSiegeState( SIEGE_TRAVEL );
+				if( m_resumePending )
+				{
+					m_resumePending = FALSE;
+					aiAttackMoveToPosition( &m_resume, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
+				}
+			}
 			else
 				showAnimFrame();
 			break;
