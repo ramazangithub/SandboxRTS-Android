@@ -514,6 +514,15 @@ ALenum OpenALAudioManager::getALFormat(uint8_t channels, uint8_t bitsPerSample)
 extern float g_gxAmbNight; // 0 day .. 1 night (written by the day/night cycle)
 extern int g_gxAmbOwnLost;  // r029: bumped by the HUD whenever one of our vehicles dies
 extern float g_gxEngIdle, g_gxEngMove; // r030: nearby vehicles standing / driving (weighted by distance to camera)
+extern int g_gxUiReq[8]; // r032: UI / action sounds requested by the HUD (GameAudio.cpp)
+float g_gxWind = 0.4f;   // r032: current wind strength 0..1 (tumbleweeds / dust devils follow it)
+#include <vector>
+#include <cstdio>
+#include <cstddef>
+#if defined(__ANDROID__)
+extern "C" void *SDL_LoadFile(const char *file, size_t *datasize); // SDL3 (linked into libmain)
+extern "C" void SDL_free(void *mem);
+#endif
 namespace {
 const int GXA_RATE = 44100;
 const int GXA_FRAMES = 4096;
@@ -536,6 +545,99 @@ struct GxRng { uint32_t s; GxRng() : s(0x9E3779B9u) {}
 	inline float f() { return (u() >> 8) * (1.0f / 16777216.0f); }       // 0..1
 	inline float n() { return f() * 2.0f - 1.0f; } };                      // -1..1
 GxRng g_r;
+
+// r032: recorded CC0 samples (APK assets/sfx, 22.05 kHz mono 16-bit). The synth stays as a fallback.
+enum { S_WIND, S_WIND2, S_BIRDS, S_VOLC, S_LAVA, S_MOTOR, S_GUST, S_SHAKE, S_BIRD1, S_BIRD2, S_BIRD3, S_BIRD4,
+	S_CROW, S_OWL, S_THUNDER, S_VBOOM, S_ROCK, S_UI0, S_COUNT = S_UI0 + 7 };
+const char *const k_gxSmpName[S_COUNT] = { "wind_bed", "wind_strong", "birds_bed", "volcano_bed", "lava_bed", "motor",
+	"wind_gust", "wind_shake", "bird1", "bird2", "bird3", "bird4", "crow", "owl", "thunder", "volcano_boom", "rock_fall",
+	"ui_click", "ui_tap", "ui_switch", "ui_order", "ui_error", "siege_on", "siege_off" };
+struct GxSmp { std::vector<float> d; int rate; };
+GxSmp s_smp[S_COUNT];
+bool s_smpTried = false, s_smpOn = false;
+
+bool gxSmpParse(const unsigned char *b, size_t n, GxSmp &out)
+{
+	if (n < 44 || memcmp(b, "RIFF", 4) != 0 || memcmp(b + 8, "WAVE", 4) != 0) return false;
+	size_t p = 12; int ch = 0, bits = 0, rate = 0;
+	while (p + 8 <= n)
+	{
+		size_t sz = (size_t)b[p + 4] | ((size_t)b[p + 5] << 8) | ((size_t)b[p + 6] << 16) | ((size_t)b[p + 7] << 24);
+		const unsigned char *c = b + p + 8;
+		if (p + 8 + sz > n) sz = n - p - 8;
+		if (memcmp(b + p, "fmt ", 4) == 0 && sz >= 16)
+		{
+			ch = c[2] | (c[3] << 8);
+			rate = c[4] | (c[5] << 8) | (c[6] << 16) | (c[7] << 24);
+			bits = c[14] | (c[15] << 8);
+		}
+		else if (memcmp(b + p, "data", 4) == 0)
+		{
+			if (bits != 16 || ch < 1 || rate <= 0) return false;
+			const size_t frames = sz / (2 * (size_t)ch);
+			out.d.resize(frames); out.rate = rate;
+			for (size_t i = 0; i < frames; ++i)
+			{
+				const unsigned char *s = c + i * 2 * (size_t)ch;
+				out.d[i] = (float)(int16_t)(s[0] | (s[1] << 8)) * (1.0f / 32768.0f);
+			}
+			return frames > 1;
+		}
+		p += 8 + sz + (sz & 1);
+	}
+	return false;
+}
+
+void gxSmpLoad()
+{
+	if (s_smpTried) return;
+	s_smpTried = true;
+#if defined(__ANDROID__)
+	static const char *const dirs[2] = { "sfx/", "/sdcard/GeneralsZH/sfx/" };
+	for (int i = 0; i < S_COUNT; ++i)
+		for (int k = 0; k < 2 && s_smp[i].d.empty(); ++k)
+		{
+			char path[160];
+			snprintf(path, sizeof(path), "%s%s.wav", dirs[k], k_gxSmpName[i]);
+			size_t n = 0;
+			void *m = SDL_LoadFile(path, &n); // relative path = APK assets on Android
+			if (m) { gxSmpParse((const unsigned char *)m, n, s_smp[i]); SDL_free(m); }
+		}
+#endif
+	s_smpOn = !s_smp[S_WIND].d.empty() && !s_smp[S_MOTOR].d.empty();
+}
+
+// looping playhead with linear interpolation; pitch 1 = original speed
+inline float gxSmpLoop(int id, float &pos, float pitch)
+{
+	const GxSmp &s = s_smp[id];
+	const int n = (int)s.d.size();
+	if (n < 2) return 0.0f;
+	if (pos >= (float)n || pos < 0.0f) pos = fmodf(pos < 0.0f ? -pos : pos, (float)n);
+	const int i = (int)pos;
+	const float fr = pos - (float)i;
+	const int j = i + 1 < n ? i + 1 : 0;
+	const float v = s.d[i] + (s.d[j] - s.d[i]) * fr;
+	pos += pitch * (float)s.rate / (float)GXA_RATE;
+	if (pos >= (float)n) pos -= (float)n;
+	return v;
+}
+
+struct GxSv { int id; float pos, step, gain, pan; bool fx; }; // id = sample + 1, 0 = free
+const int GXA_NSV = 14;
+GxSv s_sv[GXA_NSV];
+void gxaPlaySmp(int id, float gain, float pan, float pitch, bool fx)
+{
+	if (!s_smpOn || id < 0 || id >= S_COUNT || s_smp[id].d.size() < 2) return;
+	for (int i = 0; i < GXA_NSV; ++i)
+		if (s_sv[i].id == 0)
+		{
+			GxSv &q = s_sv[i];
+			q.id = id + 1; q.pos = 0.0f; q.step = pitch * (float)s_smp[id].rate / (float)GXA_RATE;
+			q.gain = gain; q.pan = pan; q.fx = fx;
+			return;
+		}
+}
 
 struct GxSvf { float lo, bp;
 	inline void run(float in, float f, float q) { float hp = in - lo - q * bp; bp += f * hp; lo += f * bp; } };
@@ -564,11 +666,29 @@ struct GxState {
 	float heat, nature, drone, dph1, dph2, dph3, radioT, beatT; GxLp dlp; int lastLost;
 	// r030 engine hum
 	float eIdle, eMove, eph1, eph2, eph3, eph4; GxLp eroll;
+	// r032 sample playheads
+	float pW1, pW2, pW3, pW4, pV, pLv, pB, pM1, pM2;
 	GxState() { memset(this, 0, sizeof(*this)); nature = 1.0f; radioT = 5.0f; lastLost = -1; gust = 0.4f; gustTarget = 0.5f; tBoom = 40; tBird = 20; tAnimal = 70; tRare = 50; tCrack = 2; duck = 1; for (int i = 0; i < 3; ++i) { crPan[i] = -0.7f + 0.7f * i; crT[i] = 0.17f * i; } }
 } s_a;
 
 GxVoice *gxaStart(int type, float dur, float gain)
 {
+	if (s_smpOn)
+	{
+		// r032: nature one-shots come from recordings
+		const float pan = g_r.n() * 0.8f, pit = 0.92f + 0.16f * g_r.f();
+		switch (type)
+		{
+		case V_HAWK: gxaPlaySmp(S_BIRD1 + (int)(g_r.u() % 4u), 0.9f * gain + 0.12f, pan, pit, false); return nullptr;
+		case V_HOWL: gxaPlaySmp(S_OWL, 0.30f, pan, pit, false); return nullptr;
+		case V_YIP: gxaPlaySmp(S_CROW, 0.22f, pan, pit, false); return nullptr;
+		case V_BOOM: gxaPlaySmp(S_VBOOM, 0.55f, pan * 0.5f, pit, false); return nullptr;
+		case V_ROCK: gxaPlaySmp(S_ROCK, 0.35f, pan, pit * 0.9f, false); return nullptr;
+		case V_THUNDER: gxaPlaySmp(S_THUNDER, 0.35f, pan, pit * 0.85f, false); return nullptr;
+		case V_CRACK: case V_RADIO: return nullptr; // clicks / radio static sounded like interference
+		default: break;
+		}
+	}
 	for (int i = 0; i < GXA_NV; ++i)
 		if (s_v[i].type == V_NONE)
 		{
@@ -718,13 +838,13 @@ void gxaSchedule(float dt)
 	}
 	a.beatT -= dt;
 	if (a.heat > 0.6f && a.beatT <= 0) { gxaStart(V_BEAT, 0.6f, 0.22f * (a.heat - 0.4f)); a.beatT = 0.95f; }
-	if (a.tBird <= 0) { if (day > 0.4f && a.nature > 0.7f) gxaStart(V_HAWK, 2.0f, 0.10f * day); a.tBird = 45.0f + 75.0f * g_r.f(); }
+	if (a.tBird <= 0) { if (day > 0.4f && a.nature > 0.7f) gxaStart(V_HAWK, 2.0f, 0.10f * day); a.tBird = s_smpOn ? 7.0f + 20.0f * g_r.f() : 45.0f + 75.0f * g_r.f(); }
 	if (a.tAnimal <= 0)
 	{
 		if (a.nature < 0.7f) {}
 		else if (a.night > 0.5f) gxaStart(g_r.f() < 0.6f ? V_HOWL : V_YIP, 2.6f + 1.5f * g_r.f(), 0.08f);
 		else if (g_r.f() < 0.4f) gxaStart(V_YIP, 1.4f, 0.05f);
-		a.tAnimal = 120.0f + 180.0f * g_r.f();
+		a.tAnimal = s_smpOn ? 30.0f + 60.0f * g_r.f() : 120.0f + 180.0f * g_r.f();
 	}
 	if (a.tRare <= 0) { gxaStart(g_r.f() < 0.5f ? V_ROCK : V_THUNDER, 3.0f + 2.5f * g_r.f(), 0.22f); a.tRare = 60.0f + 60.0f * g_r.f(); }
 	if (a.tCrack <= 0) { gxaStart(V_CRACK, 0.03f, 0.10f * (0.3f + 0.7f * a.night)); a.tCrack = (1.5f + 6.0f * g_r.f()) / (0.3f + a.night); }
@@ -733,6 +853,11 @@ void gxaSchedule(float dt)
 void gxaFill(int16_t *pcm, int frames, float duckTarget)
 {
 	GxState &a = s_a;
+	if (!s_smpTried)
+	{
+		gxSmpLoad();
+		if (s_smpOn) { a.pW2 = s_smp[S_WIND].d.size() * 0.5f; a.pW4 = s_smp[S_WIND2].d.size() * 0.37f; a.pM2 = s_smp[S_MOTOR].d.size() * 0.3f; }
+	}
 	const float nightTarget = g_gxAmbNight < 0 ? 0 : (g_gxAmbNight > 1 ? 1 : g_gxAmbNight);
 	gxaSchedule((float)frames / GXA_RATE);
 	const float fW1 = 0, fWh = 0; (void)fW1; (void)fWh;
@@ -760,26 +885,54 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 		}
 		// --- gusts
 		a.gustTimer -= dt;
-		if (a.gustTimer <= 0) { float r = g_r.f(); a.gustTarget = r < 0.25f ? 0.05f + 0.1f * g_r.f() : 0.3f + 0.7f * g_r.f() * g_r.f() + 0.25f * r; a.gustTimer = 2.0f + 6.0f * g_r.f(); a.windPanT = g_r.n() * 0.6f; }
+		if (a.gustTimer <= 0) { float r = g_r.f(); a.gustTarget = r < 0.25f ? 0.05f + 0.1f * g_r.f() : 0.3f + 0.7f * g_r.f() * g_r.f() + 0.25f * r; a.gustTimer = 2.0f + 6.0f * g_r.f(); a.windPanT = g_r.n() * 0.6f;
+			if (s_smpOn && a.gustTarget > 0.75f) gxaPlaySmp(g_r.f() < 0.6f ? S_GUST : S_SHAKE, 0.22f * a.gustTarget, a.windPanT, 0.85f + 0.2f * g_r.f(), false); }
 		a.gust += (a.gustTarget * (night > 0.5f ? 0.7f : 1.0f) - a.gust) * 0.00004f;
 		a.windPan += (a.windPanT - a.windPan) * 0.00002f;
 		const float g = a.gust;
-		const float wf = gxSvfF(180.0f + 700.0f * g);
-		a.wbL.run(g_r.n(), wf, 1.1f);
-		a.wbR.run(g_r.n(), wf, 1.1f);
-		float wind = 0.55f * (0.12f + g * g);
-		a.whis.run(g_r.n(), gxSvfF(650.0f + 950.0f * g), 0.06f);
-		float whistle = a.whis.bp * 0.05f * g * g * g;
-		float white = g_r.n();
-		float sand = (white - a.sandHp.run(white, aSand)) * 0.10f * g * g * (0.6f + 0.4f * g_r.f());
-		float L = a.wbL.bp * wind * (1.0f - 0.4f * a.windPan) + whistle * (1.0f - a.windPan) + sand;
-		float Rr = a.wbR.bp * wind * (1.0f + 0.4f * a.windPan) + whistle * (1.0f + a.windPan) + sand * 0.9f;
-		// --- volcano rumble
-		a.rumLfo += dt * 0.07f;
-		float rum = a.r2.run(a.r1.run(g_r.n(), aR1), aR2) * 2.2f * (0.75f + 0.25f * sinf(2 * GXA_PI * a.rumLfo));
-		L += rum; Rr += rum;
+		g_gxWind = g;
+		float L, Rr;
+		if (s_smpOn)
+		{
+			// r032: recorded wind - calm bed always, strong wind fades in with the gusts; two playheads
+			// per loop give a wide natural stereo field (no synthetic noise = no static/interference)
+			const float sp = 0.94f + 0.12f * g;
+			const float wl = gxSmpLoop(S_WIND, a.pW1, 1.0f), wr = gxSmpLoop(S_WIND, a.pW2, 1.0f);
+			const float sl = gxSmpLoop(S_WIND2, a.pW3, sp), sr = gxSmpLoop(S_WIND2, a.pW4, sp);
+			const float kb = 0.30f + 0.25f * g, ks = 0.75f * g * g;
+			L = (wl * kb + sl * ks) * (1.0f - 0.3f * a.windPan);
+			Rr = (wr * kb + sr * ks) * (1.0f + 0.3f * a.windPan);
+			// volcano: deep recorded rumble bed + lava bubbling
+			a.rumLfo += dt * 0.07f;
+			const float rum = gxSmpLoop(S_VOLC, a.pV, 1.0f) * 0.55f * (0.75f + 0.25f * sinf(2 * GXA_PI * a.rumLfo))
+				+ gxSmpLoop(S_LAVA, a.pLv, 1.0f) * 0.18f;
+			L += rum; Rr += rum;
+		}
+		else
+		{
+			const float wf = gxSvfF(180.0f + 700.0f * g);
+			a.wbL.run(g_r.n(), wf, 1.1f);
+			a.wbR.run(g_r.n(), wf, 1.1f);
+			float wind = 0.55f * (0.12f + g * g);
+			a.whis.run(g_r.n(), gxSvfF(650.0f + 950.0f * g), 0.06f);
+			float whistle = a.whis.bp * 0.05f * g * g * g;
+			float white = g_r.n();
+			float sand = (white - a.sandHp.run(white, aSand)) * 0.10f * g * g * (0.6f + 0.4f * g_r.f());
+			L = a.wbL.bp * wind * (1.0f - 0.4f * a.windPan) + whistle * (1.0f - a.windPan) + sand;
+			Rr = a.wbR.bp * wind * (1.0f + 0.4f * a.windPan) + whistle * (1.0f + a.windPan) + sand * 0.9f;
+			// --- volcano rumble
+			a.rumLfo += dt * 0.07f;
+			float rum = a.r2.run(a.r1.run(g_r.n(), aR1), aR2) * 2.2f * (0.75f + 0.25f * sinf(2 * GXA_PI * a.rumLfo));
+			L += rum; Rr += rum;
+		}
 		// --- cicadas (day, swelling choruses)
-		if (day > 0.05f)
+		if (s_smpOn)
+		{
+			// r032: recorded birds bed instead of the synthetic cicada hiss
+			const float bb = gxSmpLoop(S_BIRDS, a.pB, 1.0f) * 0.55f * day * a.nature;
+			L += bb * 0.85f; Rr += bb;
+		}
+		else if (day > 0.05f)
 		{
 			a.cicTimer -= dt;
 			if (a.cicTimer <= 0) { a.cicOn = a.cicOn > 0.5f ? 0.0f : 1.0f; a.cicTimer = a.cicOn > 0.5f ? 5.0f + 7.0f * g_r.f() : 4.0f + 10.0f * g_r.f(); }
@@ -814,6 +967,18 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 				if (fx) { FL += o * (1.0f - pan); FR += o * (1.0f + pan); }
 				else { L += o * (1.0f - pan); Rr += o * (1.0f + pan); }
 			}
+		for (int sv = 0; sv < GXA_NSV; ++sv)
+			if (s_sv[sv].id != 0)
+			{
+				GxSv &q = s_sv[sv];
+				const std::vector<float> &d = s_smp[q.id - 1].d;
+				const int ii = (int)q.pos;
+				if (ii + 1 >= (int)d.size()) { q.id = 0; continue; }
+				const float o = (d[ii] + (d[ii + 1] - d[ii]) * (q.pos - (float)ii)) * q.gain;
+				q.pos += q.step;
+				if (q.fx) { FL += o * (1.0f - q.pan); FR += o * (1.0f + q.pan); }
+				else { L += o * (1.0f - q.pan); Rr += o * (1.0f + q.pan); }
+			}
 		L *= a.duck * 0.9f; Rr *= a.duck * 0.9f;
 		// r030: modern electric drive - soft mains-like hum standing, motor whine rising when driving
 		{
@@ -825,6 +990,17 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 			if (tot > 0.01f)
 			{
 				const float load = a.eMove / (tot + 0.001f);
+				if (s_smpOn)
+				{
+					// r032: recorded electric motor; pitch and level rise with driving load
+					const float amt2 = sqrtf(tot > 4.0f ? 4.0f : tot) * 0.5f;
+					const float m1 = gxSmpLoop(S_MOTOR, a.pM1, 0.70f + 0.45f * load);
+					const float m2 = gxSmpLoop(S_MOTOR, a.pM2, 1.05f + 0.6f * load);
+					const float eg2 = (m1 * (0.22f + 0.18f * load) + m2 * 0.06f * load) * amt2;
+					FL += eg2; FR += eg2;
+				}
+				else
+				{
 				const float wh = 520.0f + 900.0f * load;
 				const float TP = 2.0f * GXA_PI;
 				a.eph1 += TP * wh * dt; if (a.eph1 > TP) a.eph1 -= TP;
@@ -837,6 +1013,7 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 				const float amt = sqrtf(tot > 4.0f ? 4.0f : tot) * 0.5f;
 				const float eg = (hum * 0.05f + whine * 0.035f * (0.4f + 0.6f * load) + roll * 0.05f) * amt;
 				FL += eg; FR += eg;
+				}
 			}
 		}
 		L += FL + dr; Rr += FR + dr; // battle layer is never ducked
@@ -854,8 +1031,61 @@ void gxaQueue(ALuint b, float duck)
 	alSourceQueueBuffers(s_gxaSrc, 1, &b);
 }
 
+// r032: UI / action sounds on their own short sources (no stream latency)
+ALuint s_uiSrc[4], s_uiBuf[7];
+bool s_uiOk = false, s_uiFail = false, s_uiSeenInit = false;
+int s_uiSeen[8];
+void gxaUiUpdate(Real volume)
+{
+	if (!s_smpTried) gxSmpLoad();
+	if (!s_uiOk)
+	{
+		if (s_uiFail || !s_smpOn) return;
+		alGetError();
+		alGenSources(4, s_uiSrc);
+		if (alGetError() != AL_NO_ERROR) { s_uiFail = true; return; }
+		alGenBuffers(7, s_uiBuf);
+		if (alGetError() != AL_NO_ERROR) { alDeleteSources(4, s_uiSrc); s_uiFail = true; return; }
+		for (int i = 0; i < 7; ++i)
+		{
+			const GxSmp &sm = s_smp[S_UI0 + i];
+			std::vector<int16_t> pcm(sm.d.size() > 1 ? sm.d.size() : 2, 0);
+			for (size_t k = 0; k < sm.d.size(); ++k) pcm[k] = (int16_t)(sm.d[k] * 32000.0f);
+			alBufferData(s_uiBuf[i], AL_FORMAT_MONO16, pcm.data(), (ALsizei)(pcm.size() * 2), sm.rate > 0 ? sm.rate : 22050);
+		}
+		for (int i = 0; i < 4; ++i)
+		{
+			alSourcei(s_uiSrc[i], AL_SOURCE_RELATIVE, AL_TRUE);
+			alSource3f(s_uiSrc[i], AL_POSITION, 0.0f, 0.0f, 0.0f);
+			alSourcef(s_uiSrc[i], AL_ROLLOFF_FACTOR, 0.0f);
+		}
+		s_uiOk = true;
+	}
+	if (!s_uiSeenInit) { for (int i = 0; i < 8; ++i) s_uiSeen[i] = g_gxUiReq[i]; s_uiSeenInit = true; return; }
+	static const float k_g[7] = { 0.55f, 0.35f, 0.6f, 0.5f, 0.45f, 0.8f, 0.6f };
+	for (int i = 0; i < 7; ++i)
+	{
+		if (g_gxUiReq[i] == s_uiSeen[i]) continue;
+		s_uiSeen[i] = g_gxUiReq[i];
+		int pick = 0;
+		for (int k = 0; k < 4; ++k) { ALint st = 0; alGetSourcei(s_uiSrc[k], AL_SOURCE_STATE, &st); if (st != AL_PLAYING) { pick = k; break; } }
+		alSourceStop(s_uiSrc[pick]);
+		alSourcei(s_uiSrc[pick], AL_BUFFER, (ALint)s_uiBuf[i]);
+		alSourcef(s_uiSrc[pick], AL_GAIN, volume * k_g[i]);
+		alSourcef(s_uiSrc[pick], AL_PITCH, 0.97f + 0.06f * g_r.f());
+		alSourcePlay(s_uiSrc[pick]);
+	}
+}
+
 void gxaShutdown()
 {
+	if (s_uiOk)
+	{
+		for (int i = 0; i < 4; ++i) { alSourceStop(s_uiSrc[i]); alSourcei(s_uiSrc[i], AL_BUFFER, 0); }
+		alDeleteSources(4, s_uiSrc);
+		alDeleteBuffers(7, s_uiBuf);
+		s_uiOk = false; s_uiSeenInit = false;
+	}
 	if (!s_gxaOk) return;
 	alSourceStop(s_gxaSrc);
 	alSourcei(s_gxaSrc, AL_BUFFER, 0);
@@ -887,6 +1117,7 @@ void gxaUpdate(Real volume)
 		if (s_gxaRunning) { alSourceStop(s_gxaSrc); alSourcei(s_gxaSrc, AL_BUFFER, 0); s_gxaRunning = false; }
 		return;
 	}
+	gxaUiUpdate(volume); // r032
 	// duck while a fight is visible (weapon / explosion sounds started on screen in the last ~3 s)
 	const UnsignedInt fr = TheGameLogic->getFrame();
 	const float duck = (s_gxaCombatFrame != 0 && fr >= s_gxaCombatFrame && fr - s_gxaCombatFrame < 90) ? 0.4f : 1.0f;

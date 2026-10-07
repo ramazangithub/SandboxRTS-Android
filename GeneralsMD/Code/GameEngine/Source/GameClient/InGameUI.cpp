@@ -104,6 +104,19 @@
 // r016: day/night speed multiplier, read by W3DDisplay's day/night cycle.
 float g_gxDayTimeScale = 1.0f;
 float g_gxNight = 0.0f; // r024: set by W3DDisplay day cycle
+// r032: manual headlights per vehicle: -1 auto (night), 0 forced off, 1 forced on
+#include <map>
+#include <cstring>
+static std::map<ObjectID, int> s_gxLightOv;
+int gxHeadlightOverride(ObjectID id)
+{
+	std::map<ObjectID, int>::const_iterator it = s_gxLightOv.find(id);
+	return it == s_gxLightOv.end() ? -1 : it->second;
+}
+// r032: UI / action sounds (played by the OpenAL ambience device)
+extern int g_gxUiReq[8]; // GameAudio.cpp
+enum { GX_UI_CLICK, GX_UI_TAP, GX_UI_SWITCH, GX_UI_ORDER, GX_UI_ERROR, GX_UI_SIEGE_ON, GX_UI_SIEGE_OFF };
+static inline void gxUiSound(int id) { if (id >= 0 && id < 8) ++g_gxUiReq[id]; }
 #if defined(__ANDROID__)
 #include <time.h>
 #include <ctype.h>
@@ -2347,6 +2360,19 @@ void InGameUI::message( AsciiString stringManagerLabel, ... )
 
 	// add the text to the ui
 	addMessageText( formattedMessage );
+#if defined(__ANDROID__)
+	{
+		// r032: short buzz for "can't do that" messages (the text line itself is hidden on Android)
+		const char *lbl = stringManagerLabel.str();
+		if (lbl && (strstr(lbl, "Not") || strstr(lbl, "Cant") || strstr(lbl, "Cannot") || strstr(lbl, "Unable")
+			|| strstr(lbl, "Insufficient") || strstr(lbl, "Fail") || strstr(lbl, "Error") || strstr(lbl, "Full")))
+		{
+			static UnsignedInt s_lastErr = 0;
+			const UnsignedInt f = TheGameLogic ? TheGameLogic->getFrame() : 0;
+			if (f < s_lastErr || f > s_lastErr + 60) { s_lastErr = f; gxUiSound(GX_UI_ERROR); }
+		}
+	}
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5262,6 +5288,11 @@ static UnsignedInt androidHudSelSig()
 
 void AndroidHud_NoteOrder(const Coord3D *pos, Bool aggressive)
 {
+	{
+		static UnsignedInt s_lastOrd = 0; // r032: order confirm sound
+		const UnsignedInt f = TheGameLogic ? TheGameLogic->getFrame() : 0;
+		if (f < s_lastOrd || f > s_lastOrd + 6) { s_lastOrd = f; gxUiSound(GX_UI_ORDER); }
+	}
 	if (pos == nullptr)
 		return;
 	s_gxOrderPos = *pos;
@@ -5543,10 +5574,235 @@ static Bool androidHudModeTap(Int x, Int y, Bool longPress)
 	return TRUE;
 }
 
+// r032: grey tumbleweeds rolling with the wind + small ash/sand dust devils carrying trash
+extern float g_gxWind; // OpenALAudioManager.cpp (same gusts you hear)
+struct GxTumble { Real x, y, vx, vy, rot, size, hop, hopV; Bool live; };
+struct GxDevil { Real x, y, t, life, spin, size; Bool live; };
+static GxTumble s_gxTw[10];
+static GxDevil s_gxDv[3];
+static UnsignedInt s_gxWxRng = 0x2545F491u;
+static Real gxWxF()
+{
+	s_gxWxRng ^= s_gxWxRng << 13; s_gxWxRng ^= s_gxWxRng >> 17; s_gxWxRng ^= s_gxWxRng << 5;
+	return (Real)(s_gxWxRng >> 8) * (1.0f / 16777216.0f);
+}
+static Bool gxWxProject(Real x, Real y, Real z, Int &sx, Int &sy)
+{
+	Coord3D w; w.x = x; w.y = y; w.z = z;
+	ICoord2D s;
+	if (!TheTacticalView->worldToScreen(&w, &s)) return FALSE;
+	sx = s.x; sy = s.y;
+	return TRUE;
+}
+static void androidHudDrawWeather()
+{
+	if (TheTacticalView == nullptr || TheTerrainLogic == nullptr || TheDisplay == nullptr || TheGameLogic == nullptr)
+		return;
+	static long long s_prev = 0;
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	const long long ns = (long long)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+	Real dt = s_prev ? (Real)((double)(ns - s_prev) * 1e-9) : 0.0f;
+	s_prev = ns;
+	if (dt > 0.1f) dt = 0.1f;
+	if (dt < 0.0f) dt = 0.0f;
+	if (TheGameLogic->isGamePaused()) dt = 0.0f;
+	static Real s_dir = 0.7f;
+	s_dir += dt * 0.06f * (gxWxF() - 0.5f);
+	const Real wind = g_gxWind < 0.0f ? 0.0f : (g_gxWind > 1.0f ? 1.0f : g_gxWind);
+	const Real wdx = cosf(s_dir), wdy = sinf(s_dir);
+	const Coord3D &cam = TheTacticalView->getPosition();
+	const Real R = 420.0f;
+	const Real lum = 1.0f - 0.6f * g_gxNight;
+	// ---- tumbleweeds
+	for (Int i = 0; i < 10; ++i)
+	{
+		GxTumble &t = s_gxTw[i];
+		const Real dx = t.x - cam.x, dy = t.y - cam.y;
+		if (!t.live || dx * dx + dy * dy > R * R * 1.3f)
+		{
+			// (re)spawn upwind, they roll across the view
+			const Real a = s_dir + 3.14159f + (gxWxF() - 0.5f) * 2.2f;
+			const Real d = t.live ? R : R * gxWxF();
+			t.x = cam.x + cosf(a) * d; t.y = cam.y + sinf(a) * d;
+			t.vx = 0.0f; t.vy = 0.0f; t.rot = gxWxF() * 6.28f; t.size = 3.5f + 3.5f * gxWxF();
+			t.hop = 0.0f; t.hopV = 0.0f; t.live = TRUE;
+		}
+		const Real target = (10.0f + 70.0f * wind * wind) * (0.7f + 0.3f * (Real)(i % 3));
+		t.vx += (wdx * target - t.vx) * dt * 0.8f;
+		t.vy += (wdy * target - t.vy) * dt * 0.8f;
+		t.x += t.vx * dt; t.y += t.vy * dt;
+		const Real sp = sqrtf(t.vx * t.vx + t.vy * t.vy);
+		t.rot += sp / (t.size + 0.1f) * dt;
+		t.hopV -= 60.0f * dt; t.hop += t.hopV * dt;
+		if (t.hop <= 0.0f) { t.hop = 0.0f; t.hopV = (dt > 0.0f && sp > 25.0f && gxWxF() < 0.04f) ? 8.0f + sp * 0.2f * gxWxF() : 0.0f; }
+		const Real gz = TheTerrainLogic->getGroundHeight(t.x, t.y);
+		Int cx, cy, ex, ey;
+		if (!gxWxProject(t.x, t.y, gz + t.size + t.hop, cx, cy)) continue;
+		if (!gxWxProject(t.x + t.size, t.y, gz + t.size + t.hop, ex, ey)) continue;
+		Int rad = (Int)sqrtf((Real)((ex - cx) * (ex - cx) + (ey - cy) * (ey - cy)));
+		if (rad > 60) continue;
+		if (rad < 2) rad = 2;
+		Int gx, gy;
+		if (gxWxProject(t.x, t.y, gz, gx, gy))
+			TheDisplay->drawFillRect(gx - rad, gy - rad / 4, 2 * rad, rad / 2 + 1, GameMakeColor(0, 0, 0, 50));
+		const Int c = (Int)(150.0f * lum);
+		const UnsignedInt col = GameMakeColor(c, c > 4 ? c - 4 : 0, c > 12 ? c - 12 : 0, 210);
+		const UnsignedInt col2 = GameMakeColor(c * 7 / 10, c * 7 / 10, c * 6 / 10, 200);
+		androidHudCircle(cx, cy, rad, 12, 1.5f, col);
+		androidHudCircle(cx, cy, rad * 6 / 10, 9, 1.0f, col2);
+		for (Int k = 0; k < 4; ++k)
+		{
+			const Real a = t.rot + (Real)k * 0.785f;
+			const Int ox = (Int)(cosf(a) * (Real)rad), oy = (Int)(sinf(a) * (Real)rad);
+			TheDisplay->drawLine(cx - ox, cy - oy, cx + ox, cy + oy, 1.0f, (k & 1) ? col2 : col);
+		}
+	}
+	// ---- dust devils (more often in strong wind)
+	static Real s_dvSpawn = 3.0f;
+	s_dvSpawn -= dt * (0.2f + 1.6f * wind);
+	if (s_dvSpawn <= 0.0f)
+	{
+		s_dvSpawn = 4.0f + 6.0f * gxWxF();
+		for (Int i = 0; i < 3; ++i)
+			if (!s_gxDv[i].live)
+			{
+				GxDevil &d = s_gxDv[i];
+				const Real a = gxWxF() * 6.28f, r = R * (0.15f + 0.6f * gxWxF());
+				d.x = cam.x + cosf(a) * r; d.y = cam.y + sinf(a) * r;
+				d.t = 0.0f; d.life = 6.0f + 7.0f * gxWxF(); d.spin = gxWxF() * 6.28f; d.size = 0.8f + 0.5f * gxWxF(); d.live = TRUE;
+				break;
+			}
+	}
+	for (Int i = 0; i < 3; ++i)
+	{
+		GxDevil &d = s_gxDv[i];
+		if (!d.live) continue;
+		d.t += dt;
+		if (d.t >= d.life) { d.live = FALSE; continue; }
+		const Real env = sinf(3.14159f * d.t / d.life);
+		d.x += (wdx * (8.0f + 30.0f * wind) + 6.0f * sinf(d.t * 1.7f + (Real)i)) * dt;
+		d.y += (wdy * (8.0f + 30.0f * wind) + 6.0f * cosf(d.t * 1.3f + (Real)i)) * dt;
+		d.spin += dt * 5.0f;
+		const Real gz = TheTerrainLogic->getGroundHeight(d.x, d.y);
+		const Int c = (Int)(165.0f * lum);
+		for (Int j = 0; j < 7; ++j)
+		{
+			const Real hz = (Real)j * 7.0f * d.size;
+			const Real rr = (3.0f + (Real)j * 2.6f) * d.size * (0.8f + 0.2f * env);
+			const Real sway = 3.0f * sinf(d.t * 2.0f + (Real)j * 0.6f);
+			const Int alpha = (Int)(env * (Real)(70 - j * 8));
+			if (alpha <= 2) continue;
+			const UnsignedInt col = GameMakeColor(c, c > 8 ? c - 8 : 0, c > 20 ? c - 20 : 0, alpha);
+			for (Int k = 0; k < 6; ++k)
+			{
+				const Real a = d.spin * (1.0f + 0.15f * (Real)j) + (Real)k * 1.047f;
+				Int px, py;
+				if (!gxWxProject(d.x + sway + cosf(a) * rr, d.y + sinf(a) * rr, gz + hz, px, py)) continue;
+				const Int ps = 2 + j / 2;
+				TheDisplay->drawFillRect(px - ps, py - ps / 2, 2 * ps, ps + 1, col);
+			}
+		}
+		// trash and pebbles caught in the whirl
+		const Int a8 = (Int)(env * 220.0f);
+		for (Int k = 0; k < 6; ++k)
+		{
+			const Real a = d.spin * (1.3f + 0.2f * (Real)k) + (Real)k * 2.1f;
+			const Real hz = (6.0f + 7.0f * (Real)k + 4.0f * sinf(d.t * 3.0f + (Real)k)) * d.size;
+			const Real rr = (6.0f + 3.0f * (Real)k) * d.size;
+			Int px, py;
+			if (!gxWxProject(d.x + cosf(a) * rr, d.y + sinf(a) * rr, gz + hz, px, py)) continue;
+			const UnsignedInt col = (k & 1) ? GameMakeColor((Int)(200.0f * lum), (Int)(196.0f * lum), (Int)(186.0f * lum), a8)
+				: GameMakeColor((Int)(70.0f * lum), (Int)(66.0f * lum), (Int)(60.0f * lum), a8);
+			TheDisplay->drawFillRect(px - 1, py - 1, 3 + (k % 2), 2 + ((k % 3) == 0 ? 1 : 0), col);
+		}
+	}
+}
+
+// r032: headlights on/off for the selected vehicles (button above the deselect X)
+static void androidHudLightsGeometry(Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	Int sx, sy, ss, cx, cy, cs;
+	androidHudGeometry(sx, sy, ss, cx, cy, cs);
+	(void)sx; (void)sy; (void)ss;
+	s = cs; x = cx; y = cy - cs - h / 40;
+}
+static Bool gxLightIsOn(Object *o)
+{
+	const int ov = gxHeadlightOverride(o->getID());
+	return ov == 1 || (ov < 0 && g_gxNight > 0.3f);
+}
+static Bool gxLightCandidate(Object *o)
+{
+	return o != nullptr && o->isKindOf(KINDOF_VEHICLE) && !o->isKindOf(KINDOF_AIRCRAFT) && !o->isEffectivelyDead();
+}
+static Int androidHudLightsState(Bool &anyOn)
+{
+	anyOn = FALSE;
+	Int n = 0;
+	const DrawableList *list = TheInGameUI ? TheInGameUI->getAllSelectedDrawables() : nullptr;
+	if (list == nullptr) return 0;
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		Object *o = d ? const_cast<Object *>(d->getObject()) : nullptr;
+		if (!gxLightCandidate(o)) continue;
+		++n;
+		if (gxLightIsOn(o)) anyOn = TRUE;
+	}
+	return n;
+}
+static Bool androidHudLightsTap(Int x, Int y)
+{
+	Bool anyOn = FALSE;
+	if (androidHudLightsState(anyOn) <= 0) return FALSE;
+	Int lx, ly, ls;
+	androidHudLightsGeometry(lx, ly, ls);
+	const Int pad = ls / 6;
+	if (x < lx - pad || x > lx + ls + pad || y < ly - pad || y > ly + ls + pad) return FALSE;
+	const DrawableList *list = TheInGameUI->getAllSelectedDrawables();
+	for (DrawableList::const_iterator it = list->begin(); it != list->end(); ++it)
+	{
+		const Drawable *d = *it;
+		Object *o = d ? const_cast<Object *>(d->getObject()) : nullptr;
+		if (!gxLightCandidate(o)) continue;
+		s_gxLightOv[o->getID()] = anyOn ? 0 : 1;
+	}
+	return TRUE;
+}
+static void androidHudDrawLights()
+{
+	Bool anyOn = FALSE;
+	if (androidHudLightsState(anyOn) <= 0) return;
+	Int lx, ly, ls;
+	androidHudLightsGeometry(lx, ly, ls);
+	androidHudPlate(lx, ly, ls, anyOn);
+	const UnsignedInt col = anyOn ? GameMakeColor(230, 190, 70, 255) : GameMakeColor(120, 126, 134, 255);
+	const Int mx = lx + ls * 36 / 100, my = ly + ls / 2, r = ls * 17 / 100;
+	// lamp: dome + flat lens, beams fanning out to the right
+	androidHudCircle(mx, my, r, 14, 2.5f, col);
+	TheDisplay->drawLine(mx + r, my - r, mx + r, my + r, 2.5f, col);
+	for (Int k = -1; k <= 1; ++k)
+	{
+		const Int y0 = my + k * r * 6 / 10;
+		TheDisplay->drawLine(mx + r + ls / 14, y0, mx + r + ls * 30 / 100, y0 + k * ls / 12, anyOn ? 2.5f : 1.5f, col);
+	}
+	if (!anyOn)
+		TheDisplay->drawLine(lx + ls / 5, ly + ls * 4 / 5, lx + ls * 4 / 5, ly + ls / 5, 2.0f, GameMakeColor(150, 156, 164, 255));
+}
+
 void AndroidHud_Draw()
 {
 	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return;
+	{
+		static Int s_selPrev = 0; // r032: soft tick when units get selected
+		const Int sc = TheInGameUI->getSelectCount();
+		if (sc > s_selPrev) gxUiSound(GX_UI_TAP);
+		s_selPrev = sc;
+	}
+	androidHudDrawWeather(); // r032
 	androidHudDrawMini();   // r026
 	androidHudDrawFace();   // r026
 	{
@@ -5572,6 +5828,7 @@ void AndroidHud_Draw()
 	androidHudDrawOrderLine();
 	if (TheInGameUI->getSelectCount() <= 0)
 		return;
+	androidHudDrawLights(); // r032
 	Int sx, sy, ss, cx, cy, cs;
 	androidHudGeometry(sx, sy, ss, cx, cy, cs);
 	Int sUp = 0, sDown = 0;
@@ -5644,7 +5901,8 @@ void AndroidHud_Draw()
 }
 
 // Returns TRUE if the tap hit a HUD button (and was handled).
-Bool AndroidHud_HandleTap(Int x, Int y)
+static Int s_gxTapSnd = 0; // r032: which UI sound the tap makes
+static Bool androidHudHandleTapImpl(Int x, Int y)
 {
 	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
 		return FALSE;
@@ -5660,7 +5918,7 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 		}
 	}
 	if (androidHudMiniTap(x, y))
-		return TRUE;
+		{ s_gxTapSnd = GX_UI_TAP; return TRUE; }
 	if (androidHudTapGroups(x, y))
 		return TRUE;
 	if (TheInGameUI->getSelectCount() <= 0)
@@ -5673,6 +5931,8 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 		TheInGameUI->deselectAllDrawables();
 		return TRUE;
 	}
+	if (androidHudLightsTap(x, y))
+		{ s_gxTapSnd = GX_UI_SWITCH; return TRUE; }
 	if (androidHudTapCmdRow(x, y))
 		return TRUE;
 	{
@@ -5693,6 +5953,7 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 					GameMessage *m = TheMessageStream->appendMessage(GameMessage::MSG_TOGGLE_OVERCHARGE);
 					m->appendIntegerArgument(mode);
 				}
+				s_gxTapSnd = mode == 1 ? GX_UI_SIEGE_ON : GX_UI_SIEGE_OFF;
 				return TRUE;
 			}
 		}
@@ -5701,6 +5962,14 @@ Bool AndroidHud_HandleTap(Int x, Int y)
 	if (androidHudModeTap(x, y, FALSE))
 		return TRUE;
 	return FALSE;
+}
+
+Bool AndroidHud_HandleTap(Int x, Int y)
+{
+	s_gxTapSnd = GX_UI_CLICK;
+	const Bool hit = androidHudHandleTapImpl(x, y);
+	if (hit && s_gxTapSnd >= 0) gxUiSound(s_gxTapSnd);
+	return hit;
 }
 #endif // __ANDROID__
 

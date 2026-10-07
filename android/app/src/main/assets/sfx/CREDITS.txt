@@ -1,0 +1,28 @@
+SandboxRTS r032 sound samples. All CC0 (public domain), taken from the CC0 collections
+mirrored at https://github.com/rowink/CC0-Sounds-Web (Kenney UI Audio, NOX Sound Essentials,
+FREE SFX packs, FreeSFX GameSFX, CluckFox, 100-cc0-sfx-2, MMRetroArcadeSoundsPack, Free Sound Assets).
+Converted to 22.05 kHz mono 16-bit, trimmed, filtered, loops crossfaded.
+
+wind_bed <- Essentials_Series_NOX_SOUND/Nature_Essentials_NOX_SOUND/Ambiance_Wind_Calm_Loop_Stereo.wav
+wind_strong <- Essentials_Series_NOX_SOUND/Nature_Essentials_NOX_SOUND/Ambiance_Wind_Forest_Loop_Stereo.wav
+wind_gust <- FreeSFX/GameSFX/Cinematic/Retro Cinematic Wind 02.wav
+wind_shake <- FREE SFX PACK VOL 2/Shake_Wind_1.ogg
+birds_bed <- Essentials_Series_NOX_SOUND/Nature_Essentials_NOX_SOUND/Ambiance_Forest_Birds_Loop_Stereo.wav
+bird1 <- FREE SFX PACK VOL 1/Bird_Pan_1.ogg
+bird2 <- FREE SFX PACK VOL 1/Bird_Pan_2.ogg
+bird3 <- FREE SFX PACK VOL 1/Bird_Pan_3.ogg
+bird4 <- FreeSFX/GameSFX/Animal Insects/Retro Birds 07.wav
+crow <- FreeSFX/GameSFX/Animal Insects/Retro Crow 01.wav
+owl <- FreeSFX/GameSFX/Animal Insects/Retro Owl 01.wav
+thunder <- 100-cc0-sfx-2/sfx100v2_thunder_01.ogg
+drone <- Essentials_Series_NOX_SOUND/Sample_A_Sound_Effect/Atmosphere_Drone_Hum_Eerie_Loop_Stereo.wav
+fire <- Free Sound Assets/misc/crystal_crumble.wav
+lava <- CluckFox - Rain and Thunder/05 - CluckFox - Chimney 2.flac
+motor <- Essentials_Series_NOX_SOUND/Electromagnetic_NOX_SOUND/Electromagnetic_Engine_Pool_Loop_Mono_Elektrousi.wav
+ui_click <- kenney_uiaudio/Audio/click1.ogg
+ui_tap <- kenney_uiaudio/Audio/rollover2.ogg
+ui_switch <- kenney_uiaudio/Audio/switch7.ogg
+ui_order <- FREE SFX PACK VOL 2/Click_Lock_Beep_1.ogg
+ui_error <- FREE SFX PACK VOL 2/Error_Buzz_1.ogg
+siege_on <- MMRetroArcadeSoundsPack1_0_5/Misc/m4a/Hydraulic1.m4a
+siege_off <- FREE SFX PACK VOL 2/Click_Unlock_1.ogg

@@ -2480,71 +2480,79 @@ void W3DDisplay::gxUpdateDayNight()
 		s_lastShadow = frame;
 	}
 
-	// r025: steady headlights - two persistent dynamic lights per ground vehicle
-	// (r024 used re-spawned light pulses, which flickered).
+	// r025/r032: headlights - three persistent dynamic lights per ground vehicle along the beam:
+	// a bright near pool, a wider mid spill and a broad dim throw, so the light spreads and falls
+	// off with distance like a real beam. Cool LED white, soft on/off, manual toggle from the HUD.
 	{
 		extern float g_gxNight;
-		struct GxHL { ObjectID id; W3DDynamicLight *a; W3DDynamicLight *b; Bool seen; };
+		extern int gxHeadlightOverride(ObjectID id); // InGameUI.cpp: -1 auto, 0 off, 1 on
+		struct GxHL { ObjectID id; W3DDynamicLight *l[3]; Real k; Bool seen; };
 		static std::vector<GxHL> s_hl;
 		static RTS3DScene *s_hlScene = nullptr;
 		static Real s_k = 0.0f;
 		if (frame < s_lastFrame || m_3DScene != s_hlScene)
 		{
 			for (size_t i = 0; i < s_hl.size(); ++i)
-			{
-				s_hl[i].a->setEnabled(false); s_hl[i].a->Release_Ref();
-				s_hl[i].b->setEnabled(false); s_hl[i].b->Release_Ref();
-			}
+				for (Int j = 0; j < 3; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
 			s_hl.clear();
 			s_hlScene = m_3DScene;
 			s_k = 0.0f;
 		}
-		s_k += (g_gxNight - s_k) * 0.05f; // smooth fade in / out
+		s_k += (g_gxNight - s_k) * 0.05f; // smooth dusk / dawn
 		for (size_t i = 0; i < s_hl.size(); ++i)
 			s_hl[i].seen = FALSE;
-		if (m_3DScene && TheGameLogic && s_k > 0.08f)
+		if (m_3DScene && TheGameLogic)
 		{
-			const Real k = s_k;
-			Int budget = 32;
+			static const Real dist[3] = { 14.0f, 40.0f, 74.0f };
+			static const Real inner[3] = { 7.0f, 13.0f, 20.0f };
+			static const Real width[3] = { 16.0f, 28.0f, 46.0f };
+			static const Real gain[3] = { 1.15f, 0.62f, 0.32f };
+			static const Real amb[3] = { 0.45f, 0.65f, 0.85f }; // far light is more scattered
+			static const Real hgt[3] = { 5.0f, 7.0f, 10.0f };
+			Int budget = 20;
 			for (Object *o = TheGameLogic->getFirstObject(); o && budget > 0; o = o->getNextObject())
 			{
 				if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead())
 					continue;
-				--budget;
+				const int ov = gxHeadlightOverride(o->getID());
+				if (ov == 0)
+					continue; // switched off by the player
+				const Real want = (ov == 1) ? (s_k > 0.55f ? s_k : 0.55f) : s_k;
 				GxHL *e = nullptr;
 				for (size_t i = 0; i < s_hl.size(); ++i)
 					if (s_hl[i].id == o->getID()) { e = &s_hl[i]; break; }
 				if (e == nullptr)
 				{
+					if (want < 0.08f)
+						continue;
 					GxHL n;
 					n.id = o->getID();
-					n.a = m_3DScene->getADynamicLight(); n.a->Add_Ref();
-					n.b = m_3DScene->getADynamicLight(); n.b->Add_Ref();
+					for (Int j = 0; j < 3; ++j) { n.l[j] = m_3DScene->getADynamicLight(); n.l[j]->Add_Ref(); }
+					n.k = 0.0f;
 					n.seen = FALSE;
 					s_hl.push_back(n);
 					e = &s_hl.back();
 				}
+				e->k += (want - e->k) * 0.15f; // lamps switch on / off softly
+				if (want < 0.08f && e->k < 0.03f)
+					continue; // faded out -> released below
+				--budget;
 				e->seen = TRUE;
 				const Coord3D *p = o->getPosition();
 				const Real ang = o->getOrientation();
 				const Real c = cosf(ang), sn = sinf(ang);
 				const Real r = o->getGeometryInfo().getMajorRadius();
-				W3DDynamicLight *L[2] = { e->a, e->b };
-				const Real dist[2] = { r + 20.0f, r + 52.0f };
-				const Real inner[2] = { 12.0f, 16.0f };
-				const Real width[2] = { 26.0f, 34.0f };
-				const Real gain[2] = { 1.0f, 0.6f };
-				for (Int j = 0; j < 2; ++j)
+				for (Int j = 0; j < 3; ++j)
 				{
-					if (!L[j]->isEnabled())
-						L[j]->setEnabled(true); // no fade counts -> never decays
-					const Real g = k * gain[j];
-					const Vector3 col(1.0f * g, 0.9f * g, 0.68f * g);
-					L[j]->Set_Ambient(col);
-					L[j]->Set_Diffuse(col);
-					L[j]->Set_Position(Vector3(p->x + c * dist[j], p->y + sn * dist[j], p->z + 8.0f));
-					L[j]->Set_Far_Attenuation_Range(inner[j], inner[j] + width[j]);
-					L[j]->Set_Flag(LightClass::FAR_ATTENUATION, true);
+					W3DDynamicLight *L = e->l[j];
+					if (!L->isEnabled())
+						L->setEnabled(true); // no fade counts -> never decays
+					const Real g = e->k * gain[j];
+					L->Set_Ambient(Vector3(0.93f * g * amb[j], 0.96f * g * amb[j], 1.0f * g * amb[j]));
+					L->Set_Diffuse(Vector3(0.93f * g, 0.96f * g, 1.0f * g));
+					L->Set_Position(Vector3(p->x + c * (r + dist[j]), p->y + sn * (r + dist[j]), p->z + hgt[j]));
+					L->Set_Far_Attenuation_Range(inner[j], inner[j] + width[j]);
+					L->Set_Flag(LightClass::FAR_ATTENUATION, true);
 				}
 			}
 		}
@@ -2552,8 +2560,7 @@ void W3DDisplay::gxUpdateDayNight()
 		{
 			if (!s_hl[i].seen)
 			{
-				s_hl[i].a->setEnabled(false); s_hl[i].a->Release_Ref();
-				s_hl[i].b->setEnabled(false); s_hl[i].b->Release_Ref();
+				for (Int j = 0; j < 3; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
 				s_hl.erase(s_hl.begin() + i);
 			}
 			else
