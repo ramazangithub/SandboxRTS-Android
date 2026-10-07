@@ -59,13 +59,54 @@
 #include "GameLogic/TerrainLogic.h"
 #include "GameLogic/Object.h"
 #include "GameClient/Drawable.h"
+#include "surfaceclass.h"
+
+static inline Int gxMinI(Int a, Int b) { return a < b ? a : b; }
+
+// r031: our own procedural tread texture (two tread bands, link bars along the track), built once in code
+static TextureClass *gxTrackTex()
+{
+	static TextureClass *s_tex = nullptr;
+	static bool s_tried = false;
+	if (s_tried)
+		return s_tex;
+	s_tried = true;
+	const Int W = 32, H = 32;
+	s_tex = new TextureClass(W, H, WW3D_FORMAT_A8R8G8B8, MIP_LEVELS_1);
+	SurfaceClass *surf = s_tex ? s_tex->Get_Surface_Level() : nullptr;
+	if (surf)
+	{
+		Int pitch = 0;
+		UnsignedByte *base = (UnsignedByte *)surf->Lock(&pitch);
+		if (base)
+		{
+			for (Int y = 0; y < H; ++y)
+			{
+				UnsignedInt *row = (UnsignedInt *)(base + y * pitch);
+				const Bool bar = (y % 8) < 5; // track links
+				for (Int x = 0; x < W; ++x)
+				{
+					const Bool band = (x >= 3 && x <= 11) || (x >= 20 && x <= 28);
+					const Bool edge = (x == 3 || x == 11 || x == 20 || x == 28);
+					UnsignedInt a = 0;
+					if (band)
+						a = bar ? (edge ? 120u : 200u) : 70u;
+					row[x] = (a << 24) | 0x00FFFFFFu; // colour comes from the vertex diffuse (dark soil)
+				}
+			}
+			surf->Unlock();
+		}
+		REF_PTR_RELEASE(surf);
+	}
+	return s_tex;
+}
 
 // r027: tread marks. GlobalData can leave the track pool at 0 (bindTrack -> null -> no marks)
 // or with tiny edge counts; clamp to sane values so tanks always leave tracks.
-static inline Int gxTrackModules() { Int n = TheGlobalData->m_maxTerrainTracks; if (n < 64) n = 64; if (n > 250) n = 250; return n; }
-static inline Int gxTrackEdges(Int e) { if (e < 60) e = 100; if (e > 120) e = 120; return e; }
-static inline Int gxTrackOpaque(Int o, Int e) { if (o < 10 || o >= e) o = 25; return o; }
-static inline Int gxTrackFade(Int f) { return f < 20000 ? 60000 : f; }
+static inline Int gxTrackModules() { Int n = TheGlobalData->m_maxTerrainTracks; if (n < 8) n = 8; if (n > 24) n = 24; return n; } // r031
+static inline Int gxTrackEdges(Int e) { (void)e; return 10; } // r031: very short marks
+static inline Int gxTrackOpaque(Int o, Int e) { (void)o; (void)e; return 2; } // r031
+static inline Int gxTrackFade(Int f) { (void)f; return 400; } // r031: gone in ~0.4 s
 
 
 #define BRIDGE_OFFSET_FACTOR	0.25f	//amount to raise tracks above bridges.
@@ -175,8 +216,10 @@ void TerrainTracksRenderObjClass::init( Real width, Real length, const Char *tex
 	//no sense culling these things since they have very irregular shape and fade
 	//out over time.
 	Set_Force_Visible(TRUE);
-	// r030: no texture -> plain dark soil-coloured strips (the stock texture is absent and rendered pink)
-	m_stageZeroTexture=nullptr;
+	// r031: own procedural tread texture (the stock one is absent and rendered pink)
+	m_stageZeroTexture=gxTrackTex();
+	if (m_stageZeroTexture)
+		m_stageZeroTexture->Add_Ref();
 	(void)texturename;
 }
 
@@ -497,7 +540,7 @@ TerrainTracksRenderObjClass *TerrainTracksRenderObjClassSystem::bindTrack( Rende
 			m_usedModules->m_prevSystem = mod;
 		m_usedModules = mod;
 
-		mod->init(computeTrackSpacing(renderObject),length,texturename);
+		mod->init(computeTrackSpacing(renderObject)*0.5f,length*0.5f,texturename); // r031: small marks
 		mod->m_bound=true;
 		m_TerrainTracksScene->Add_Render_Object( mod);
 	}
