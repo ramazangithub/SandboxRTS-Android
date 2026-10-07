@@ -512,6 +512,8 @@ ALenum OpenALAudioManager::getALFormat(uint8_t channels, uint8_t bitsPerSample)
 #include <cmath>
 #include <cstdint>
 extern float g_gxAmbNight; // 0 day .. 1 night (written by the day/night cycle)
+extern int g_gxAmbOwnLost;  // r029: bumped by the HUD whenever one of our vehicles dies
+extern float g_gxEngIdle, g_gxEngMove; // r030: nearby vehicles standing / driving (weighted by distance to camera)
 namespace {
 const int GXA_RATE = 44100;
 const int GXA_FRAMES = 4096;
@@ -521,6 +523,12 @@ ALuint s_gxaSrc = 0;
 ALuint s_gxaBuf[GXA_NBUF];
 bool s_gxaOk = false, s_gxaFailed = false, s_gxaRunning = false;
 UnsignedInt s_gxaCombatFrame = 0;
+// r029: battle intensity inputs (filled by playAudioEvent, consumed by the synth)
+float s_gxaHeatAdd = 0.0f;
+int s_gxaDistReq = 0;
+bool s_gxaRingReq = false;
+float s_gxaMuffle = 0.0f;
+UnsignedInt s_gxaLastDist = 0, s_gxaLastRing = 0;
 int16_t s_gxaPcm[GXA_FRAMES * 2];
 
 struct GxRng { uint32_t s; GxRng() : s(0x9E3779B9u) {}
@@ -536,9 +544,10 @@ struct GxLp { float y; inline float run(float x, float a) { y += a * (x - y); re
 inline float gxLpA(float hz) { return 1.0f - expf(-2.0f * GXA_PI * hz / GXA_RATE); }
 
 // one-shot voices
-enum { V_NONE, V_HAWK, V_HOWL, V_YIP, V_BOOM, V_ROCK, V_THUNDER, V_CRACK };
+enum { V_NONE, V_HAWK, V_HOWL, V_YIP, V_BOOM, V_ROCK, V_THUNDER, V_CRACK,
+	V_DISTANT, V_RING, V_LOSS, V_RADIO, V_BEAT }; // >= V_DISTANT: battle layer (not ducked)
 struct GxVoice { int type; float t, dur, pan, ph, ph2, gain; int n; GxSvf f; GxLp l; };
-const int GXA_NV = 12;
+const int GXA_NV = 20;
 GxVoice s_v[GXA_NV];
 
 struct GxState {
@@ -551,10 +560,14 @@ struct GxState {
 	// schedulers (seconds)
 	float tBoom, tBird, tAnimal, tRare, tCrack;
 	float duck, night;
-	GxState() { memset(this, 0, sizeof(*this)); gust = 0.4f; gustTarget = 0.5f; tBoom = 40; tBird = 20; tAnimal = 70; tRare = 50; tCrack = 2; duck = 1; for (int i = 0; i < 3; ++i) { crPan[i] = -0.7f + 0.7f * i; crT[i] = 0.17f * i; } }
+	// r029 battle layer
+	float heat, nature, drone, dph1, dph2, dph3, radioT, beatT; GxLp dlp; int lastLost;
+	// r030 engine hum
+	float eIdle, eMove, eph1, eph2, eph3, eph4; GxLp eroll;
+	GxState() { memset(this, 0, sizeof(*this)); nature = 1.0f; radioT = 5.0f; lastLost = -1; gust = 0.4f; gustTarget = 0.5f; tBoom = 40; tBird = 20; tAnimal = 70; tRare = 50; tCrack = 2; duck = 1; for (int i = 0; i < 3; ++i) { crPan[i] = -0.7f + 0.7f * i; crT[i] = 0.17f * i; } }
 } s_a;
 
-void gxaStart(int type, float dur, float gain)
+GxVoice *gxaStart(int type, float dur, float gain)
 {
 	for (int i = 0; i < GXA_NV; ++i)
 		if (s_v[i].type == V_NONE)
@@ -562,8 +575,9 @@ void gxaStart(int type, float dur, float gain)
 			GxVoice &v = s_v[i];
 			memset(&v, 0, sizeof(v));
 			v.type = type; v.dur = dur; v.gain = gain; v.pan = g_r.n() * 0.9f; v.n = 0;
-			return;
+			return &v;
 		}
+	return nullptr;
 }
 
 inline float gxaEnv(float t, float a, float d) { if (t < a) return t / a; float x = 1.0f - (t - a) / d; return x > 0 ? x * x : 0; }
@@ -625,6 +639,45 @@ float gxaVoice(GxVoice &v)
 		v.f.run(g_r.n(), gxSvfF(2600.0f), 0.5f);
 		out = v.f.bp * e * 2.0f;
 	} break;
+	case V_DISTANT: { // far gun / explosion: delayed muffled thump + echo off the rocks
+		const float tt = t - v.ph2;
+		if (tt < 0.0f) break;
+		const float e = expf(-tt * 5.0f);
+		const float e2 = (tt > 0.35f) ? expf(-(tt - 0.35f) * 4.0f) * 0.35f : 0.0f;
+		const float nz = v.l.run(g_r.n(), gxLpA(160.0f));
+		v.ph += 2 * GXA_PI * 48.0f * dt;
+		out = (nz * 4.0f + sinf(v.ph) * 0.6f) * (e + e2);
+	} break;
+	case V_RING: { // ear ringing after a close blast
+		v.ph += 2 * GXA_PI * 3150.0f * dt;
+		v.ph2 += 2 * GXA_PI * 3190.0f * dt;
+		const float att = t < 0.05f ? t / 0.05f : 1.0f;
+		out = (sinf(v.ph) + sinf(v.ph2)) * 0.5f * expf(-t * 1.4f) * att;
+	} break;
+	case V_LOSS: { // our vehicle died: heavy metal clang + low drop
+		v.ph += 2 * GXA_PI * 187.0f * dt;
+		v.ph2 += 2 * GXA_PI * (70.0f - 30.0f * (t / v.dur)) * dt;
+		const float clang = (sinf(v.ph) + 0.6f * sinf(v.ph * 2.21f) + 0.4f * sinf(v.ph * 3.93f)) * expf(-t * 3.0f);
+		out = clang + sinf(v.ph2) * 0.9f * gxaEnv(t, 0.02f, v.dur - 0.02f);
+	} break;
+	case V_RADIO: { // garbled radio chatter: buzzy syllables through a narrow band + squelch
+		const bool sq = (t < 0.07f || t > v.dur - 0.07f);
+		const int syl = (int)(t * 7.0f);
+		const float st = t * 7.0f - (float)syl;
+		const uint32_t h = (uint32_t)syl * 2654435761u + (uint32_t)v.n;
+		const bool on = ((h >> 13) & 3u) != 0u && !sq;
+		const float hz = 115.0f + (float)((h >> 7) & 31u);
+		v.ph += hz * dt;
+		if (v.ph > 1.0f) v.ph -= 1.0f;
+		const float env = on ? sinf(GXA_PI * st) : 0.0f;
+		v.f.run((v.ph * 2.0f - 1.0f) * env + g_r.n() * 0.15f, gxSvfF(1400.0f + 500.0f * sinf(GXA_PI * st)), 0.35f);
+		out = v.f.bp * 1.6f + g_r.n() * ((sq ? 0.5f : 0.0f) + 0.04f);
+	} break;
+	case V_BEAT: { // heavy double pulse when the fight is at its peak
+		const float tt = t < 0.25f ? t : t - 0.25f;
+		v.ph += 2 * GXA_PI * (50.0f - 15.0f * tt) * dt;
+		out = sinf(v.ph) * expf(-tt * 18.0f) * (t < 0.25f ? 1.0f : 0.7f);
+	} break;
 	default: break;
 	}
 	v.t += dt;
@@ -638,10 +691,38 @@ void gxaSchedule(float dt)
 	const float day = 1.0f - a.night;
 	a.tBoom -= dt; a.tBird -= dt; a.tAnimal -= dt; a.tRare -= dt; a.tCrack -= dt;
 	if (a.tBoom <= 0) { gxaStart(V_BOOM, 2.5f + 2.0f * g_r.f(), 0.55f); a.tBoom = 60.0f + 120.0f * g_r.f(); }
-	if (a.tBird <= 0) { if (day > 0.4f) gxaStart(V_HAWK, 2.0f, 0.10f * day); a.tBird = 45.0f + 75.0f * g_r.f(); }
+	// r029: battle intensity
+	a.heat += s_gxaHeatAdd; s_gxaHeatAdd = 0.0f;
+	if (a.heat > 1.0f) a.heat = 1.0f;
+	a.heat -= dt * 0.07f;
+	if (a.heat < 0.0f) a.heat = 0.0f;
+	while (s_gxaDistReq > 0)
+	{
+		--s_gxaDistReq;
+		GxVoice *v = gxaStart(V_DISTANT, 2.4f, 0.16f);
+		if (v) v->ph2 = 0.25f + 1.1f * g_r.f(); // sound travels: far shots arrive late
+	}
+	if (s_gxaRingReq) { s_gxaRingReq = false; gxaStart(V_RING, 3.2f, 0.09f); s_gxaMuffle = 1.0f; }
+	if (a.lastLost < 0) a.lastLost = g_gxAmbOwnLost;
+	if (g_gxAmbOwnLost != a.lastLost)
+	{
+		a.lastLost = g_gxAmbOwnLost;
+		gxaStart(V_LOSS, 1.6f, 0.16f);
+		if (g_r.f() < 0.6f) a.radioT = 0.8f;
+	}
+	a.radioT -= dt;
+	if (a.radioT <= 0)
+	{
+		if (a.heat > 0.3f) { GxVoice *v = gxaStart(V_RADIO, 1.2f + 1.6f * g_r.f(), 0.10f); if (v) v->n = (int)(g_r.u() & 0xFFFFu); }
+		a.radioT = 9.0f + 15.0f * g_r.f();
+	}
+	a.beatT -= dt;
+	if (a.heat > 0.6f && a.beatT <= 0) { gxaStart(V_BEAT, 0.6f, 0.22f * (a.heat - 0.4f)); a.beatT = 0.95f; }
+	if (a.tBird <= 0) { if (day > 0.4f && a.nature > 0.7f) gxaStart(V_HAWK, 2.0f, 0.10f * day); a.tBird = 45.0f + 75.0f * g_r.f(); }
 	if (a.tAnimal <= 0)
 	{
-		if (a.night > 0.5f) gxaStart(g_r.f() < 0.6f ? V_HOWL : V_YIP, 2.6f + 1.5f * g_r.f(), 0.08f);
+		if (a.nature < 0.7f) {}
+		else if (a.night > 0.5f) gxaStart(g_r.f() < 0.6f ? V_HOWL : V_YIP, 2.6f + 1.5f * g_r.f(), 0.08f);
 		else if (g_r.f() < 0.4f) gxaStart(V_YIP, 1.4f, 0.05f);
 		a.tAnimal = 120.0f + 180.0f * g_r.f();
 	}
@@ -663,6 +744,20 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 		a.night += (nightTarget - a.night) * 0.00002f;
 		a.duck += (duckTarget - a.duck) * 0.00006f;
 		const float night = a.night, day = 1.0f - night;
+		// r029: nature hushes fast when shooting starts, comes back slowly (~10 s) after
+		const float natT = a.heat > 0.22f ? 0.0f : 1.0f;
+		a.nature += (natT - a.nature) * (natT < a.nature ? 0.00005f : 0.0000025f);
+		a.drone += (a.heat - a.drone) * 0.00002f;
+		float dr = 0.0f;
+		if (a.drone > 0.01f)
+		{
+			// low tension bed: detuned saws, filter opens with intensity (no melody)
+			a.dph1 += 55.0f * dt; if (a.dph1 > 1.0f) a.dph1 -= 1.0f;
+			a.dph2 += 55.6f * dt; if (a.dph2 > 1.0f) a.dph2 -= 1.0f;
+			a.dph3 += 82.4f * dt; if (a.dph3 > 1.0f) a.dph3 -= 1.0f;
+			const float sw = (a.dph1 * 2.0f - 1.0f) + (a.dph2 * 2.0f - 1.0f) + 0.6f * (a.dph3 * 2.0f - 1.0f);
+			dr = a.dlp.run(sw, gxLpA(140.0f + 260.0f * a.drone)) * 0.09f * a.drone;
+		}
 		// --- gusts
 		a.gustTimer -= dt;
 		if (a.gustTimer <= 0) { float r = g_r.f(); a.gustTarget = r < 0.25f ? 0.05f + 0.1f * g_r.f() : 0.3f + 0.7f * g_r.f() * g_r.f() + 0.25f * r; a.gustTimer = 2.0f + 6.0f * g_r.f(); a.windPanT = g_r.n() * 0.6f; }
@@ -692,7 +787,7 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 			a.cicPh += dt * 47.0f; if (a.cicPh > 1) a.cicPh -= 1;
 			float am = sinf(GXA_PI * a.cicPh); am *= am; am *= am;
 			a.cic.run(g_r.n(), fCic, 0.12f);
-			float c = a.cic.bp * am * a.cicEnv * 0.035f * day;
+			float c = a.cic.bp * am * a.cicEnv * 0.035f * day * a.nature;
 			L += c * 0.8f; Rr += c;
 		}
 		// --- crickets (night)
@@ -705,18 +800,46 @@ void gxaFill(int16_t *pcm, int frames, float duckTarget)
 				const float pt = t - pulse * 0.035f;
 				float e = (pulse < 3 && pt < 0.022f) ? sinf(GXA_PI * pt / 0.022f) : 0.0f;
 				a.crPh[k] += 2 * GXA_PI * (4300.0f + 180.0f * k) * dt; if (a.crPh[k] > 2 * GXA_PI) a.crPh[k] -= 2 * GXA_PI;
-				float c = sinf(a.crPh[k]) * e * 0.022f * night;
+				float c = sinf(a.crPh[k]) * e * 0.022f * night * a.nature;
 				L += c * (1.0f - a.crPan[k]); Rr += c * (1.0f + a.crPan[k]);
 			}
 		// --- one-shots
+		float FL = 0.0f, FR = 0.0f;
 		for (int v = 0; v < GXA_NV; ++v)
 			if (s_v[v].type != V_NONE)
 			{
 				const float pan = s_v[v].pan;
+				const bool fx = s_v[v].type >= V_DISTANT;
 				const float o = gxaVoice(s_v[v]);
-				L += o * (1.0f - pan); Rr += o * (1.0f + pan);
+				if (fx) { FL += o * (1.0f - pan); FR += o * (1.0f + pan); }
+				else { L += o * (1.0f - pan); Rr += o * (1.0f + pan); }
 			}
 		L *= a.duck * 0.9f; Rr *= a.duck * 0.9f;
+		// r030: modern electric drive - soft mains-like hum standing, motor whine rising when driving
+		{
+			const float ti = g_gxEngIdle < 0 ? 0 : (g_gxEngIdle > 6 ? 6 : g_gxEngIdle);
+			const float tm = g_gxEngMove < 0 ? 0 : (g_gxEngMove > 6 ? 6 : g_gxEngMove);
+			a.eIdle += (ti - a.eIdle) * 0.00005f;
+			a.eMove += (tm - a.eMove) * 0.00005f;
+			const float tot = a.eIdle + a.eMove;
+			if (tot > 0.01f)
+			{
+				const float load = a.eMove / (tot + 0.001f);
+				const float wh = 520.0f + 900.0f * load;
+				const float TP = 2.0f * GXA_PI;
+				a.eph1 += TP * wh * dt; if (a.eph1 > TP) a.eph1 -= TP;
+				a.eph2 += TP * (wh * 1.5f + 3.0f) * dt; if (a.eph2 > TP) a.eph2 -= TP;
+				a.eph3 += TP * 100.0f * dt; if (a.eph3 > TP) a.eph3 -= TP;
+				a.eph4 += TP * 150.4f * dt; if (a.eph4 > TP) a.eph4 -= TP;
+				const float hum = sinf(a.eph3) * 0.5f + sinf(a.eph4) * 0.3f;
+				const float whine = sinf(a.eph1) * 0.25f + sinf(a.eph2) * 0.07f;
+				const float roll = a.eroll.run(g_r.n(), gxLpA(220.0f)) * 3.0f * load;
+				const float amt = sqrtf(tot > 4.0f ? 4.0f : tot) * 0.5f;
+				const float eg = (hum * 0.05f + whine * 0.035f * (0.4f + 0.6f * load) + roll * 0.05f) * amt;
+				FL += eg; FR += eg;
+			}
+		}
+		L += FL + dr; Rr += FR + dr; // battle layer is never ducked
 		L = L > 1.0f ? 1.0f : (L < -1.0f ? -1.0f : L);
 		Rr = Rr > 1.0f ? 1.0f : (Rr < -1.0f ? -1.0f : Rr);
 		pcm[2 * i] = (int16_t)(L * 32000.0f);
@@ -739,6 +862,7 @@ void gxaShutdown()
 	alDeleteSources(1, &s_gxaSrc);
 	alDeleteBuffers(GXA_NBUF, s_gxaBuf);
 	s_gxaOk = false; s_gxaRunning = false;
+	if (s_gxaMuffle > 0.0f) { s_gxaMuffle = 0.0f; alListenerf(AL_GAIN, 1.0f); }
 }
 
 void gxaUpdate(Real volume)
@@ -759,6 +883,7 @@ void gxaUpdate(Real volume)
 	}
 	if (!want)
 	{
+		if (s_gxaMuffle > 0.0f) { s_gxaMuffle = 0.0f; alListenerf(AL_GAIN, 1.0f); }
 		if (s_gxaRunning) { alSourceStop(s_gxaSrc); alSourcei(s_gxaSrc, AL_BUFFER, 0); s_gxaRunning = false; }
 		return;
 	}
@@ -766,6 +891,13 @@ void gxaUpdate(Real volume)
 	const UnsignedInt fr = TheGameLogic->getFrame();
 	const float duck = (s_gxaCombatFrame != 0 && fr >= s_gxaCombatFrame && fr - s_gxaCombatFrame < 90) ? 0.4f : 1.0f;
 	alSourcef(s_gxaSrc, AL_GAIN, volume * 0.8f);
+	if (s_gxaMuffle > 0.0f)
+	{
+		// r029: the whole world goes dull for a moment after a close blast
+		s_gxaMuffle -= 0.012f;
+		if (s_gxaMuffle < 0.0f) s_gxaMuffle = 0.0f;
+		alListenerf(AL_GAIN, 1.0f - 0.55f * s_gxaMuffle);
+	}
 	if (!s_gxaRunning)
 	{
 		for (int i = 0; i < GXA_NBUF; ++i) gxaQueue(s_gxaBuf[i], duck);
@@ -786,16 +918,40 @@ void gxaUpdate(Real volume)
 	if (st != AL_PLAYING) alSourcePlay(s_gxaSrc); // underrun recovery
 }
 
-void gxaNoteSound(AudioEventRTS *event, const AudioEventInfo *info, bool onScreen)
+void gxaNoteSound(AudioEventRTS *event, bool onScreen, Real centerDist)
 {
-	if (!onScreen || !TheGameLogic) return;
+	if (!TheGameLogic) return;
 	AsciiString n = event->getEventName();
 	n.toLower();
 	const char *s = n.str();
-	if (strstr(s, "weapon") || strstr(s, "explo") || strstr(s, "cannon") || strstr(s, "gun") || strstr(s, "shot") || strstr(s, "impact") || strstr(s, "fire"))
-		s_gxaCombatFrame = TheGameLogic->getFrame();
-	(void)info;
+	if (!s) return;
+	const bool boom = strstr(s, "explo") || strstr(s, "impact") || strstr(s, "death");
+	const bool shot = strstr(s, "weapon") || strstr(s, "cannon") || strstr(s, "gun") || strstr(s, "shot") || strstr(s, "fire");
+	if (!boom && !shot) return;
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	if (onScreen)
+	{
+		s_gxaCombatFrame = fr;
+		s_gxaHeatAdd += boom ? 0.10f : 0.06f;
+		if (boom && centerDist < 140.0f && (fr < s_gxaLastRing || fr - s_gxaLastRing > 150))
+		{
+			s_gxaLastRing = fr;
+			s_gxaRingReq = true;
+		}
+	}
+	else
+	{
+		s_gxaHeatAdd += 0.025f;
+		if (fr < s_gxaLastDist || fr - s_gxaLastDist >= 8)
+		{
+			s_gxaLastDist = fr;
+			if (s_gxaDistReq < 4) ++s_gxaDistReq;
+		}
+	}
 }
+
+// r029: small random pitch spread so repeated shots never sound identical
+Real gxaPitchJitter() { return 0.965f + 0.07f * g_r.f(); }
 
 // r027: real distance fade for positional sounds. OpenAL's inverse-clamped model never reaches
 // zero, so looping sounds (lava!) kept playing at ~20% forever after the camera left.
@@ -1056,9 +1212,28 @@ void OpenALAudioManager::playAudioEvent(AudioEventRTS* event)
 
 	AudioHandle handleToKill = event->getHandleToKill();
 
+	if (event->isPositionalAudio())
+	{
+		// r030: stock vehicle engine / move loops sound like a vacuum cleaner -> replaced by the synth hum
+		AsciiString en = event->getEventName();
+		en.toLower();
+		const char *es = en.str();
+		if (es && !strstr(es, "voice") &&
+		    (strstr(es, "moveloop") || strstr(es, "movestart") || strstr(es, "engine") || strstr(es, "idle") || strstr(es, "tread")))
+			return;
+	}
 	AsciiString fileToPlay = event->getFilename();
 	if (event->isPositionalAudio() && event->getCurrentPosition() && TheTacticalView)
-		gxaNoteSound(event, info, isOnScreen(event->getCurrentPosition())); // r027 combat duck
+	{
+		// r029: battle intensity / distant echo / ear ringing
+		const Coord3D *gp = event->getCurrentPosition();
+		if (gp && TheTacticalView)
+		{
+			const Coord3D &vc = TheTacticalView->getPosition();
+			const Real ddx = gp->x - vc.x, ddy = gp->y - vc.y;
+			gxaNoteSound(event, isOnScreen(gp), sqrtf(ddx * ddx + ddy * ddy));
+		}
+	}
 	PlayingAudio* audio = allocatePlayingAudio();
 	switch (info->m_soundType)
 	{
@@ -3293,6 +3468,7 @@ ALuint OpenALAudioManager::playSample3D(AudioEventRTS* event, PlayingAudio* samp
 			Real y = pos->y;
 			Real z = pos->z;
 			Real pitch = event->getPitchShift() != 0.0f ? event->getPitchShift() : 1.0f;
+			pitch *= gxaPitchJitter(); // r029
 			ALint channels = 0;
 			alGetBufferi(handle, AL_CHANNELS, &channels);
 			alSourcef(source, AL_PITCH, pitch);

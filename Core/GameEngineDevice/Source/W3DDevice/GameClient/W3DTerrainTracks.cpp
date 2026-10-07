@@ -175,7 +175,9 @@ void TerrainTracksRenderObjClass::init( Real width, Real length, const Char *tex
 	//no sense culling these things since they have very irregular shape and fade
 	//out over time.
 	Set_Force_Visible(TRUE);
-	m_stageZeroTexture=WW3DAssetManager::Get_Instance()->Get_Texture(texturename);
+	// r030: no texture -> plain dark soil-coloured strips (the stock texture is absent and rendered pink)
+	m_stageZeroTexture=nullptr;
+	(void)texturename;
 }
 
 //=============================================================================
@@ -824,7 +826,7 @@ Try improving the fit to vertical surfaces like cliffs.
 	shadeG*=255.0f;
 	shadeB*=255.0f;
 
-	diffuseLight = REAL_TO_INT(shadeB) | (REAL_TO_INT(shadeG) << 8) | (REAL_TO_INT(shadeR) << 16);
+	diffuseLight = REAL_TO_INT(shadeB * 0.16f) | (REAL_TO_INT(shadeG * 0.21f) << 8) | (REAL_TO_INT(shadeR * 0.27f) << 16); // r030: dark soil
 	Real numFadedEdges=m_maxTankTrackEdges-m_maxTankTrackOpaqueEdges;
 
 	//check if there is anything to draw and fill vertex buffer
@@ -870,7 +872,7 @@ Try improving the fit to vertical surfaces like cliffs.
 					verts->v1=endPointUV->Y;
 
 					//fade the alpha channel with distance
-					verts->diffuse=diffuseLight | ( REAL_TO_INT(distanceFade*255.0f) <<24);
+					verts->diffuse=diffuseLight | ( REAL_TO_INT(distanceFade*150.0f) <<24);
 					verts++;
 
 					endPoint=&mod->m_edges[index].endPointPos[1];	//right endpoint
@@ -883,7 +885,7 @@ Try improving the fit to vertical surfaces like cliffs.
 					verts->u1=endPointUV->X;
 					verts->v1=endPointUV->Y;			///@todo: Add diffuse lighting.
 
-					verts->diffuse=diffuseLight | ( REAL_TO_INT(distanceFade*255.0f) <<24);
+					verts->diffuse=diffuseLight | ( REAL_TO_INT(distanceFade*150.0f) <<24);
 					verts++;
 				}
 			}

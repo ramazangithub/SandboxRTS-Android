@@ -1165,3 +1165,8 @@ void parseSpeakerType( INI *ini, void *instance, void *store, const void* userDa
 
 // r027: 0 = day .. 1 = night, written by W3DDisplay::gxUpdateDayNight, read by the map ambience
 float g_gxAmbNight = 0.0f;
+// r029: count of our vehicles lost (HUD -> battle sound stinger)
+int g_gxAmbOwnLost = 0;
+// r030: nearby own/visible vehicles standing and driving (HUD -> engine hum)
+float g_gxEngIdle = 0.0f;
+float g_gxEngMove = 0.0f;

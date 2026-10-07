@@ -4586,9 +4586,9 @@ void AndroidHud_NoteOrder(const Coord3D *pos, Bool aggressive);
 static void androidHudMiniGeometry(Int &x, Int &y, Int &s)
 {
 	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
-	s = h * 40 / 100;
-	x = h / 30;
-	y = h / 30;
+	s = h * 28 / 100; // r028: was 40%
+	x = h / 40;
+	y = h / 40;
 }
 
 static Bool androidHudMiniRect(Int &mx, Int &my, Int &mw, Int &mh, Region3D &ext)
@@ -4625,17 +4625,55 @@ static void androidHudMiniToPx(const Region3D &e, Int mx, Int my, Int mw, Int mh
 	py = my + mh - (Int)(fy * mh);
 }
 
-// tap inside the minimap square: move the camera there (always consumes the tap)
-static Bool androidHudMiniTap(Int x, Int y)
+static Bool s_miniDrag = FALSE;   // r028: finger went down on the minimap
+static Bool s_miniMoved = FALSE;  // r028: ...and slid (camera follows the finger, no jump on lift)
+static void androidHudMiniLook(Int x, Int y);
+
+static Bool androidHudMiniInside(Int x, Int y)
 {
 	Int gx, gy, gs;
 	androidHudMiniGeometry(gx, gy, gs);
-	if (x < gx || x > gx + gs || y < gy || y > gy + gs)
+	return !(x < gx || x > gx + gs || y < gy || y > gy + gs);
+}
+
+// tap inside the minimap square: move the camera there (always consumes the tap)
+static Bool androidHudMiniTap(Int x, Int y)
+{
+	if (!androidHudMiniInside(x, y))
 		return FALSE;
+	if (s_miniMoved)
+		return TRUE; // the drag already moved the camera
+	androidHudMiniLook(x, y);
+	return TRUE;
+}
+
+Bool AndroidHud_MiniDown(Int x, Int y)
+{
+	s_miniMoved = FALSE;
+	s_miniDrag = (TheGameLogic != nullptr && TheGameLogic->isInGame() && androidHudMiniInside(x, y)) ? TRUE : FALSE;
+	return s_miniDrag;
+}
+
+Bool AndroidHud_MiniDrag(Int x, Int y)
+{
+	if (!s_miniDrag)
+		return FALSE;
+	s_miniMoved = TRUE;
+	androidHudMiniLook(x, y);
+	return TRUE;
+}
+
+void AndroidHud_MiniUp()
+{
+	s_miniDrag = FALSE;
+}
+
+static void androidHudMiniLook(Int x, Int y)
+{
 	Int mx, my, mw, mh;
 	Region3D e;
 	if (!androidHudMiniRect(mx, my, mw, mh, e) || TheTacticalView == nullptr)
-		return TRUE;
+		return;
 	Real fx = (Real)(x - mx) / (Real)mw;
 	Real fy = (Real)(my + mh - y) / (Real)mh;
 	if (fx < 0.0f) fx = 0.0f;
@@ -4647,7 +4685,6 @@ static Bool androidHudMiniTap(Int x, Int y)
 	p.y = e.lo.y + fy * (e.hi.y - e.lo.y);
 	p.z = TheTerrainLogic->getGroundHeight(p.x, p.y);
 	TheTacticalView->lookAt(&p);
-	return TRUE;
 }
 
 static const Int kMiniN = 32;
@@ -4688,13 +4725,55 @@ static void androidHudMiniTerrain(const Region3D &e)
 	{
 		if (wet[k])
 		{
-			s_miniCol[k] = GameMakeColor(28, 44, 62, 235);
+			s_miniCol[k] = GameMakeColor(14, 22, 32, 240);
 			continue;
 		}
 		const Real t = (hs[k] - lo) / span;
-		const Int c = 40 + (Int)(t * 80.0f);
-		s_miniCol[k] = GameMakeColor(c, c * 92 / 100, c * 80 / 100, 235);
+		const Int c = 22 + (Int)(t * 52.0f); // r028: dark minimap
+		s_miniCol[k] = GameMakeColor(c, c * 92 / 100, c * 80 / 100, 240);
 	}
+}
+
+#include <map>
+static std::map<ObjectID, Coord3D> s_gxEngPrev; // r030: last position per vehicle (moving or standing)
+// r028: fog of war on the minimap: 0 clear, 1 fogged (seen before), 2 never seen
+static UnsignedByte s_miniFog[kMiniN * kMiniN];
+static UnsignedInt s_miniFogFrame = 0xFFFFFFFFu;
+static void androidHudMiniFog(const Region3D &e, Int pidx)
+{
+	const UnsignedInt f = TheGameLogic->getFrame();
+	if (s_miniFogFrame != 0xFFFFFFFFu && f >= s_miniFogFrame && f - s_miniFogFrame < 10)
+		return;
+	s_miniFogFrame = f;
+	const Real W = e.hi.x - e.lo.x, H = e.hi.y - e.lo.y;
+	for (Int j = 0; j < kMiniN; ++j)
+		for (Int i = 0; i < kMiniN; ++i)
+		{
+			Coord3D c;
+			c.x = e.lo.x + ((Real)i + 0.5f) / (Real)kMiniN * W;
+			c.y = e.lo.y + ((Real)j + 0.5f) / (Real)kMiniN * H;
+			c.z = 0.0f;
+			UnsignedByte v = 0;
+			if (ThePartitionManager != nullptr && pidx >= 0)
+			{
+				const CellShroudStatus st = ThePartitionManager->getShroudStatusForPlayer(pidx, &c);
+				v = (st == CELLSHROUD_CLEAR) ? 0 : (st == CELLSHROUD_FOGGED) ? 1 : 2;
+			}
+			s_miniFog[j * kMiniN + i] = v;
+		}
+}
+
+static inline UnsignedInt androidHudMiniCell(Int k)
+{
+	if (s_miniFog[k] == 2)
+		return GameMakeColor(5, 6, 8, 245);
+	if (s_miniFog[k] == 1)
+	{
+		UnsignedByte r, g, b, a;
+		GameGetColorComponents(s_miniCol[k], &r, &g, &b, &a);
+		return GameMakeColor(r / 2, g / 2, b / 2, 245);
+	}
+	return s_miniCol[k];
 }
 
 static void androidHudDrawMini()
@@ -4707,20 +4786,33 @@ static void androidHudDrawMini()
 	if (!androidHudMiniRect(mx, my, mw, mh, e))
 		return;
 	androidHudMiniTerrain(e);
+	Player *lp = ThePlayerList ? ThePlayerList->getLocalPlayer() : nullptr;
+	const Int pidx = lp ? (Int)lp->getPlayerIndex() : -1;
+	androidHudMiniFog(e, pidx);
 	for (Int j = 0; j < kMiniN; ++j)
 	{
 		const Int y0 = my + mh - (j + 1) * mh / kMiniN;
 		const Int y1 = my + mh - j * mh / kMiniN;
-		for (Int i = 0; i < kMiniN; ++i)
+		Int i = 0;
+		while (i < kMiniN)
 		{
+			const UnsignedInt col = androidHudMiniCell(j * kMiniN + i);
+			Int i2 = i + 1;
+			while (i2 < kMiniN && androidHudMiniCell(j * kMiniN + i2) == col)
+				++i2;
 			const Int x0 = mx + i * mw / kMiniN;
-			const Int x1 = mx + (i + 1) * mw / kMiniN;
-			TheDisplay->drawFillRect(x0, y0, x1 - x0, y1 - y0, s_miniCol[j * kMiniN + i]);
+			const Int x1 = mx + i2 * mw / kMiniN;
+			TheDisplay->drawFillRect(x0, y0, x1 - x0, y1 - y0, col);
+			i = i2;
 		}
 	}
-	// units: own = white (selected = gold), enemies = orange
-	Player *lp = ThePlayerList ? ThePlayerList->getLocalPlayer() : nullptr;
+	// units: own = white (selected = gold), enemies = orange - only where the player can see them
+
 	const Int ur = gs / 110 + 1;
+	Int ownVeh = 0; // r029
+	Real engIdle = 0.0f, engMove = 0.0f; // r030
+	const Coord3D camC = TheTacticalView ? TheTacticalView->getPosition() : Coord3D();
+	if (s_gxEngPrev.size() > 3000) s_gxEngPrev.clear();
 	for (Object *o = TheGameLogic->getFirstObject(); o != nullptr; o = o->getNextObject())
 	{
 		if (o->isEffectivelyDead())
@@ -4731,17 +4823,53 @@ static void androidHudDrawMini()
 		UnsignedInt c;
 		if (o->isLocallyControlled())
 		{
+			if (!st) ++ownVeh;
 			const Drawable *d = o->getDrawable();
 			c = (d && d->isSelected()) ? GameMakeColor(230, 190, 70, 255) : GameMakeColor(241, 240, 236, 255);
 		}
 		else if (lp && o->getTeam() && lp->getRelationship(o->getTeam()) == ENEMIES)
+		{
+			const ObjectShroudStatus ss = o->getShroudedStatus(pidx);
+			if (ss != OBJECTSHROUD_CLEAR && ss != OBJECTSHROUD_PARTIAL_CLEAR)
+				continue; // r028: hidden by fog of war
 			c = GameMakeColor(255, 90, 31, 255);
+		}
 		else
 			continue;
+		if (!st)
+		{
+			// r030: engine hum input - vehicles near the camera, weighted by distance
+			const Coord3D *op = o->getPosition();
+			const Real cdx = op->x - camC.x, cdy = op->y - camC.y;
+			const Real cd = sqrtf(cdx * cdx + cdy * cdy);
+			Coord3D &pv = s_gxEngPrev[o->getID()];
+			const Real mdx = op->x - pv.x, mdy = op->y - pv.y;
+			const Bool moving = (mdx * mdx + mdy * mdy) > 0.02f && (mdx * mdx + mdy * mdy) < 400.0f;
+			pv = *op;
+			if (cd < 450.0f)
+			{
+				const Real w = 1.0f - cd / 450.0f;
+				if (moving) engMove += w; else engIdle += w;
+			}
+		}
 		Int px, py;
 		androidHudMiniToPx(e, mx, my, mw, mh, o->getPosition()->x, o->getPosition()->y, px, py);
 		const Int r = st ? ur + 1 : ur;
 		TheDisplay->drawFillRect(px - r, py - r, r * 2 + 1, r * 2 + 1, c);
+	}
+	{
+		// r029: tell the sound when one of our vehicles is lost
+		extern int g_gxAmbOwnLost;
+		static Int s_prevOwn = -1;
+		static UnsignedInt s_prevOwnFrame = 0;
+		const UnsignedInt fr = TheGameLogic->getFrame();
+		if (fr < s_prevOwnFrame) s_prevOwn = -1; // new game
+		s_prevOwnFrame = fr;
+		if (s_prevOwn >= 0 && ownVeh < s_prevOwn) ++g_gxAmbOwnLost;
+		s_prevOwn = ownVeh;
+		extern float g_gxEngIdle, g_gxEngMove;
+		g_gxEngIdle = engIdle;
+		g_gxEngMove = engMove;
 	}
 	// camera: the four screen corners projected on the ground -> trapezoid (wide far edge, narrow near edge)
 	if (TheTacticalView != nullptr)
@@ -5583,7 +5711,11 @@ void InGameUI::postDraw()
 #endif
 
 	// render our display strings for the messages if on
+#if defined(__ANDROID__)
+	if( FALSE ) // r028: the top-left info/error line is off on Android
+#else
 	if( m_messagesOn )
+#endif
 	{
 		Int i, x, y;
 		Color dropColor;

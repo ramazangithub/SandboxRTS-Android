@@ -58,7 +58,13 @@ Bool AndroidHud_DoubleTapGround(Int x, Int y);   // InGameUI.cpp (r022 aggressiv
 Bool AndroidHud_HandleLongPress(Int x, Int y);   // InGameUI.cpp (r022 group slots)
 Bool AndroidHud_FaceDrag(Int x, Int y);          // InGameUI.cpp (r026 formation front)
 void AndroidHud_FaceEnd(Int x, Int y, Bool cancel);
+Bool AndroidHud_MiniDown(Int x, Int y);          // InGameUI.cpp (r028 minimap drag)
+Bool AndroidHud_MiniDrag(Int x, Int y);
+void AndroidHud_MiniUp();
 #else
+static inline Bool AndroidHud_MiniDown(Int, Int) { return FALSE; }
+static inline Bool AndroidHud_MiniDrag(Int, Int) { return FALSE; }
+static inline void AndroidHud_MiniUp() {}
 static inline Bool AndroidHud_HandleTap(Int, Int) { return FALSE; }
 static inline void AndroidHud_SelectOnScreen() {}
 static inline Bool AndroidHud_DoubleTapGround(Int, Int) { return FALSE; }
@@ -499,6 +505,11 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 			s_touch.f1y = event.tfinger.y;
 			s_touch.downTicks = SDL_GetTicks();
 			s_touch.thresholdCrossed = false;
+			{
+				const float msx = (TheDisplay && winW > 0) ? (float)TheDisplay->getWidth() / (float)winW : 1.0f;
+				const float msy = (TheDisplay && winH > 0) ? (float)TheDisplay->getHeight() / (float)winH : 1.0f;
+				AndroidHud_MiniDown((Int)(px * msx), (Int)(py * msy)); // r028
+			}
 			// Move the cursor to the touch point NOW (motion clicks nothing, so the
 			// deferred-tap protection is intact). This lets the GUI process hover
 			// over the next frame(s) before the tap commits — hover-driven widgets
@@ -537,6 +548,13 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 			s_touch.f1y = event.tfinger.y;
 			s_touch.lastX = px;
 			s_touch.lastY = py;
+			if (s_touch.phase == TouchState::PENDING || s_touch.phase == TouchState::LONGPRESSED) {
+				// r028: finger held on the minimap -> the camera follows it (no drag box, no pan)
+				const float msx = (TheDisplay && winW > 0) ? (float)TheDisplay->getWidth() / (float)winW : 1.0f;
+				const float msy = (TheDisplay && winH > 0) ? (float)TheDisplay->getHeight() / (float)winH : 1.0f;
+				if (AndroidHud_MiniDrag((Int)(px * msx), (Int)(py * msy)))
+					break;
+			}
 		} else if ((s_touch.phase == TouchState::TWO_PENDING ||
 		            s_touch.phase == TouchState::PAN ||
 		            s_touch.phase == TouchState::PINCH) &&
@@ -662,6 +680,8 @@ void handleTouchEvent(SDL3Mouse *mouse, SDL_Window *window, const SDL_Event &eve
 
 	case SDL_EVENT_FINGER_UP:
 	case SDL_EVENT_FINGER_CANCELED:
+		if (event.tfinger.fingerID == s_touch.finger1)
+			AndroidHud_MiniUp(); // r028 (the tap path still sees whether the finger slid)
 		if (event.tfinger.fingerID != s_touch.finger1 &&
 		    !((s_touch.phase == TouchState::TWO_PENDING ||
 		       s_touch.phase == TouchState::PAN ||
