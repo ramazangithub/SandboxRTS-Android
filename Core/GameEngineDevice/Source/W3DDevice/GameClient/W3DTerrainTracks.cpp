@@ -60,6 +60,13 @@
 #include "GameLogic/Object.h"
 #include "GameClient/Drawable.h"
 
+// r027: tread marks. GlobalData can leave the track pool at 0 (bindTrack -> null -> no marks)
+// or with tiny edge counts; clamp to sane values so tanks always leave tracks.
+static inline Int gxTrackModules() { Int n = TheGlobalData->m_maxTerrainTracks; if (n < 64) n = 64; if (n > 250) n = 250; return n; }
+static inline Int gxTrackEdges(Int e) { if (e < 60) e = 100; if (e > 120) e = 120; return e; }
+static inline Int gxTrackOpaque(Int o, Int e) { if (o < 10 || o >= e) o = 25; return o; }
+static inline Int gxTrackFade(Int f) { return f < 20000 ? 60000 : f; }
+
 
 #define BRIDGE_OFFSET_FACTOR	0.25f	//amount to raise tracks above bridges.
 //=============================================================================
@@ -558,9 +565,9 @@ TerrainTracksRenderObjClassSystem::TerrainTracksRenderObjClassSystem()
 	m_vertexMaterialClass = nullptr;
 	m_vertexBuffer = nullptr;
 
-	m_maxTankTrackEdges=TheGlobalData->m_maxTankTrackEdges;
-	m_maxTankTrackOpaqueEdges=TheGlobalData->m_maxTankTrackOpaqueEdges;
-	m_maxTankTrackFadeDelay=TheGlobalData->m_maxTankTrackFadeDelay;
+	m_maxTankTrackEdges=gxTrackEdges(TheGlobalData->m_maxTankTrackEdges);
+	m_maxTankTrackOpaqueEdges=gxTrackOpaque(TheGlobalData->m_maxTankTrackOpaqueEdges, m_maxTankTrackEdges);
+	m_maxTankTrackFadeDelay=gxTrackFade(TheGlobalData->m_maxTankTrackFadeDelay);
 }
 
 //=============================================================================
@@ -587,7 +594,7 @@ TerrainTracksRenderObjClassSystem::~TerrainTracksRenderObjClassSystem()
 void TerrainTracksRenderObjClassSystem::ReAcquireResources()
 {
 	Int i;
-	const Int numModules=TheGlobalData->m_maxTerrainTracks;
+	const Int numModules=gxTrackModules();
 
 	// just for paranoia's sake.
 	REF_PTR_RELEASE(m_indexBuffer);
@@ -636,7 +643,7 @@ void TerrainTracksRenderObjClassSystem::ReleaseResources()
 //=============================================================================
 void TerrainTracksRenderObjClassSystem::init( SceneClass *TerrainTracksScene )
 {
-	const Int numModules=TheGlobalData->m_maxTerrainTracks;
+	const Int numModules=gxTrackModules();
 
 	Int i;
 	TerrainTracksRenderObjClass *mod;
@@ -962,9 +969,9 @@ void TerrainTracksRenderObjClassSystem::setDetail()
 	clearTracks();
 	ReleaseResources();
 
-	m_maxTankTrackEdges=TheGlobalData->m_maxTankTrackEdges;
-	m_maxTankTrackOpaqueEdges=TheGlobalData->m_maxTankTrackOpaqueEdges;
-	m_maxTankTrackFadeDelay=TheGlobalData->m_maxTankTrackFadeDelay;
+	m_maxTankTrackEdges=gxTrackEdges(TheGlobalData->m_maxTankTrackEdges);
+	m_maxTankTrackOpaqueEdges=gxTrackOpaque(TheGlobalData->m_maxTankTrackOpaqueEdges, m_maxTankTrackEdges);
+	m_maxTankTrackFadeDelay=gxTrackFade(TheGlobalData->m_maxTankTrackFadeDelay);
 
 	//We changed the maximum number of visible edges so re-allocate our resources to match.
 	ReAcquireResources();

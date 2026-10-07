@@ -2596,6 +2596,7 @@ void W3DDisplay::gxUpdateDayNight()
 		// r024: 0 = day, 1 = deep night (evening->night ramps up, night->morning down)
 		extern float g_gxNight;
 		g_gxNight = (a == 2) ? w : (a == 3) ? (1.0f - w) : 0.0f;
+		extern float g_gxAmbNight; g_gxAmbNight = g_gxNight; // r027 ambience
 	}
 
 	for (Int i = 0; i < MAX_GLOBAL_LIGHTS; ++i)

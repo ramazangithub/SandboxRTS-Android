@@ -485,8 +485,41 @@ GameEngine *CreateGameEngine(void)
  * @param argv Command line arguments
  * @return Exit code (0 = success)
  */
+#if defined(__ANDROID__) || defined(__linux__)
+#include <sched.h>
+#include <cstdio>
+// r027: universal big-core pinning. Reads every core's max frequency and keeps the game
+// on the cores within 80% of the fastest one (no per-device tables). Threads created later
+// inherit the mask. Skipped if it would leave fewer than 2 cores.
+static void gxPinFastCores()
+{
+	long fmax[64]; int n = 0; long best = 0;
+	for (; n < 64; ++n)
+	{
+		char path[96];
+		snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", n);
+		FILE *f = fopen(path, "r");
+		if (!f) break;
+		long v = 0;
+		if (fscanf(f, "%ld", &v) != 1) v = 0;
+		fclose(f);
+		fmax[n] = v;
+		if (v > best) best = v;
+	}
+	if (n < 2 || best <= 0) return;
+	cpu_set_t set; CPU_ZERO(&set); int cnt = 0;
+	for (int i = 0; i < n; ++i)
+		if (fmax[i] * 10 >= best * 8) { CPU_SET(i, &set); ++cnt; }
+	if (cnt < 2 || cnt == n) return;
+	sched_setaffinity(0, sizeof(set), &set);
+}
+#else
+static void gxPinFastCores() {}
+#endif
+
 int main(int argc, char* argv[])
 {
+	gxPinFastCores(); // r027
 	int exitcode = 1;
 
 	// TheSuperHackers @build felipebraz 13/02/2026

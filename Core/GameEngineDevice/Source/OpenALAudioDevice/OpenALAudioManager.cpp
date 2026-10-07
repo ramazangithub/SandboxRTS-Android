@@ -501,6 +501,322 @@ ALenum OpenALAudioManager::getALFormat(uint8_t channels, uint8_t bitsPerSample)
 	return AL_FORMAT_MONO8;
 }
 
+
+//=================================================================================================
+// r027: procedural map ambience (no asset files). Stereo 44.1 kHz stream on its own OpenAL source.
+// Layers: gusty wind + whistle + sand, volcano rumble + deep booms, day cicadas + hawk cries,
+// night crickets + cooling-rock cracks, rare animals (howl / jackal yips), rare rockfall / thunder.
+// Ducks when a fight is visible on screen.
+//=================================================================================================
+#include <cstring>
+#include <cmath>
+#include <cstdint>
+extern float g_gxAmbNight; // 0 day .. 1 night (written by the day/night cycle)
+namespace {
+const int GXA_RATE = 44100;
+const int GXA_FRAMES = 4096;
+const int GXA_NBUF = 4;
+const float GXA_PI = 3.14159265f;
+ALuint s_gxaSrc = 0;
+ALuint s_gxaBuf[GXA_NBUF];
+bool s_gxaOk = false, s_gxaFailed = false, s_gxaRunning = false;
+UnsignedInt s_gxaCombatFrame = 0;
+int16_t s_gxaPcm[GXA_FRAMES * 2];
+
+struct GxRng { uint32_t s; GxRng() : s(0x9E3779B9u) {}
+	inline uint32_t u() { s ^= s << 13; s ^= s >> 17; s ^= s << 5; return s; }
+	inline float f() { return (u() >> 8) * (1.0f / 16777216.0f); }       // 0..1
+	inline float n() { return f() * 2.0f - 1.0f; } };                      // -1..1
+GxRng g_r;
+
+struct GxSvf { float lo, bp;
+	inline void run(float in, float f, float q) { float hp = in - lo - q * bp; bp += f * hp; lo += f * bp; } };
+inline float gxSvfF(float hz) { float x = 2.0f * sinf(GXA_PI * hz / GXA_RATE); return x > 0.9f ? 0.9f : x; }
+struct GxLp { float y; inline float run(float x, float a) { y += a * (x - y); return y; } };
+inline float gxLpA(float hz) { return 1.0f - expf(-2.0f * GXA_PI * hz / GXA_RATE); }
+
+// one-shot voices
+enum { V_NONE, V_HAWK, V_HOWL, V_YIP, V_BOOM, V_ROCK, V_THUNDER, V_CRACK };
+struct GxVoice { int type; float t, dur, pan, ph, ph2, gain; int n; GxSvf f; GxLp l; };
+const int GXA_NV = 12;
+GxVoice s_v[GXA_NV];
+
+struct GxState {
+	// wind
+	float gust, gustTarget, gustTimer, windPan, windPanT; GxSvf wbL, wbR, whis; GxLp sandHp;
+	// rumble
+	GxLp r1, r2; float rumLfo;
+	// cicadas / crickets
+	GxSvf cic; float cicPh, cicEnv, cicTimer, cicOn; float crPh[3], crT[3], crPan[3];
+	// schedulers (seconds)
+	float tBoom, tBird, tAnimal, tRare, tCrack;
+	float duck, night;
+	GxState() { memset(this, 0, sizeof(*this)); gust = 0.4f; gustTarget = 0.5f; tBoom = 40; tBird = 20; tAnimal = 70; tRare = 50; tCrack = 2; duck = 1; for (int i = 0; i < 3; ++i) { crPan[i] = -0.7f + 0.7f * i; crT[i] = 0.17f * i; } }
+} s_a;
+
+void gxaStart(int type, float dur, float gain)
+{
+	for (int i = 0; i < GXA_NV; ++i)
+		if (s_v[i].type == V_NONE)
+		{
+			GxVoice &v = s_v[i];
+			memset(&v, 0, sizeof(v));
+			v.type = type; v.dur = dur; v.gain = gain; v.pan = g_r.n() * 0.9f; v.n = 0;
+			return;
+		}
+}
+
+inline float gxaEnv(float t, float a, float d) { if (t < a) return t / a; float x = 1.0f - (t - a) / d; return x > 0 ? x * x : 0; }
+
+// one voice sample (mono), returns value; advances time
+float gxaVoice(GxVoice &v)
+{
+	const float dt = 1.0f / GXA_RATE;
+	float out = 0.0f;
+	const float t = v.t;
+	switch (v.type)
+	{
+	case V_HAWK: { // two descending screeches
+		float tt = t < 1.1f ? t : t - 1.1f;
+		float hz = 3000.0f - 1400.0f * (tt / 0.9f) + 120.0f * sinf(2 * GXA_PI * 9.0f * tt);
+		v.ph += 2 * GXA_PI * hz * dt;
+		float e = (tt < 0.9f) ? gxaEnv(tt, 0.06f, 0.84f) : 0.0f;
+		if (t > 1.1f) e *= 0.6f;
+		out = (sinf(v.ph) + 0.3f * sinf(2.0f * v.ph) + 0.15f * g_r.n()) * e;
+		out = v.l.run(out, gxLpA(2500.0f)); // distance
+	} break;
+	case V_HOWL: { // distant wolf / dog howl
+		float x = t / v.dur;
+		float hz = 330.0f + 260.0f * sinf(GXA_PI * (x < 0.4f ? x / 0.4f * 0.5f : 0.5f + (x - 0.4f) / 0.6f * 0.35f)) + 6.0f * sinf(2 * GXA_PI * 5.5f * t);
+		v.ph += 2 * GXA_PI * hz * dt;
+		float e = gxaEnv(t, 0.4f, v.dur - 0.4f);
+		out = (sinf(v.ph) + 0.35f * sinf(2.0f * v.ph) + 0.12f * sinf(3.0f * v.ph)) * e;
+		out = v.l.run(out, gxLpA(1200.0f));
+	} break;
+	case V_YIP: { // jackal: 6 short rising yips
+		float seg = 0.22f; int k = (int)(t / seg); float tt = t - k * seg;
+		float hz = 800.0f + 700.0f * (tt / 0.14f) + 40.0f * k;
+		v.ph += 2 * GXA_PI * hz * dt;
+		float e = (tt < 0.14f) ? gxaEnv(tt, 0.015f, 0.125f) : 0.0f;
+		out = (sinf(v.ph) + 0.25f * sinf(2.0f * v.ph)) * e;
+		out = v.l.run(out, gxLpA(1800.0f));
+	} break;
+	case V_BOOM: { // deep volcano boom
+		float hz = 38.0f - 10.0f * (t / v.dur);
+		v.ph += 2 * GXA_PI * hz * dt;
+		float e = gxaEnv(t, 0.08f, v.dur - 0.08f);
+		float nz = v.l.run(g_r.n(), gxLpA(90.0f)) * 3.0f;
+		out = (sinf(v.ph) * 0.8f + nz) * e;
+	} break;
+	case V_ROCK: { // rockfall: clattering bursts + low tumble
+		if (g_r.f() < 0.0009f * (1.0f - t / v.dur)) v.ph2 = 1.0f;
+		v.ph2 *= 0.9985f;
+		v.f.run(g_r.n() * v.ph2, gxSvfF(900.0f + 600.0f * g_r.f()), 0.7f);
+		float tumble = v.l.run(g_r.n(), gxLpA(140.0f)) * 2.5f * gxaEnv(t, 0.3f, v.dur - 0.3f);
+		out = v.f.bp * 1.4f + tumble;
+	} break;
+	case V_THUNDER: {
+		float e = gxaEnv(t, 0.25f, v.dur - 0.25f);
+		float crack = (t < 0.6f && g_r.f() < 0.02f) ? g_r.n() * 2.0f : 0.0f;
+		out = (v.l.run(g_r.n() + crack, gxLpA(260.0f)) * 3.2f) * e * (0.7f + 0.3f * sinf(2 * GXA_PI * 3.0f * t));
+	} break;
+	case V_CRACK: { // cooling stone click
+		float e = expf(-t * 900.0f);
+		v.f.run(g_r.n(), gxSvfF(2600.0f), 0.5f);
+		out = v.f.bp * e * 2.0f;
+	} break;
+	default: break;
+	}
+	v.t += dt;
+	if (v.t >= v.dur) v.type = V_NONE;
+	return out * v.gain;
+}
+
+void gxaSchedule(float dt)
+{
+	GxState &a = s_a;
+	const float day = 1.0f - a.night;
+	a.tBoom -= dt; a.tBird -= dt; a.tAnimal -= dt; a.tRare -= dt; a.tCrack -= dt;
+	if (a.tBoom <= 0) { gxaStart(V_BOOM, 2.5f + 2.0f * g_r.f(), 0.55f); a.tBoom = 60.0f + 120.0f * g_r.f(); }
+	if (a.tBird <= 0) { if (day > 0.4f) gxaStart(V_HAWK, 2.0f, 0.10f * day); a.tBird = 45.0f + 75.0f * g_r.f(); }
+	if (a.tAnimal <= 0)
+	{
+		if (a.night > 0.5f) gxaStart(g_r.f() < 0.6f ? V_HOWL : V_YIP, 2.6f + 1.5f * g_r.f(), 0.08f);
+		else if (g_r.f() < 0.4f) gxaStart(V_YIP, 1.4f, 0.05f);
+		a.tAnimal = 120.0f + 180.0f * g_r.f();
+	}
+	if (a.tRare <= 0) { gxaStart(g_r.f() < 0.5f ? V_ROCK : V_THUNDER, 3.0f + 2.5f * g_r.f(), 0.22f); a.tRare = 60.0f + 60.0f * g_r.f(); }
+	if (a.tCrack <= 0) { gxaStart(V_CRACK, 0.03f, 0.10f * (0.3f + 0.7f * a.night)); a.tCrack = (1.5f + 6.0f * g_r.f()) / (0.3f + a.night); }
+}
+
+void gxaFill(int16_t *pcm, int frames, float duckTarget)
+{
+	GxState &a = s_a;
+	const float nightTarget = g_gxAmbNight < 0 ? 0 : (g_gxAmbNight > 1 ? 1 : g_gxAmbNight);
+	gxaSchedule((float)frames / GXA_RATE);
+	const float fW1 = 0, fWh = 0; (void)fW1; (void)fWh;
+	const float aSand = gxLpA(3000.0f), aR1 = gxLpA(55.0f), aR2 = gxLpA(45.0f);
+	const float fCic = gxSvfF(5200.0f);
+	for (int i = 0; i < frames; ++i)
+	{
+		const float dt = 1.0f / GXA_RATE;
+		a.night += (nightTarget - a.night) * 0.00002f;
+		a.duck += (duckTarget - a.duck) * 0.00006f;
+		const float night = a.night, day = 1.0f - night;
+		// --- gusts
+		a.gustTimer -= dt;
+		if (a.gustTimer <= 0) { float r = g_r.f(); a.gustTarget = r < 0.25f ? 0.05f + 0.1f * g_r.f() : 0.3f + 0.7f * g_r.f() * g_r.f() + 0.25f * r; a.gustTimer = 2.0f + 6.0f * g_r.f(); a.windPanT = g_r.n() * 0.6f; }
+		a.gust += (a.gustTarget * (night > 0.5f ? 0.7f : 1.0f) - a.gust) * 0.00004f;
+		a.windPan += (a.windPanT - a.windPan) * 0.00002f;
+		const float g = a.gust;
+		const float wf = gxSvfF(180.0f + 700.0f * g);
+		a.wbL.run(g_r.n(), wf, 1.1f);
+		a.wbR.run(g_r.n(), wf, 1.1f);
+		float wind = 0.55f * (0.12f + g * g);
+		a.whis.run(g_r.n(), gxSvfF(650.0f + 950.0f * g), 0.06f);
+		float whistle = a.whis.bp * 0.05f * g * g * g;
+		float white = g_r.n();
+		float sand = (white - a.sandHp.run(white, aSand)) * 0.10f * g * g * (0.6f + 0.4f * g_r.f());
+		float L = a.wbL.bp * wind * (1.0f - 0.4f * a.windPan) + whistle * (1.0f - a.windPan) + sand;
+		float Rr = a.wbR.bp * wind * (1.0f + 0.4f * a.windPan) + whistle * (1.0f + a.windPan) + sand * 0.9f;
+		// --- volcano rumble
+		a.rumLfo += dt * 0.07f;
+		float rum = a.r2.run(a.r1.run(g_r.n(), aR1), aR2) * 2.2f * (0.75f + 0.25f * sinf(2 * GXA_PI * a.rumLfo));
+		L += rum; Rr += rum;
+		// --- cicadas (day, swelling choruses)
+		if (day > 0.05f)
+		{
+			a.cicTimer -= dt;
+			if (a.cicTimer <= 0) { a.cicOn = a.cicOn > 0.5f ? 0.0f : 1.0f; a.cicTimer = a.cicOn > 0.5f ? 5.0f + 7.0f * g_r.f() : 4.0f + 10.0f * g_r.f(); }
+			a.cicEnv += (a.cicOn - a.cicEnv) * 0.00003f;
+			a.cicPh += dt * 47.0f; if (a.cicPh > 1) a.cicPh -= 1;
+			float am = sinf(GXA_PI * a.cicPh); am *= am; am *= am;
+			a.cic.run(g_r.n(), fCic, 0.12f);
+			float c = a.cic.bp * am * a.cicEnv * 0.035f * day;
+			L += c * 0.8f; Rr += c;
+		}
+		// --- crickets (night)
+		if (night > 0.05f)
+			for (int k = 0; k < 3; ++k)
+			{
+				a.crT[k] += dt; if (a.crT[k] > 0.55f + 0.07f * k) a.crT[k] = 0;
+				const float t = a.crT[k];
+				const int pulse = (int)(t / 0.035f);
+				const float pt = t - pulse * 0.035f;
+				float e = (pulse < 3 && pt < 0.022f) ? sinf(GXA_PI * pt / 0.022f) : 0.0f;
+				a.crPh[k] += 2 * GXA_PI * (4300.0f + 180.0f * k) * dt; if (a.crPh[k] > 2 * GXA_PI) a.crPh[k] -= 2 * GXA_PI;
+				float c = sinf(a.crPh[k]) * e * 0.022f * night;
+				L += c * (1.0f - a.crPan[k]); Rr += c * (1.0f + a.crPan[k]);
+			}
+		// --- one-shots
+		for (int v = 0; v < GXA_NV; ++v)
+			if (s_v[v].type != V_NONE)
+			{
+				const float pan = s_v[v].pan;
+				const float o = gxaVoice(s_v[v]);
+				L += o * (1.0f - pan); Rr += o * (1.0f + pan);
+			}
+		L *= a.duck * 0.9f; Rr *= a.duck * 0.9f;
+		L = L > 1.0f ? 1.0f : (L < -1.0f ? -1.0f : L);
+		Rr = Rr > 1.0f ? 1.0f : (Rr < -1.0f ? -1.0f : Rr);
+		pcm[2 * i] = (int16_t)(L * 32000.0f);
+		pcm[2 * i + 1] = (int16_t)(Rr * 32000.0f);
+	}
+}
+
+void gxaQueue(ALuint b, float duck)
+{
+	gxaFill(s_gxaPcm, GXA_FRAMES, duck);
+	alBufferData(b, AL_FORMAT_STEREO16, s_gxaPcm, (ALsizei)sizeof(s_gxaPcm), GXA_RATE);
+	alSourceQueueBuffers(s_gxaSrc, 1, &b);
+}
+
+void gxaShutdown()
+{
+	if (!s_gxaOk) return;
+	alSourceStop(s_gxaSrc);
+	alSourcei(s_gxaSrc, AL_BUFFER, 0);
+	alDeleteSources(1, &s_gxaSrc);
+	alDeleteBuffers(GXA_NBUF, s_gxaBuf);
+	s_gxaOk = false; s_gxaRunning = false;
+}
+
+void gxaUpdate(Real volume)
+{
+	const bool want = TheGameLogic && TheGameLogic->isInGame() && !TheGameLogic->isInShellGame() && !TheGameLogic->isGamePaused() && volume > 0.001f;
+	if (!s_gxaOk)
+	{
+		if (!want || s_gxaFailed) return;
+		alGetError();
+		alGenSources(1, &s_gxaSrc);
+		if (alGetError() != AL_NO_ERROR) { s_gxaFailed = true; return; }
+		alGenBuffers(GXA_NBUF, s_gxaBuf);
+		if (alGetError() != AL_NO_ERROR) { alDeleteSources(1, &s_gxaSrc); s_gxaFailed = true; return; }
+		alSourcei(s_gxaSrc, AL_SOURCE_RELATIVE, AL_TRUE);
+		alSource3f(s_gxaSrc, AL_POSITION, 0.0f, 0.0f, 0.0f);
+		alSourcef(s_gxaSrc, AL_ROLLOFF_FACTOR, 0.0f);
+		s_gxaOk = true;
+	}
+	if (!want)
+	{
+		if (s_gxaRunning) { alSourceStop(s_gxaSrc); alSourcei(s_gxaSrc, AL_BUFFER, 0); s_gxaRunning = false; }
+		return;
+	}
+	// duck while a fight is visible (weapon / explosion sounds started on screen in the last ~3 s)
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	const float duck = (s_gxaCombatFrame != 0 && fr >= s_gxaCombatFrame && fr - s_gxaCombatFrame < 90) ? 0.4f : 1.0f;
+	alSourcef(s_gxaSrc, AL_GAIN, volume * 0.8f);
+	if (!s_gxaRunning)
+	{
+		for (int i = 0; i < GXA_NBUF; ++i) gxaQueue(s_gxaBuf[i], duck);
+		alSourcePlay(s_gxaSrc);
+		s_gxaRunning = true;
+		return;
+	}
+	ALint done = 0;
+	alGetSourcei(s_gxaSrc, AL_BUFFERS_PROCESSED, &done);
+	while (done-- > 0)
+	{
+		ALuint b = 0;
+		alSourceUnqueueBuffers(s_gxaSrc, 1, &b);
+		gxaQueue(b, duck);
+	}
+	ALint st = 0;
+	alGetSourcei(s_gxaSrc, AL_SOURCE_STATE, &st);
+	if (st != AL_PLAYING) alSourcePlay(s_gxaSrc); // underrun recovery
+}
+
+void gxaNoteSound(AudioEventRTS *event, const AudioEventInfo *info, bool onScreen)
+{
+	if (!onScreen || !TheGameLogic) return;
+	AsciiString n = event->getEventName();
+	n.toLower();
+	const char *s = n.str();
+	if (strstr(s, "weapon") || strstr(s, "explo") || strstr(s, "cannon") || strstr(s, "gun") || strstr(s, "shot") || strstr(s, "impact") || strstr(s, "fire"))
+		s_gxaCombatFrame = TheGameLogic->getFrame();
+	(void)info;
+}
+
+// r027: real distance fade for positional sounds. OpenAL's inverse-clamped model never reaches
+// zero, so looping sounds (lava!) kept playing at ~20% forever after the camera left.
+Real gxaDistFade(AudioEventRTS *event, const Coord3D *p, const Coord3D &listener)
+{
+	const AudioEventInfo *info = event ? event->getAudioEventInfo() : nullptr;
+	if (!info || !p || (info->m_type & ST_GLOBAL) || info->m_maxDistance <= 1.0f)
+		return 1.0f;
+	const Real dx = p->x - listener.x, dy = p->y - listener.y;
+	const Real d = sqrtf(dx * dx + dy * dy);
+	const Real maxD = info->m_maxDistance;
+	Real start = maxD * 0.55f;
+	if (start < info->m_minDistance) start = info->m_minDistance;
+	if (start >= maxD) start = maxD * 0.8f;
+	if (d >= maxD) return 0.0f;
+	if (d <= start) return 1.0f;
+	const Real k = (maxD - d) / (maxD - start);
+	return k * k;
+}
+} // namespace
+
 //-------------------------------------------------------------------------------------------------
 void OpenALAudioManager::init()
 {
@@ -549,6 +865,7 @@ void OpenALAudioManager::update()
 	processPlayingList();
 	processFadingList();
 	processStoppedList();
+	gxaUpdate(m_soundVolume); // r027 map ambience
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -740,6 +1057,8 @@ void OpenALAudioManager::playAudioEvent(AudioEventRTS* event)
 	AudioHandle handleToKill = event->getHandleToKill();
 
 	AsciiString fileToPlay = event->getFilename();
+	if (event->isPositionalAudio() && event->getCurrentPosition() && TheTacticalView)
+		gxaNoteSound(event, info, isOnScreen(event->getCurrentPosition())); // r027 combat duck
 	PlayingAudio* audio = allocatePlayingAudio();
 	switch (info->m_soundType)
 	{
@@ -1577,6 +1896,7 @@ void OpenALAudioManager::openDevice(void)
 //-------------------------------------------------------------------------------------------------
 void OpenALAudioManager::closeDevice(void)
 {
+	gxaShutdown(); // r027
 	unselectProvider();
 	alcMakeContextCurrent(nullptr);
 
@@ -2495,6 +2815,8 @@ void OpenALAudioManager::processPlayingList(void)
 						Real y = pos->y;
 						Real z = pos->z;
 						alSource3f(playing->m_source, AL_POSITION, x, y, z);
+						// r027: fade to silence past MaxRange (keeps the sample alive so it returns when the camera does)
+						alSourcef(playing->m_source, AL_GAIN, getEffectiveVolume(playing->m_audioEventRTS) * gxaDistFade(playing->m_audioEventRTS, pos, m_listenerPosition));
 						// DEBUG_LOG(("Updating 3D sound position for %s to %f, %f, %f\n", playing->m_audioEventRTS->getEventName().str(), x, y, z));
 					}
 				}

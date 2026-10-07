@@ -126,6 +126,38 @@ void GX_PatrolCreate( const ObjectID *ids, Int nIds, const Coord3D *pts, Int nPt
 		return;
 	const Int n = (Int)objs.size();
 	c.x /= n; c.y /= n;
+	{
+		// r027: points too close together -> no patrol (tanks just twitched in place);
+		// drive the group in formation to the last point instead.
+		Int cc = 1;
+		while( cc * cc < n ) ++cc;
+		const Int rr = ( n + cc - 1 ) / cc;
+		Real span2 = 0.0f;
+		for( Int i = 0; i < nPts; ++i )
+			for( Int j = i + 1; j < nPts; ++j )
+			{
+				const Real dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+				if( dx * dx + dy * dy > span2 ) span2 = dx * dx + dy * dy;
+			}
+		Real lim = cc * 24.0f * 2.0f;
+		if( lim < 90.0f ) lim = 90.0f;
+		if( span2 < lim * lim )
+		{
+			const Coord3D &dst = pts[ nPts - 1 ];
+			for( Int k = 0; k < n; ++k )
+			{
+				AIUpdateInterface *ai = objs[k]->getAIUpdateInterface();
+				if( ai == nullptr )
+					continue;
+				Coord3D d = dst;
+				d.x += ( (Real)( k % cc ) - ( cc - 1 ) * 0.5f ) * 24.0f;
+				d.y += ( (Real)( k / cc ) - ( rr - 1 ) * 0.5f ) * 24.0f;
+				GX_PatrolRemove( objs[k]->getID() );
+				ai->aiMoveToPosition( &d, CMD_FROM_PLAYER );
+			}
+			return;
+		}
+	}
 	GxPatrol p;
 	p.pts.assign( pts, pts + nPts );
 	p.legStart = TheGameLogic->getFrame();

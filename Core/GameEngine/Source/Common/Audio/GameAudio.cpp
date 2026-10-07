@@ -1162,3 +1162,6 @@ void parseSpeakerType( INI *ini, void *instance, void *store, const void* userDa
 	(*(UnsignedInt*)store) = TheAudio->translateSpeakerTypeToUnsignedInt(str);
 }
 
+
+// r027: 0 = day .. 1 = night, written by W3DDisplay::gxUpdateDayNight, read by the map ambience
+float g_gxAmbNight = 0.0f;
