@@ -5581,7 +5581,7 @@ struct GxBit { Real x, y, z, vx, vy, vz, life; };
 static GxBit s_gxBits[48];
 static Bool gxWxVisible(Int me, Real x, Real y, Real z)
 {
-	if (me < 0 || ThePartitionManager == nullptr) return TRUE;
+	if (me < 0 || ThePartitionManager == nullptr || TheGameLogic == nullptr || TheGameLogic->isLoadingMap() || TheGameLogic->getFrame() == 0) return TRUE;
 	Coord3D c; c.x = x; c.y = y; c.z = z;
 	return ThePartitionManager->getShroudStatusForPlayer(me, &c) == CELLSHROUD_CLEAR; // hidden in fog and under the black shroud
 }
@@ -5605,7 +5605,7 @@ static Bool gxWxProject(Real x, Real y, Real z, Int &sx, Int &sy)
 }
 static void androidHudDrawWeather()
 {
-	if (TheTacticalView == nullptr || TheTerrainLogic == nullptr || TheDisplay == nullptr || TheGameLogic == nullptr)
+	if (TheTacticalView == nullptr || TheTerrainLogic == nullptr || TheDisplay == nullptr || TheGameLogic == nullptr || TheGameLogic->isLoadingMap() || TheGameLogic->getFrame() == 0)
 		return;
 	static long long s_prev = 0;
 	struct timespec ts;
@@ -5856,7 +5856,7 @@ static void androidHudDrawLights()
 
 void AndroidHud_Draw()
 {
-	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+	if (TheDisplay == nullptr || TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame() || TheGameLogic->isLoadingMap() || TheGameLogic->getFrame() == 0 || ThePartitionManager == nullptr)
 		return;
 	{
 		static Int s_selPrev = 0; // r032: soft tick when units get selected
@@ -5966,7 +5966,7 @@ void AndroidHud_Draw()
 static Int s_gxTapSnd = 0; // r032: which UI sound the tap makes
 static Bool androidHudHandleTapImpl(Int x, Int y)
 {
-	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame())
+	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame() || TheGameLogic->isLoadingMap() || TheGameLogic->getFrame() == 0)
 		return FALSE;
 	{
 		Int ax, ay, as;
