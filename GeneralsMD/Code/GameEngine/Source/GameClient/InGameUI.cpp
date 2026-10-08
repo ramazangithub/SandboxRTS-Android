@@ -114,9 +114,9 @@ int gxHeadlightOverride(ObjectID id)
 	return it == s_gxLightOv.end() ? -1 : it->second;
 }
 // r032: UI / action sounds (played by the OpenAL ambience device)
-extern int g_gxUiReq[8]; // GameAudio.cpp
+extern int g_gxUiReq[16]; // GameAudio.cpp
 enum { GX_UI_CLICK, GX_UI_TAP, GX_UI_SWITCH, GX_UI_ORDER, GX_UI_ERROR, GX_UI_SIEGE_ON, GX_UI_SIEGE_OFF };
-static inline void gxUiSound(int id) { if (id >= 0 && id < 8) ++g_gxUiReq[id]; }
+static inline void gxUiSound(int id) { if (id >= 0 && id < 16) ++g_gxUiReq[id]; }
 #if defined(__ANDROID__)
 #include <time.h>
 #include <ctype.h>
@@ -5576,7 +5576,16 @@ static Bool androidHudModeTap(Int x, Int y, Bool longPress)
 
 // r032: grey tumbleweeds rolling with the wind + small ash/sand dust devils carrying trash
 extern float g_gxWind; // OpenALAudioManager.cpp (same gusts you hear)
-struct GxTumble { Real x, y, vx, vy, rot, size, hop, hopV; Bool live; };
+struct GxTumble { Real x, y, vx, vy, rot, size, hop, hopV, seed; Bool live; };
+struct GxBit { Real x, y, z, vx, vy, vz, life; };
+static GxBit s_gxBits[48];
+static Bool gxWxVisible(Int me, Real x, Real y, Real z)
+{
+	if (me < 0 || ThePartitionManager == nullptr) return TRUE;
+	Coord3D c; c.x = x; c.y = y; c.z = z;
+	return ThePartitionManager->getShroudStatusForPlayer(me, &c) == CELLSHROUD_CLEAR; // hidden in fog and under the black shroud
+}
+
 struct GxDevil { Real x, y, t, life, spin, size; Bool live; };
 static GxTumble s_gxTw[10];
 static GxDevil s_gxDv[3];
@@ -5614,19 +5623,20 @@ static void androidHudDrawWeather()
 	const Coord3D &cam = TheTacticalView->getPosition();
 	const Real R = 420.0f;
 	const Real lum = 1.0f - 0.6f * g_gxNight;
-	// ---- tumbleweeds
+	// ---- tumbleweeds (r033: small, ash-grey, see-through tangles of twigs; no shadow; never in fog;
+	// break apart when a vehicle rolls into them)
+	const Int me = (ThePlayerList && ThePlayerList->getLocalPlayer()) ? (Int)ThePlayerList->getLocalPlayer()->getPlayerIndex() : -1;
 	for (Int i = 0; i < 10; ++i)
 	{
 		GxTumble &t = s_gxTw[i];
 		const Real dx = t.x - cam.x, dy = t.y - cam.y;
 		if (!t.live || dx * dx + dy * dy > R * R * 1.3f)
 		{
-			// (re)spawn upwind, they roll across the view
 			const Real a = s_dir + 3.14159f + (gxWxF() - 0.5f) * 2.2f;
 			const Real d = t.live ? R : R * gxWxF();
 			t.x = cam.x + cosf(a) * d; t.y = cam.y + sinf(a) * d;
-			t.vx = 0.0f; t.vy = 0.0f; t.rot = gxWxF() * 6.28f; t.size = 3.5f + 3.5f * gxWxF();
-			t.hop = 0.0f; t.hopV = 0.0f; t.live = TRUE;
+			t.vx = 0.0f; t.vy = 0.0f; t.rot = gxWxF() * 6.28f; t.size = 2.0f + 1.8f * gxWxF();
+			t.hop = 0.0f; t.hopV = 0.0f; t.seed = gxWxF() * 100.0f; t.live = TRUE;
 		}
 		const Real target = (10.0f + 70.0f * wind * wind) * (0.7f + 0.3f * (Real)(i % 3));
 		t.vx += (wdx * target - t.vx) * dt * 0.8f;
@@ -5635,28 +5645,79 @@ static void androidHudDrawWeather()
 		const Real sp = sqrtf(t.vx * t.vx + t.vy * t.vy);
 		t.rot += sp / (t.size + 0.1f) * dt;
 		t.hopV -= 60.0f * dt; t.hop += t.hopV * dt;
-		if (t.hop <= 0.0f) { t.hop = 0.0f; t.hopV = (dt > 0.0f && sp > 25.0f && gxWxF() < 0.04f) ? 8.0f + sp * 0.2f * gxWxF() : 0.0f; }
+		if (t.hop <= 0.0f) { t.hop = 0.0f; t.hopV = (dt > 0.0f && sp > 25.0f && gxWxF() < 0.04f) ? 6.0f + sp * 0.15f * gxWxF() : 0.0f; }
 		const Real gz = TheTerrainLogic->getGroundHeight(t.x, t.y);
+		const Bool vis = gxWxVisible(me, t.x, t.y, gz);
+		if (dt > 0.0f && ThePartitionManager)
+		{
+			Coord3D c3; c3.x = t.x; c3.y = t.y; c3.z = gz;
+			ObjectIterator *iter = ThePartitionManager->iterateObjectsInRange(&c3, t.size + 30.0f, FROM_CENTER_2D);
+			MemoryPoolObjectHolder hold(iter);
+			Bool hit = FALSE;
+			for (Object *o = iter->first(); o; o = iter->next())
+			{
+				if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead()) continue;
+				const Real ox = o->getPosition()->x - t.x, oy = o->getPosition()->y - t.y;
+				const Real rr = o->getGeometryInfo().getMajorRadius() + t.size;
+				if (ox * ox + oy * oy < rr * rr) { hit = TRUE; break; }
+			}
+			if (hit)
+			{
+				if (vis)
+				{
+					Int made = 0;
+					for (Int b = 0; b < 48 && made < 14; ++b)
+						if (s_gxBits[b].life <= 0.0f)
+						{
+							GxBit &q = s_gxBits[b];
+							const Real a = gxWxF() * 6.28f, v = 8.0f + 18.0f * gxWxF();
+							q.x = t.x; q.y = t.y; q.z = gz + t.size;
+							q.vx = cosf(a) * v + t.vx * 0.3f; q.vy = sinf(a) * v + t.vy * 0.3f; q.vz = 10.0f + 16.0f * gxWxF();
+							q.life = 0.7f + 0.6f * gxWxF();
+							++made;
+						}
+					gxUiSound(9);
+				}
+				t.live = FALSE;
+				continue;
+			}
+		}
+		if (!vis) continue;
 		Int cx, cy, ex, ey;
 		if (!gxWxProject(t.x, t.y, gz + t.size + t.hop, cx, cy)) continue;
 		if (!gxWxProject(t.x + t.size, t.y, gz + t.size + t.hop, ex, ey)) continue;
 		Int rad = (Int)sqrtf((Real)((ex - cx) * (ex - cx) + (ey - cy) * (ey - cy)));
-		if (rad > 60) continue;
+		if (rad > 40) continue;
 		if (rad < 2) rad = 2;
-		Int gx, gy;
-		if (gxWxProject(t.x, t.y, gz, gx, gy))
-			TheDisplay->drawFillRect(gx - rad, gy - rad / 4, 2 * rad, rad / 2 + 1, GameMakeColor(0, 0, 0, 50));
-		const Int c = (Int)(150.0f * lum);
-		const UnsignedInt col = GameMakeColor(c, c > 4 ? c - 4 : 0, c > 12 ? c - 12 : 0, 210);
-		const UnsignedInt col2 = GameMakeColor(c * 7 / 10, c * 7 / 10, c * 6 / 10, 200);
-		androidHudCircle(cx, cy, rad, 12, 1.5f, col);
-		androidHudCircle(cx, cy, rad * 6 / 10, 9, 1.0f, col2);
-		for (Int k = 0; k < 4; ++k)
+		const Int c = (Int)(132.0f * lum);
+		const UnsignedInt colA = GameMakeColor(c, c - c / 30, c - c / 12, 120);
+		const UnsignedInt colB = GameMakeColor(c * 8 / 10, c * 8 / 10, c * 3 / 4, 95);
+		for (Int k = 0; k < 9; ++k)
 		{
-			const Real a = t.rot + (Real)k * 0.785f;
-			const Int ox = (Int)(cosf(a) * (Real)rad), oy = (Int)(sinf(a) * (Real)rad);
-			TheDisplay->drawLine(cx - ox, cy - oy, cx + ox, cy + oy, 1.0f, (k & 1) ? col2 : col);
+			const Real h1 = sinf(t.seed + (Real)k * 12.9898f) * 43758.5453f;
+			const Real r1 = h1 - floorf(h1);
+			const Real h2 = sinf(t.seed * 1.7f + (Real)k * 78.233f) * 12345.678f;
+			const Real r2 = h2 - floorf(h2);
+			const Real a1 = t.rot + r1 * 6.28f;
+			const Real a2 = a1 + 1.6f + 1.8f * r2;
+			const Real q1 = (Real)rad * (0.55f + 0.45f * r2), q2 = (Real)rad * (0.5f + 0.5f * r1);
+			TheDisplay->drawLine(cx + (Int)(cosf(a1) * q1), cy + (Int)(sinf(a1) * q1 * 0.9f),
+				cx + (Int)(cosf(a2) * q2), cy + (Int)(sinf(a2) * q2 * 0.9f), 1.0f, (k & 1) ? colB : colA);
 		}
+	}
+	for (Int b = 0; b < 48; ++b)
+	{
+		GxBit &q = s_gxBits[b];
+		if (q.life <= 0.0f) continue;
+		q.life -= dt; q.vz -= 50.0f * dt;
+		q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+		const Real gz = TheTerrainLogic->getGroundHeight(q.x, q.y);
+		if (q.z < gz) { q.z = gz; q.vx *= 0.6f; q.vy *= 0.6f; q.vz = 0.0f; }
+		Int px, py;
+		if (!gxWxProject(q.x, q.y, q.z, px, py)) continue;
+		const Int al = (Int)(140.0f * (q.life > 1.0f ? 1.0f : q.life));
+		const Int c = (Int)(130.0f * lum);
+		TheDisplay->drawLine(px - 1, py, px + 2, py - 1, 1.0f, GameMakeColor(c, c, c - c / 10, al > 0 ? al : 0));
 	}
 	// ---- dust devils (more often in strong wind)
 	static Real s_dvSpawn = 3.0f;
@@ -5685,6 +5746,7 @@ static void androidHudDrawWeather()
 		d.y += (wdy * (8.0f + 30.0f * wind) + 6.0f * cosf(d.t * 1.3f + (Real)i)) * dt;
 		d.spin += dt * 5.0f;
 		const Real gz = TheTerrainLogic->getGroundHeight(d.x, d.y);
+		if (!gxWxVisible(me, d.x, d.y, gz)) continue;
 		const Int c = (Int)(165.0f * lum);
 		for (Int j = 0; j < 7; ++j)
 		{

@@ -26,3 +26,9 @@ ui_order <- FREE SFX PACK VOL 2/Click_Lock_Beep_1.ogg
 ui_error <- FREE SFX PACK VOL 2/Error_Buzz_1.ogg
 siege_on <- MMRetroArcadeSoundsPack1_0_5/Misc/m4a/Hydraulic1.m4a
 siege_off <- FREE SFX PACK VOL 2/Click_Unlock_1.ogg
+tree_crack.wav <- 100-CC0-wood-metal-SFX/wood_cracking_02.ogg (CC0, rowink/CC0-Sounds-Web)
+tree_fall.wav <- 75-cc0-breaking-falling-hit-sfx/bfh1_falling_03.ogg (CC0, rowink/CC0-Sounds-Web)
+crush_wood.wav <- 100-CC0-wood-metal-SFX/wood_breaking_01.ogg (CC0, rowink/CC0-Sounds-Web)
+crush_rock.wav <- 100-cc0-sfx-2/sfx100v2_stones_02.ogg (CC0, rowink/CC0-Sounds-Web)
+crush_metal.wav <- 100-CC0-wood-metal-SFX/metal_falling_01.ogg (CC0, rowink/CC0-Sounds-Web)
+house_break.wav <- 75-cc0-breaking-falling-hit-sfx/bfh1_breaking_02.ogg (CC0, rowink/CC0-Sounds-Web)

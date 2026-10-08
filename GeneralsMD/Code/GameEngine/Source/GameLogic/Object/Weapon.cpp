@@ -792,6 +792,23 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 
 	DEBUG_ASSERTCRASH((m_primaryDamage > 0)  ||  (victimObj == nullptr), ("You can't really shoot a zero damage weapon at an Object.") );
 
+	{
+		// SandboxRTS r033: a house between shooter and target takes the hit
+		extern Object *gxHouseIntercept(const Object *src, Object *victim, const Coord3D *vpos);
+		extern void gxHouseHit(Object *house, const Object *src);
+		if (!isProjectileDetonation)
+		{
+			Object *gxH = gxHouseIntercept(sourceObj, victimObj, victimObj ? victimObj->getPosition() : victimPos);
+			if (gxH)
+			{
+				victimObj = gxH;
+				victimPos = gxH->getPosition();
+			}
+		}
+		if (victimObj && inflictDamage && (isProjectileDetonation || getProjectileTemplate() == nullptr))
+			gxHouseHit(victimObj, sourceObj);
+	}
+
 	ObjectID sourceID = sourceObj->getID();
 	const Coord3D* sourcePos = sourceObj->getPosition();
 

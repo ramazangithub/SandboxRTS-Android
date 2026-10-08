@@ -366,6 +366,7 @@ void Drawable::saturateRGB(RGBColor& color, Real factor)
  * graphical side of a logical object, whereas GameLogic objects encapsulate
  * behaviors and physics.  */
 //-------------------------------------------------------------------------------------------------
+#include <cstring> // r033
 Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statusBits )
 				: Thing( thingTemplate )
 {
@@ -454,6 +455,12 @@ Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statu
 	// r024: ground vehicles 20% smaller (more room on the map)
 	if (thingTemplate->isKindOf(KINDOF_VEHICLE) && !thingTemplate->isKindOf(KINDOF_AIRCRAFT))
 		m_instanceScale *= 0.68f; // r025: 0.8 * 0.85
+	// r033: towering ash trees, 5-6 tanks tall
+	{
+		const char *gxTn = thingTemplate->getName().str();
+		if (gxTn && !thingTemplate->isKindOf(KINDOF_VEHICLE) && (strstr(gxTn, "Tree") || strstr(gxTn, "Pine") || strstr(gxTn, "Palm")))
+			m_instanceScale *= 2.6f;
+	}
 
 	// initially not bound to an object
 	m_object = nullptr;

@@ -2493,7 +2493,7 @@ void W3DDisplay::gxUpdateDayNight()
 		if (frame < s_lastFrame || m_3DScene != s_hlScene)
 		{
 			for (size_t i = 0; i < s_hl.size(); ++i)
-				for (Int j = 0; j < 3; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
+				for (Int j = 0; j < 2; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
 			s_hl.clear();
 			s_hlScene = m_3DScene;
 			s_k = 0.0f;
@@ -2503,17 +2503,25 @@ void W3DDisplay::gxUpdateDayNight()
 			s_hl[i].seen = FALSE;
 		if (m_3DScene && TheGameLogic)
 		{
-			static const Real dist[3] = { 14.0f, 40.0f, 74.0f };
-			static const Real inner[3] = { 7.0f, 13.0f, 20.0f };
-			static const Real width[3] = { 16.0f, 28.0f, 46.0f };
-			static const Real gain[3] = { 1.15f, 0.62f, 0.32f };
-			static const Real amb[3] = { 0.45f, 0.65f, 0.85f }; // far light is more scattered
-			static const Real hgt[3] = { 5.0f, 7.0f, 10.0f };
-			Int budget = 20;
+			// r033: 2 lights per vehicle, max 10 vehicles near the camera
+			static const Real dist[2] = { 18.0f, 58.0f };
+			static const Real inner[2] = { 9.0f, 18.0f };
+			static const Real width[2] = { 20.0f, 42.0f };
+			static const Real gain[2] = { 1.1f, 0.5f };
+			static const Real amb[2] = { 0.5f, 0.8f };
+			static const Real hgt[2] = { 6.0f, 9.0f };
+			Int budget = 10;
+			const Coord3D gxCam = TheTacticalView ? TheTacticalView->getPosition() : Coord3D();
 			for (Object *o = TheGameLogic->getFirstObject(); o && budget > 0; o = o->getNextObject())
 			{
 				if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead())
 					continue;
+				if (TheTacticalView)
+				{
+					const Real cdx = o->getPosition()->x - gxCam.x, cdy = o->getPosition()->y - gxCam.y;
+					if (cdx * cdx + cdy * cdy > 520.0f * 520.0f)
+						continue;
+				}
 				const int ov = gxHeadlightOverride(o->getID());
 				if (ov == 0)
 					continue; // switched off by the player
@@ -2527,7 +2535,7 @@ void W3DDisplay::gxUpdateDayNight()
 						continue;
 					GxHL n;
 					n.id = o->getID();
-					for (Int j = 0; j < 3; ++j) { n.l[j] = m_3DScene->getADynamicLight(); n.l[j]->Add_Ref(); }
+					for (Int j = 0; j < 2; ++j) { n.l[j] = m_3DScene->getADynamicLight(); n.l[j]->Add_Ref(); }
 					n.k = 0.0f;
 					n.seen = FALSE;
 					s_hl.push_back(n);
@@ -2542,7 +2550,7 @@ void W3DDisplay::gxUpdateDayNight()
 				const Real ang = o->getOrientation();
 				const Real c = cosf(ang), sn = sinf(ang);
 				const Real r = o->getGeometryInfo().getMajorRadius();
-				for (Int j = 0; j < 3; ++j)
+				for (Int j = 0; j < 2; ++j)
 				{
 					W3DDynamicLight *L = e->l[j];
 					if (!L->isEnabled())
@@ -2560,7 +2568,7 @@ void W3DDisplay::gxUpdateDayNight()
 		{
 			if (!s_hl[i].seen)
 			{
-				for (Int j = 0; j < 3; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
+				for (Int j = 0; j < 2; ++j) { s_hl[i].l[j]->setEnabled(false); s_hl[i].l[j]->Release_Ref(); }
 				s_hl.erase(s_hl.begin() + i);
 			}
 			else

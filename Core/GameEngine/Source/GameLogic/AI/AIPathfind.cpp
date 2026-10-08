@@ -4392,6 +4392,15 @@ void Pathfinder::classifyObjectFootprint( Object *obj, Bool insert )
 			}
 		}
 	}
+	{
+		// SandboxRTS r033: houses / towers / ruins are always solid
+		const char *gxN = obj->getTemplate()->getName().str();
+		if (gxN && !obj->isMobile() && (strstr(gxN, "VHouse") || strstr(gxN, "VTower") || strstr(gxN, "VRuin") || strstr(gxN, "House") || strstr(gxN, "Shack")))
+		{
+			internal_classifyObjectFootprint(obj, insert);
+			return;
+		}
+	}
 	if (!obj->isKindOf(KINDOF_STRUCTURE)) {
 		return;  // Only path around structures.
 	}

@@ -104,9 +104,9 @@ static TextureClass *gxTrackTex()
 // r027: tread marks. GlobalData can leave the track pool at 0 (bindTrack -> null -> no marks)
 // or with tiny edge counts; clamp to sane values so tanks always leave tracks.
 static inline Int gxTrackModules() { Int n = TheGlobalData->m_maxTerrainTracks; if (n < 8) n = 8; if (n > 24) n = 24; return n; } // r031
-static inline Int gxTrackEdges(Int e) { (void)e; return 10; } // r031: very short marks
-static inline Int gxTrackOpaque(Int o, Int e) { (void)o; (void)e; return 2; } // r031
-static inline Int gxTrackFade(Int f) { (void)f; return 400; } // r031: gone in ~0.4 s
+static inline Int gxTrackEdges(Int e) { (void)e; return 22; } // r033: short but visible marks
+static inline Int gxTrackOpaque(Int o, Int e) { (void)o; (void)e; return 8; } // r033
+static inline Int gxTrackFade(Int f) { (void)f; return 2500; } // r033: fade out in ~2.5 s
 
 
 #define BRIDGE_OFFSET_FACTOR	0.25f	//amount to raise tracks above bridges.

@@ -1169,5 +1169,5 @@ float g_gxAmbNight = 0.0f;
 int g_gxAmbOwnLost = 0;
 // r030: nearby own/visible vehicles standing and driving (HUD -> engine hum)
 float g_gxEngIdle = 0.0f;
-int g_gxUiReq[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // r032: UI / action sound requests (InGameUI -> OpenAL)
+int g_gxUiReq[16] = { 0 }; // r032: UI / action sound requests (InGameUI -> OpenAL)
 float g_gxEngMove = 0.0f;

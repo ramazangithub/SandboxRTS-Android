@@ -514,7 +514,7 @@ ALenum OpenALAudioManager::getALFormat(uint8_t channels, uint8_t bitsPerSample)
 extern float g_gxAmbNight; // 0 day .. 1 night (written by the day/night cycle)
 extern int g_gxAmbOwnLost;  // r029: bumped by the HUD whenever one of our vehicles dies
 extern float g_gxEngIdle, g_gxEngMove; // r030: nearby vehicles standing / driving (weighted by distance to camera)
-extern int g_gxUiReq[8]; // r032: UI / action sounds requested by the HUD (GameAudio.cpp)
+extern int g_gxUiReq[16]; // r032: UI / action sounds requested by the HUD (GameAudio.cpp)
 float g_gxWind = 0.4f;   // r032: current wind strength 0..1 (tumbleweeds / dust devils follow it)
 #include <vector>
 #include <cstdio>
@@ -548,10 +548,11 @@ GxRng g_r;
 
 // r032: recorded CC0 samples (APK assets/sfx, 22.05 kHz mono 16-bit). The synth stays as a fallback.
 enum { S_WIND, S_WIND2, S_BIRDS, S_VOLC, S_LAVA, S_MOTOR, S_GUST, S_SHAKE, S_BIRD1, S_BIRD2, S_BIRD3, S_BIRD4,
-	S_CROW, S_OWL, S_THUNDER, S_VBOOM, S_ROCK, S_UI0, S_COUNT = S_UI0 + 7 };
+	S_CROW, S_OWL, S_THUNDER, S_VBOOM, S_ROCK, S_UI0, S_COUNT = S_UI0 + 13 };
 const char *const k_gxSmpName[S_COUNT] = { "wind_bed", "wind_strong", "birds_bed", "volcano_bed", "lava_bed", "motor",
 	"wind_gust", "wind_shake", "bird1", "bird2", "bird3", "bird4", "crow", "owl", "thunder", "volcano_boom", "rock_fall",
-	"ui_click", "ui_tap", "ui_switch", "ui_order", "ui_error", "siege_on", "siege_off" };
+	"ui_click", "ui_tap", "ui_switch", "ui_order", "ui_error", "siege_on", "siege_off",
+	"tree_crack", "tree_fall", "crush_wood", "crush_rock", "crush_metal", "house_break" };
 struct GxSmp { std::vector<float> d; int rate; };
 GxSmp s_smp[S_COUNT];
 bool s_smpTried = false, s_smpOn = false;
@@ -1032,9 +1033,9 @@ void gxaQueue(ALuint b, float duck)
 }
 
 // r032: UI / action sounds on their own short sources (no stream latency)
-ALuint s_uiSrc[4], s_uiBuf[7];
+ALuint s_uiSrc[4], s_uiBuf[13];
 bool s_uiOk = false, s_uiFail = false, s_uiSeenInit = false;
-int s_uiSeen[8];
+int s_uiSeen[16];
 void gxaUiUpdate(Real volume)
 {
 	if (!s_smpTried) gxSmpLoad();
@@ -1044,9 +1045,9 @@ void gxaUiUpdate(Real volume)
 		alGetError();
 		alGenSources(4, s_uiSrc);
 		if (alGetError() != AL_NO_ERROR) { s_uiFail = true; return; }
-		alGenBuffers(7, s_uiBuf);
+		alGenBuffers(13, s_uiBuf);
 		if (alGetError() != AL_NO_ERROR) { alDeleteSources(4, s_uiSrc); s_uiFail = true; return; }
-		for (int i = 0; i < 7; ++i)
+		for (int i = 0; i < 13; ++i)
 		{
 			const GxSmp &sm = s_smp[S_UI0 + i];
 			std::vector<int16_t> pcm(sm.d.size() > 1 ? sm.d.size() : 2, 0);
@@ -1061,9 +1062,9 @@ void gxaUiUpdate(Real volume)
 		}
 		s_uiOk = true;
 	}
-	if (!s_uiSeenInit) { for (int i = 0; i < 8; ++i) s_uiSeen[i] = g_gxUiReq[i]; s_uiSeenInit = true; return; }
-	static const float k_g[7] = { 0.55f, 0.35f, 0.6f, 0.5f, 0.45f, 0.8f, 0.6f };
-	for (int i = 0; i < 7; ++i)
+	if (!s_uiSeenInit) { for (int i = 0; i < 16; ++i) s_uiSeen[i] = g_gxUiReq[i]; s_uiSeenInit = true; return; }
+	static const float k_g[13] = { 0.55f, 0.35f, 0.6f, 0.5f, 0.45f, 0.8f, 0.6f, 0.75f, 0.95f, 0.7f, 0.7f, 0.55f, 0.95f };
+	for (int i = 0; i < 13; ++i)
 	{
 		if (g_gxUiReq[i] == s_uiSeen[i]) continue;
 		s_uiSeen[i] = g_gxUiReq[i];
@@ -1083,7 +1084,7 @@ void gxaShutdown()
 	{
 		for (int i = 0; i < 4; ++i) { alSourceStop(s_uiSrc[i]); alSourcei(s_uiSrc[i], AL_BUFFER, 0); }
 		alDeleteSources(4, s_uiSrc);
-		alDeleteBuffers(7, s_uiBuf);
+		alDeleteBuffers(13, s_uiBuf);
 		s_uiOk = false; s_uiSeenInit = false;
 	}
 	if (!s_gxaOk) return;

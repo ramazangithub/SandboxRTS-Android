@@ -6561,3 +6561,195 @@ ObjectID Object::calculateCountermeasureToDivertTo( const Object& victim )
 	}
 	return INVALID_ID;
 }
+
+
+// ============================================================================
+// SandboxRTS r033: tanks crush props, fell trees, shells blow houses apart.
+// ============================================================================
+#include <vector>
+#include <set>
+#include <map>
+#include <cstring>
+#include "GameClient/View.h"
+extern int g_gxUiReq[16];
+enum { GXW_TREE_CRACK = 7, GXW_TREE_FALL = 8, GXW_CRUSH_WOOD = 9, GXW_CRUSH_ROCK = 10, GXW_CRUSH_METAL = 11, GXW_HOUSE_BREAK = 12 };
+
+static void gxWorldSound(int id, const Coord3D *p)
+{
+	if (TheTacticalView == nullptr || p == nullptr || id < 0 || id >= 16) return;
+	const Coord3D &c = TheTacticalView->getPosition();
+	const Real dx = p->x - c.x, dy = p->y - c.y;
+	if (dx * dx + dy * dy < 650.0f * 650.0f) ++g_gxUiReq[id];
+}
+
+static inline Bool gxHas(const char *n, const char *k) { return strstr(n, k) != nullptr; }
+
+// 0 none, 1 tree, 2 rock, 3 wood, 4 metal, 5 house
+static int gxPropClass(const Object *o)
+{
+	if (o == nullptr || o->getTemplate() == nullptr) return 0;
+	const char *n = o->getTemplate()->getName().str();
+	if (n == nullptr) return 0;
+	if (gxHas(n, "VHouse") || gxHas(n, "VTower") || gxHas(n, "VRuin") || gxHas(n, "House") || gxHas(n, "Shack")) return 5;
+	if (o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_INFANTRY) || o->isKindOf(KINDOF_AIRCRAFT) || o->isKindOf(KINDOF_PROJECTILE)) return 0;
+	if (gxHas(n, "Tree") || gxHas(n, "Pine") || gxHas(n, "Palm")) return 1;
+	if (gxHas(n, "Rock") || gxHas(n, "Boulder") || gxHas(n, "Chunk") || gxHas(n, "Stone")) return 2;
+	if (gxHas(n, "Fence") || gxHas(n, "Barricade") || gxHas(n, "Crate") || gxHas(n, "Bush") || gxHas(n, "Shrub")
+		|| gxHas(n, "Hedge") || gxHas(n, "Post") || gxHas(n, "Sign") || gxHas(n, "Log") || gxHas(n, "Plank") || gxHas(n, "Bench")) return 3;
+	if (gxHas(n, "Barrel") || gxHas(n, "Drum") || gxHas(n, "Lamp") || gxHas(n, "Hydrant") || gxHas(n, "Mailbox") || gxHas(n, "Tire")) return 4;
+	if (o->isKindOf(KINDOF_SHRUBBERY)) return 3;
+	return 0;
+}
+
+struct GxFall { ObjectID id; Real ax, ay; Int t; };
+static std::vector<GxFall> s_gxFalls;
+static std::set<ObjectID> s_gxGone, s_gxTinted;
+static std::map<ObjectID, Int> s_gxHouseHits;
+static UnsignedInt s_gxWorldFrame = 0;
+
+static void gxStartFall(Object *tree, const Object *by)
+{
+	const Real hy = by->getOrientation();
+	Real dx = cosf(hy), dy = sinf(hy);
+	const Real yaw = tree->getOrientation();
+	const Real c = cosf(yaw), s = sinf(yaw);
+	const Real lx = dx * c + dy * s, ly = -dx * s + dy * c;
+	GxFall f;
+	f.id = tree->getID(); f.ax = -ly; f.ay = lx; f.t = 0;
+	s_gxFalls.push_back(f);
+	gxWorldSound(GXW_TREE_CRACK, tree->getPosition());
+}
+
+void gxSandboxWorldUpdate()
+{
+	if (TheGameLogic == nullptr || ThePartitionManager == nullptr) return;
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	if (fr < s_gxWorldFrame)
+	{
+		s_gxFalls.clear(); s_gxGone.clear(); s_gxTinted.clear(); s_gxHouseHits.clear();
+	}
+	s_gxWorldFrame = fr;
+
+	for (size_t i = 0; i < s_gxFalls.size(); )
+	{
+		GxFall &f = s_gxFalls[i];
+		Object *t = TheGameLogic->findObjectByID(f.id);
+		if (t == nullptr) { s_gxFalls.erase(s_gxFalls.begin() + i); continue; }
+		++f.t;
+		const Int T = 36;
+		const Real k = f.t >= T ? 1.0f : (Real)f.t / (Real)T;
+		const Real ang = k * k * 1.52f;
+		if (f.t == T) gxWorldSound(GXW_TREE_FALL, t->getPosition());
+		Drawable *d = t->getDrawable();
+		if (d)
+		{
+			Matrix3D m(Vector3(f.ax, f.ay, 0.0f), ang);
+			d->setInstanceMatrix(&m);
+		}
+		if (f.t > T + 180)
+		{
+			TheGameLogic->destroyObject(t);
+			s_gxFalls.erase(s_gxFalls.begin() + i);
+			continue;
+		}
+		++i;
+	}
+
+	if ((fr % 30) == 0)
+	{
+		for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+		{
+			if (gxPropClass(o) != 1 || s_gxTinted.count(o->getID())) continue;
+			Drawable *d = o->getDrawable();
+			if (d == nullptr) continue;
+			RGBColor ash; ash.red = 0.22f; ash.green = 0.21f; ash.blue = 0.20f;
+			d->colorTint(&ash);
+			s_gxTinted.insert(o->getID());
+		}
+	}
+
+	if (fr & 1) return;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (!o->isKindOf(KINDOF_VEHICLE) || o->isKindOf(KINDOF_AIRCRAFT) || o->isEffectivelyDead()) continue;
+		const PhysicsBehavior *ph = o->getPhysics();
+		if (ph == nullptr || ph->getVelocityMagnitude() < 0.15f) continue;
+		const Real rMe = o->getGeometryInfo().getMajorRadius();
+		ObjectIterator *iter = ThePartitionManager->iterateObjectsInRange(o, rMe + 40.0f, FROM_CENTER_2D);
+		MemoryPoolObjectHolder hold(iter);
+		for (Object *other = iter->first(); other; other = iter->next())
+		{
+			if (other == o || other->isEffectivelyDead()) continue;
+			const int cls = gxPropClass(other);
+			if (cls < 1 || cls > 4) continue;
+			if (s_gxGone.count(other->getID())) continue;
+			const Real dx = other->getPosition()->x - o->getPosition()->x;
+			const Real dy = other->getPosition()->y - o->getPosition()->y;
+			const Real reach = rMe + other->getGeometryInfo().getMajorRadius() * (cls == 1 ? 0.35f : 0.6f);
+			if (dx * dx + dy * dy > reach * reach) continue;
+			s_gxGone.insert(other->getID());
+			if (cls == 1)
+				gxStartFall(other, o);
+			else
+			{
+				gxWorldSound(cls == 2 ? GXW_CRUSH_ROCK : (cls == 3 ? GXW_CRUSH_WOOD : GXW_CRUSH_METAL), other->getPosition());
+				TheGameLogic->destroyObject(other);
+			}
+		}
+	}
+}
+
+Object *gxHouseIntercept(const Object *src, Object *victim, const Coord3D *vpos)
+{
+	if (src == nullptr || vpos == nullptr || ThePartitionManager == nullptr) return nullptr;
+	if (!src->isKindOf(KINDOF_VEHICLE) || src->isKindOf(KINDOF_AIRCRAFT)) return nullptr;
+	if (victim && gxPropClass(victim) == 5) return nullptr;
+	const Coord3D *a = src->getPosition();
+	const Real dx = vpos->x - a->x, dy = vpos->y - a->y;
+	const Real len2 = dx * dx + dy * dy;
+	if (len2 < 100.0f) return nullptr;
+	const Real len = sqrtf(len2);
+	Coord3D mid; mid.x = a->x + dx * 0.5f; mid.y = a->y + dy * 0.5f; mid.z = a->z;
+	ObjectIterator *iter = ThePartitionManager->iterateObjectsInRange(&mid, len * 0.5f + 60.0f, FROM_CENTER_2D);
+	MemoryPoolObjectHolder hold(iter);
+	Object *best = nullptr;
+	Real bestT = 2.0f;
+	for (Object *other = iter->first(); other; other = iter->next())
+	{
+		if (other == victim || other == src || other->isEffectivelyDead() || gxPropClass(other) != 5) continue;
+		const Coord3D *p = other->getPosition();
+		const Real t = ((p->x - a->x) * dx + (p->y - a->y) * dy) / len2;
+		if (t <= 0.02f || t >= 0.98f) continue;
+		const Real cx = a->x + dx * t - p->x, cy = a->y + dy * t - p->y;
+		const Real r = other->getGeometryInfo().getMajorRadius() * 0.8f;
+		if (cx * cx + cy * cy > r * r) continue;
+		if (t < bestT) { bestT = t; best = other; }
+	}
+	return best;
+}
+
+void gxHouseHit(Object *house, const Object *src)
+{
+	if (house == nullptr || house->isEffectivelyDead() || gxPropClass(house) != 5) return;
+	if (src && !src->isKindOf(KINDOF_VEHICLE)) return;
+	Int &hits = s_gxHouseHits[house->getID()];
+	++hits;
+	BodyModuleInterface *b = house->getBodyModule();
+	if (b && b->getMaxHealth() > 0.0f)
+	{
+		DamageInfo di;
+		di.in.m_damageType = DAMAGE_EXPLOSION;
+		di.in.m_deathType = DEATH_NORMAL;
+		di.in.m_sourceID = src ? src->getID() : INVALID_ID;
+		di.in.m_amount = b->getMaxHealth() * 0.26f;
+		house->attemptDamage(&di);
+	}
+	if (!house->isEffectivelyDead() && (hits >= 4 || (b && b->getHealth() <= 1.0f)))
+		house->kill();
+	if (house->isEffectivelyDead())
+	{
+		gxWorldSound(GXW_HOUSE_BREAK, house->getPosition());
+		TheGameLogic->destroyObject(house);
+		s_gxHouseHits.erase(house->getID());
+	}
+}

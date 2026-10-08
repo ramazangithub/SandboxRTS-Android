@@ -3976,6 +3976,12 @@ void GameLogic::update()
 
 
 
+	{
+		extern void gxSandboxWorldUpdate(); // Object.cpp, r033
+		if (!m_startNewGame)
+			gxSandboxWorldUpdate();
+	}
+
 	// increment world time
 	if (!m_startNewGame)
 	{
