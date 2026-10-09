@@ -6571,6 +6571,9 @@ ObjectID Object::calculateCountermeasureToDivertTo( const Object& victim )
 #include <map>
 #include <cstring>
 #include "GameClient/View.h"
+#include "GameClient/ParticleSys.h"
+#include "GameClient/FXList.h"
+#include "GameLogic/TerrainLogic.h"
 extern int g_gxUiReq[16];
 enum { GXW_TREE_CRACK = 7, GXW_TREE_FALL = 8, GXW_CRUSH_WOOD = 9, GXW_CRUSH_ROCK = 10, GXW_CRUSH_METAL = 11, GXW_HOUSE_BREAK = 12 };
 
@@ -6580,6 +6583,45 @@ static void gxWorldSound(int id, const Coord3D *p)
 	const Coord3D &c = TheTacticalView->getPosition();
 	const Real dx = p->x - c.x, dy = p->y - c.y;
 	if (dx * dx + dy * dy < 650.0f * 650.0f) ++g_gxUiReq[id];
+}
+
+static void gxSpawnTreeDust(const Coord3D &pos)
+{
+	if (TheParticleSystemManager != nullptr)
+	{
+		static const char *s_dustNames[] = {
+			"SBDirt", "DirtDebrisSmall", "DustPuff", "GroundDustSmall", "BuildingCollapseDust"
+		};
+		for (size_t i = 0; i < sizeof(s_dustNames)/sizeof(s_dustNames[0]); ++i)
+		{
+			const ParticleSystemTemplate *tm = TheParticleSystemManager->findTemplate(s_dustNames[i]);
+			if (tm != nullptr)
+			{
+				ParticleSystem *ps = TheParticleSystemManager->createParticleSystem(tm);
+				if (ps != nullptr)
+				{
+					ps->setPosition(&pos);
+					break;
+				}
+			}
+		}
+	}
+
+	if (TheFXListStore != nullptr)
+	{
+		static const char *s_fxNames[] = {
+			"FX_TreeToppleBounce", "FX_TankRunOverSmallTree", "FX_BuildingCollapseDust", "FX_GroundHitDirt"
+		};
+		for (size_t i = 0; i < sizeof(s_fxNames)/sizeof(s_fxNames[0]); ++i)
+		{
+			const FXList *fx = TheFXListStore->findFXList(s_fxNames[i]);
+			if (fx != nullptr)
+			{
+				FXList::doFXPos(fx, &pos);
+				break;
+			}
+		}
+	}
 }
 
 static inline Bool gxHas(const char *n, const char *k) { return strstr(n, k) != nullptr; }
@@ -6601,7 +6643,17 @@ static int gxPropClass(const Object *o)
 	return 0;
 }
 
-struct GxFall { ObjectID id; Real ax, ay; Int t; };
+struct GxFall {
+	ObjectID id;
+	Real ax, ay;      // local rotation axis
+	Real dx, dy;      // world fall direction
+	Real height;      // tree height in world units
+	Int t;            // frame counter
+	Int t_crack;      // crack pause frames (~14 frames, ~0.47s)
+	Int t_fall;       // fall duration based on height (~80-100 frames, ~2.7-3.3s)
+	Int t_rest;       // ground resting frames (~150 frames, ~5.0s)
+	Int t_sink;       // smooth sink frames (~60 frames, ~2.0s)
+};
 static std::vector<GxFall> s_gxFalls;
 static std::set<ObjectID> s_gxGone, s_gxTinted;
 static std::map<ObjectID, Int> s_gxHouseHits;
@@ -6609,14 +6661,46 @@ static UnsignedInt s_gxWorldFrame = 0;
 
 static void gxStartFall(Object *tree, const Object *by)
 {
+	if (tree == nullptr || by == nullptr) return;
+
+	// Point 4: Random deviation +/-20 degrees relative to vehicle heading
 	const Real hy = by->getOrientation();
-	Real dx = cosf(hy), dy = sinf(hy);
+	const UnsignedInt seed = (tree->getID() * 1103515245U + (TheGameLogic ? TheGameLogic->getFrame() * 12345U : 12345U));
+	const Real devDeg = ((Real)(seed % 41U) - 20.0f); // -20.0 to +20.0 degrees
+	const Real devRad = devDeg * (PI / 180.0f);
+	const Real fallHeading = hy + devRad;
+
+	const Real dx = cosf(fallHeading), dy = sinf(fallHeading);
 	const Real yaw = tree->getOrientation();
 	const Real c = cosf(yaw), s = sinf(yaw);
 	const Real lx = dx * c + dy * s, ly = -dx * s + dy * c;
+
+	// Point 1: Tree height determines fall duration
+	Real h = tree->getGeometryInfo().getMaxHeightAbovePosition();
+	const char *tname = tree->getTemplate() ? tree->getTemplate()->getName().str() : "";
+	if (h < 15.0f)
+	{
+		if (gxHas(tname, "VTreeC")) h = 73.6f;
+		else if (gxHas(tname, "VTreeB")) h = 55.2f;
+		else if (gxHas(tname, "VTreeA")) h = 64.4f;
+		else h = 60.0f;
+	}
+
 	GxFall f;
-	f.id = tree->getID(); f.ax = -ly; f.ay = lx; f.t = 0;
+	f.id = tree->getID();
+	f.ax = -ly;
+	f.ay = lx;
+	f.dx = dx;
+	f.dy = dy;
+	f.height = h;
+	f.t = 0;
+	f.t_crack = 14;                         // Point 2: ~0.47s crack pause before falling
+	f.t_fall = 60 + (Int)(h * 0.5f);        // Point 1: 55 units -> 87 fr, 74 units -> 97 fr (~3.0-3.3s)
+	f.t_rest = 150;                         // Point 6: rests on ground ~5.0s
+	f.t_sink = 60;                          // Point 6: smooth vertical sink ~2.0s
 	s_gxFalls.push_back(f);
+
+	// Point 2 & 4: Initial crack sound at vehicle collision
 	gxWorldSound(GXW_TREE_CRACK, tree->getPosition());
 }
 
@@ -6636,21 +6720,87 @@ void gxSandboxWorldUpdate()
 		Object *t = TheGameLogic->findObjectByID(f.id);
 		if (t == nullptr) { s_gxFalls.erase(s_gxFalls.begin() + i); continue; }
 		++f.t;
-		const Int T = 36;
-		const Real k = f.t >= T ? 1.0f : (Real)f.t / (Real)T;
-		const Real ang = k * k * 1.52f;
-		if (f.t == T) gxWorldSound(GXW_TREE_FALL, t->getPosition());
+
+		Real ang = 0.0f;
+		Real sinkZ = 0.0f;
+
+		const Int t_impact = f.t_crack + f.t_fall;
+		const Int t_sink_start = t_impact + f.t_rest;
+		const Int t_total = t_sink_start + f.t_sink;
+
+		if (f.t < f.t_crack)
+		{
+			// Point 2: Cracking jerk & slight lean (0.0 to 0.47s)
+			const Real k = (Real)f.t / (Real)f.t_crack;
+			const Real jerk = sinf(k * 15.0f) * 0.008f * (1.0f - k);
+			ang = k * 0.035f + jerk;
+		}
+		else if (f.t < t_impact)
+		{
+			// Point 1 & 2: Inverted pendulum physics acceleration
+			// Barely moves at start, sharply accelerates near ground
+			const Real u = (Real)(f.t - f.t_crack) / (Real)f.t_fall;
+			ang = 0.035f + powf(u, 2.8f) * (1.52f - 0.035f);
+		}
+		else if (f.t == t_impact)
+		{
+			// Point 3 & 5: Impact sound and dust burst precisely on first ground touch
+			ang = 1.52f;
+			gxWorldSound(GXW_TREE_FALL, t->getPosition());
+
+			// Crown impact dust
+			Coord3D crownPos = *t->getPosition();
+			crownPos.x += f.dx * (f.height * 0.70f);
+			crownPos.y += f.dy * (f.height * 0.70f);
+			crownPos.z = TheTerrainLogic ? TheTerrainLogic->getGroundHeight(crownPos.x, crownPos.y) : t->getPosition()->z;
+			gxSpawnTreeDust(crownPos);
+
+			// Mid-trunk dust
+			Coord3D midPos = *t->getPosition();
+			midPos.x += f.dx * (f.height * 0.35f);
+			midPos.y += f.dy * (f.height * 0.35f);
+			midPos.z = TheTerrainLogic ? TheTerrainLogic->getGroundHeight(midPos.x, midPos.y) : t->getPosition()->z;
+			gxSpawnTreeDust(midPos);
+		}
+		else if (f.t < t_impact + 36)
+		{
+			// Point 3: Damped 2-bounce rebound and crown/branch vibration
+			const Int thit = f.t - t_impact;
+			const Real bounce = expf(-0.09f * (Real)thit) * fabsf(sinf((Real)thit * 0.28f)) * 0.13f;
+			const Real crownVib = expf(-0.12f * (Real)thit) * sinf((Real)thit * 1.4f) * 0.025f;
+			ang = 1.52f - bounce + crownVib;
+			if (ang > 1.52f) ang = 1.52f; // clamp so trunk never penetrates ground
+		}
+		else if (f.t < t_sink_start)
+		{
+			// Resting flat on ground
+			ang = 1.52f;
+		}
+		else if (f.t < t_total)
+		{
+			// Point 6: Smooth vertical sinking below ground level (~2.0s)
+			ang = 1.52f;
+			const Real ks = (Real)(f.t - t_sink_start) / (Real)f.t_sink;
+			const Real smooth_s = ks * ks * (3.0f - 2.0f * ks); // smoothstep
+			sinkZ = smooth_s * (f.height * 0.35f);
+		}
+		else
+		{
+			// Point 6: Sinking complete, cleanly remove object
+			TheGameLogic->destroyObject(t);
+			s_gxFalls.erase(s_gxFalls.begin() + i);
+			continue;
+		}
+
 		Drawable *d = t->getDrawable();
 		if (d)
 		{
 			Matrix3D m(Vector3(f.ax, f.ay, 0.0f), ang);
+			if (sinkZ > 0.0f)
+			{
+				m.Set_Z_Translation(-sinkZ);
+			}
 			d->setInstanceMatrix(&m);
-		}
-		if (f.t > T + 180)
-		{
-			TheGameLogic->destroyObject(t);
-			s_gxFalls.erase(s_gxFalls.begin() + i);
-			continue;
 		}
 		++i;
 	}
