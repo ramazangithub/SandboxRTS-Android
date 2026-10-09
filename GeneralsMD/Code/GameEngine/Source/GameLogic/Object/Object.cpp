@@ -6663,7 +6663,7 @@ void gxSandboxWorldUpdate()
 			Drawable *d = o->getDrawable();
 			if (d == nullptr) continue;
 			RGBColor ash; ash.red = 0.22f; ash.green = 0.21f; ash.blue = 0.20f;
-			d->colorTint(&ash);
+			(void)ash; (void)d; // r035: textured grey cypress, no flat ash tint
 			s_gxTinted.insert(o->getID());
 		}
 	}

@@ -459,7 +459,7 @@ Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statu
 	{
 		const char *gxTn = thingTemplate->getName().str();
 		if (gxTn && !thingTemplate->isKindOf(KINDOF_VEHICLE) && (strstr(gxTn, "Tree") || strstr(gxTn, "Pine") || strstr(gxTn, "Palm")))
-			m_instanceScale *= 2.6f;
+			m_instanceScale *= 1.0f; // r035: slim cypress models are authored at real size
 	}
 
 	// initially not bound to an object
