@@ -1419,6 +1419,7 @@ static Bool doesStateExist(const ModelConditionVector& v, const ModelConditionFl
 //-------------------------------------------------------------------------------------------------
 // SandboxRTS MVP: our own models for the MVP factions. Active only when the file
 // Art/W3D/<model>.w3d exists on the device, otherwise nothing changes.
+extern AsciiString TheGxParsingTemplateName;	// set in ThingFactory.cpp
 struct GxMvpMap { const char* tmpl; const char* model; };
 static const GxMvpMap s_gxMvpMap[] =
 {
@@ -1464,7 +1465,7 @@ static const char* gxMvpModelFor(const AsciiString& tmplName)
 
 static void gxMvpApply(ModelConditionInfo& info, Bool isTransition)
 {
-	const char* model = gxMvpModelFor(TheThingTemplateBeingParsedName);
+	const char* model = gxMvpModelFor(TheGxParsingTemplateName);
 	if (model == nullptr || !gxMvpFileExists(model))
 		return;
 	if (info.m_modelName.isEmpty())

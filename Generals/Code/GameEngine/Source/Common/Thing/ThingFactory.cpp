@@ -370,6 +370,7 @@ Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableStatus
 #if defined(RTS_DEBUG) || defined(DEBUG_CRASHING)
 AsciiString TheThingTemplateBeingParsedName;
 #endif
+AsciiString TheGxParsingTemplateName;	// SandboxRTS MVP: template name while parsing (release too)
 
 //-------------------------------------------------------------------------------------------------
 /** Parse Object entry */
@@ -379,6 +380,7 @@ AsciiString TheThingTemplateBeingParsedName;
 #if defined(RTS_DEBUG) || defined(DEBUG_CRASHING)
 	TheThingTemplateBeingParsedName = name;
 #endif
+	TheGxParsingTemplateName = name;
 
 	// find existing item if present
 	ThingTemplate *thingTemplate = TheThingFactory->findTemplateInternal( name, FALSE );
@@ -433,6 +435,7 @@ AsciiString TheThingTemplateBeingParsedName;
 #if defined(RTS_DEBUG) || defined(DEBUG_CRASHING)
 	TheThingTemplateBeingParsedName.clear();
 #endif
+	TheGxParsingTemplateName.clear();
 }
 
 //#define CHECK_THING_NAMES
