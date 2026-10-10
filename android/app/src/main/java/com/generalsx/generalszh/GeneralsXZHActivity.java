@@ -23,6 +23,10 @@ public class GeneralsXZHActivity extends SDLActivity {
 
         super.onCreate(savedInstanceState);
         hideSystemBars();
+        // mvp: fade-in, 3-2-1, "РАЗВЕРТКА 0:40" banner over the game
+        if (getIntent() != null && getIntent().hasExtra(WelcomeActivity.EXTRA_FACTION)) {
+            DeployOverlay.attach(this);
+        }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{
