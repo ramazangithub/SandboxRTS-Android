@@ -435,11 +435,11 @@ void Player::init(const PlayerTemplate* pt)
 			// Note that copying the entire Money class instead would also copy the player index inside of it.
 			if ( TheGameInfo )
 			{
-				m_money.deposit( TheGameInfo->getStartingCash().countMoney(), FALSE, FALSE );
+				m_money.deposit( 1300, FALSE, FALSE ); // SandboxRTS MVP: 1300 starting cubes
 			}
 			else
 			{
-				m_money.deposit( TheGlobalData->m_defaultStartingCash.countMoney(), FALSE, FALSE );
+				m_money.deposit( 1300, FALSE, FALSE ); // SandboxRTS MVP: 1300 starting cubes
 			}
 		}
 
