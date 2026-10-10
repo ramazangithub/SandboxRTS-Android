@@ -12,49 +12,58 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 /**
- * SandboxRTS MVP welcome screen: title, the two MVP factions, economy rules and a Play button.
- * Plain Android views (no resources) so it always renders Cyrillic and cannot break the engine.
+ * SandboxRTS start menu: plain grey background, faction picker and one centre Play button.
+ * The chosen faction is passed to the game as an intent extra ("sbx_faction").
  */
 public class WelcomeActivity extends Activity {
+    public static final String EXTRA_FACTION = "sbx_faction";
+    public static final int FACTION_STIHIYA = 0;
+    public static final int FACTION_STAYA = 1;
+
+    private static final int GREY_BG = Color.rgb(74, 76, 80);
     private static final int ORANGE = Color.rgb(255, 90, 31);
-    private static final int WHITE = Color.rgb(241, 240, 236);
-    private static final int GOLD = Color.rgb(230, 190, 70);
     private static final int ICE = Color.rgb(120, 200, 232);
-    private static final int BG = Color.rgb(18, 19, 22);
+    private static final int WHITE = Color.rgb(241, 240, 236);
+
+    private int faction = FACTION_STIHIYA;
+    private Button stihiyaBtn;
+    private Button stayaBtn;
 
     private int dp(float v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 
-    private TextView text(String s, float size, int color, boolean bold) {
-        TextView t = new TextView(this);
-        t.setText(s);
-        t.setTextSize(size);
-        t.setTextColor(color);
-        if (bold) t.setTypeface(Typeface.DEFAULT_BOLD);
-        return t;
-    }
-
-    private LinearLayout card(String title, int accent, String body) {
-        LinearLayout c = new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(14), dp(10), dp(14), dp(10));
+    private GradientDrawable box(int color, int radius) {
         GradientDrawable g = new GradientDrawable();
-        g.setColor(Color.rgb(30, 32, 36));
-        g.setStroke(dp(2), accent);
-        g.setCornerRadius(dp(10));
-        c.setBackground(g);
-        c.addView(text(title, 18, accent, true));
-        c.addView(text(body, 12, WHITE, false));
-        return c;
+        g.setColor(color);
+        g.setCornerRadius(dp(radius));
+        return g;
     }
 
-    private LinearLayout.LayoutParams half() {
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        p.setMargins(dp(6), dp(10), dp(6), dp(6));
-        return p;
+    private Button factionButton(String label, final int id, int color) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setAllCaps(false);
+        b.setTextSize(16);
+        b.setTypeface(Typeface.DEFAULT_BOLD);
+        b.setTextColor(Color.WHITE);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(150), dp(48));
+        p.setMargins(dp(8), 0, dp(8), 0);
+        b.setLayoutParams(p);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                faction = id;
+                refreshFactionButtons();
+            }
+        });
+        b.setTag(color);
+        return b;
+    }
+
+    private void refreshFactionButtons() {
+        stihiyaBtn.setBackground(box(faction == FACTION_STIHIYA ? ICE : Color.rgb(50, 52, 56), 10));
+        stayaBtn.setBackground(box(faction == FACTION_STAYA ? ORANGE : Color.rgb(50, 52, 56), 10));
     }
 
     @Override
@@ -65,56 +74,57 @@ public class WelcomeActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(BG);
-        root.setPadding(dp(24), dp(14), dp(24), dp(14));
+        root.setGravity(Gravity.CENTER);
+        root.setBackgroundColor(GREY_BG);
+        root.setPadding(dp(24), dp(24), dp(24), dp(24));
 
-        TextView title = text("SANDBOX RTS", 34, ORANGE, true);
+        TextView title = new TextView(this);
+        title.setText("SANDBOX RTS");
+        title.setTextSize(30);
+        title.setTextColor(WHITE);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         root.addView(title);
-        TextView sub = text("MVP \u00b7 Стихия против Стаи", 14, GOLD, false);
-        sub.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.addView(sub);
+
+        TextView pick = new TextView(this);
+        pick.setText("Выбери фракцию");
+        pick.setTextSize(14);
+        pick.setTextColor(WHITE);
+        pick.setGravity(Gravity.CENTER_HORIZONTAL);
+        pick.setPadding(0, dp(24), 0, dp(10));
+        root.addView(pick);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.addView(card("СТИХИЯ", ICE,
-            "Пехота: Изморозь, Град\nТехника: Шквал \u2192 Буран \u2192 Цунами\nАрта: Тайфун \u00b7 Авиа: Бриз\nРабочие: Прораб, Муссон\nБаза: Эпицентр, Зарница, Водохранилище, Метеостанция, Кузня бурь, Высота, Мерзлота, Гроза"), half());
-        row.addView(card("СТАЯ", ORANGE,
-            "Пехота: Шакал, Волк\nТехника: Хорёк \u2192 Росомаха \u2192 Медоед\nАрта: Дикобраз \u00b7 Авиа: Стрекоза\nРабочие: Бобр, Пеликан\nБаза: Логово, Муравейник, Запасник, Стойбище, Берлога, Гнездо, Улей, Капкан"), half());
+        row.setGravity(Gravity.CENTER);
+        stihiyaBtn = factionButton("Стихия", FACTION_STIHIYA, ICE);
+        stayaBtn = factionButton("Стая", FACTION_STAYA, ORANGE);
+        row.addView(stihiyaBtn);
+        row.addView(stayaBtn);
         root.addView(row);
-
-        TextView eco = text("Экономика: собирай ресурсы на точках снабжения и захватывай нефтевышки (пассивный доход). "
-            + "Лимит армии: 20 + 20 за каждый штаб (максимум 80). Энергия занимается, а не тратится.", 12, WHITE, false);
-        eco.setPadding(dp(6), dp(4), dp(6), dp(8));
-        root.addView(eco);
+        refreshFactionButtons();
 
         Button play = new Button(this);
         play.setText("ИГРАТЬ");
-        play.setTextSize(20);
+        play.setAllCaps(false);
+        play.setTextSize(22);
         play.setTextColor(Color.WHITE);
         play.setTypeface(Typeface.DEFAULT_BOLD);
-        GradientDrawable pg = new GradientDrawable();
-        pg.setColor(ORANGE);
-        pg.setCornerRadius(dp(12));
-        play.setBackground(pg);
-        LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(dp(260), dp(56));
+        play.setBackground(box(ORANGE, 12));
+        LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(dp(260), dp(64));
         pl.gravity = Gravity.CENTER_HORIZONTAL;
+        pl.topMargin = dp(40);
+        play.setLayoutParams(pl);
         play.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                startActivity(new Intent(WelcomeActivity.this, GeneralsXZHActivity.class));
+                Intent i = new Intent(WelcomeActivity.this, GeneralsXZHActivity.class);
+                i.putExtra(EXTRA_FACTION, faction);
+                startActivity(i);
                 finish();
             }
         });
-        root.addView(play, pl);
+        root.addView(play);
 
-        TextView hint = text("Модели MVP: распакуй SandboxRTS_MVP_models.zip в /sdcard/ (без них игра идёт на стандартных моделях)", 10, Color.GRAY, false);
-        hint.setGravity(Gravity.CENTER_HORIZONTAL);
-        hint.setPadding(0, dp(8), 0, 0);
-        root.addView(hint);
-
-        ScrollView sv = new ScrollView(this);
-        sv.setBackgroundColor(BG);
-        sv.addView(root);
-        setContentView(sv);
+        setContentView(root);
     }
 }
