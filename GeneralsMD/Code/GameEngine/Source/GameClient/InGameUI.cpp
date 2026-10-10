@@ -51,6 +51,7 @@
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
 #include "Common/BuildAssistant.h"
+#include "Common/Upgrade.h"
 #include "Common/Recorder.h"
 #include "Common/SpecialPower.h"
 
@@ -4562,8 +4563,11 @@ static void androidHudDrawCmdRow()
 	}
 }
 
+static Bool androidHudOnBuild(Int x, Int y); // r040
 static Bool androidHudOnCmdRow(Int x, Int y)
 {
+	if (androidHudOnBuild(x, y))
+		return TRUE;
 	for (Int i = 0; i < 6; ++i)
 	{
 		Int bx, by, s;
@@ -5962,6 +5966,231 @@ void AndroidHud_Draw()
 	TheDisplay->drawLine(mx - a, my + a, mx + a, my - a, 4.0f, xcol);
 }
 
+
+// ============================================================================
+// SandboxRTS r040: touch build / production / upgrade menu.
+// The classic ControlBar is not used on Android, so the CommandSet of the
+// selected own object is drawn here as a grid on the left side (under the
+// minimap). Tap = same action as the PC control bar button.
+// ============================================================================
+static DisplayString *s_bdCost[MAX_COMMANDS_PER_SET] = { nullptr };
+static Int s_bdCostLast[MAX_COMMANDS_PER_SET] = { 0 };
+static Int s_bdCostH[MAX_COMMANDS_PER_SET] = { 0 };
+
+static Bool androidHudBuildIsMenuCmd(const CommandButton *cb)
+{
+	if (cb == nullptr)
+		return FALSE;
+	const GUICommandType t = cb->getCommandType();
+	if (t == GUI_COMMAND_DOZER_CONSTRUCT || t == GUI_COMMAND_UNIT_BUILD)
+		return cb->getThingTemplate() != nullptr;
+	if (t == GUI_COMMAND_OBJECT_UPGRADE || t == GUI_COMMAND_PLAYER_UPGRADE)
+		return cb->getUpgradeTemplate() != nullptr;
+	return FALSE;
+}
+
+// selected own object that has a command set (builder, HQ, barracks, factory...)
+static Object *androidHudBuildSource(Drawable **outDraw, const CommandSet **outSet)
+{
+	if (TheInGameUI == nullptr || TheControlBar == nullptr || ThePlayerList == nullptr)
+		return nullptr;
+	if (TheInGameUI->getSelectCount() <= 0)
+		return nullptr;
+	Drawable *draw = TheInGameUI->getFirstSelectedDrawable();
+	Object *obj = draw ? draw->getObject() : nullptr;
+	if (obj == nullptr || obj->isEffectivelyDead() || !obj->isLocallyControlled())
+		return nullptr;
+	if (obj->getControllingPlayer() != ThePlayerList->getLocalPlayer())
+		return nullptr;
+	if (obj->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION))
+		return nullptr;
+	const CommandSet *set = TheControlBar->findCommandSet(obj->getCommandSetString());
+	if (set == nullptr)
+		return nullptr;
+	if (outDraw) *outDraw = draw;
+	if (outSet) *outSet = set;
+	return obj;
+}
+
+// slot n (0..) of the visible buttons -> rect. 3 columns under the minimap.
+static Bool androidHudBuildGeometry(Int n, Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	Int mx, my, ms;
+	androidHudMiniGeometry(mx, my, ms);
+	const Int gap = h / 70;
+	s = h / 9;
+	const Int cols = 3;
+	const Int top = my + ms + h / 30;
+	const Int row = n / cols, col = n % cols;
+	x = mx + col * (s + gap);
+	y = top + row * (s + gap);
+	return y + s <= h - h / 60;
+}
+
+static Bool androidHudBuildEnabled(Object *obj, const CommandButton *cb, Int &cost)
+{
+	Player *pl = ThePlayerList->getLocalPlayer();
+	cost = 0;
+	const GUICommandType t = cb->getCommandType();
+	if (t == GUI_COMMAND_DOZER_CONSTRUCT || t == GUI_COMMAND_UNIT_BUILD)
+	{
+		const ThingTemplate *tt = cb->getThingTemplate();
+		cost = tt->calcCostToBuild(pl);
+		return TheBuildAssistant && TheBuildAssistant->canMakeUnit(obj, tt) == CANMAKE_OK;
+	}
+	const UpgradeTemplate *ut = cb->getUpgradeTemplate();
+	cost = ut->calcCostToBuild(pl);
+	if (TheUpgradeCenter == nullptr || !TheUpgradeCenter->canAffordUpgrade(pl, ut, FALSE))
+		return FALSE;
+	if (t == GUI_COMMAND_OBJECT_UPGRADE)
+	{
+		if (obj->hasUpgrade(ut) || !obj->affectedByUpgrade(ut))
+			return FALSE;
+		ProductionUpdateInterface *pu = obj->getProductionUpdateInterface();
+		if (pu && pu->canQueueUpgrade(ut) != CANMAKE_OK)
+			return FALSE;
+	}
+	else if (pl->hasUpgradeComplete(ut) || pl->hasUpgradeInProduction(ut))
+		return FALSE;
+	return TRUE;
+}
+
+static void androidHudDrawBuild()
+{
+	if (TheDisplay == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame() || TheGameLogic->getFrame() == 0)
+		return;
+	Drawable *draw = nullptr;
+	const CommandSet *set = nullptr;
+	Object *obj = androidHudBuildSource(&draw, &set);
+	if (obj == nullptr)
+		return;
+	const ThingTemplate *pending = TheInGameUI->getPendingPlaceType();
+	Int n = 0;
+	for (Int i = 0; i < MAX_COMMANDS_PER_SET; ++i)
+	{
+		const CommandButton *cb = set->getCommandButton(i);
+		if (!androidHudBuildIsMenuCmd(cb))
+			continue;
+		Int x, y, s;
+		if (!androidHudBuildGeometry(n, x, y, s))
+			break;
+		Int cost = 0;
+		const Bool ok = androidHudBuildEnabled(obj, cb, cost);
+		const Bool active = pending != nullptr && pending == cb->getThingTemplate();
+		androidHudPlate(x, y, s, active);
+		const Image *img = cb->getButtonImage();
+		if (img == nullptr && cb->getThingTemplate())
+			img = cb->getThingTemplate()->getButtonImage();
+		const Int in = s / 12;
+		if (img)
+			TheDisplay->drawImage(img, x + in, y + in, x + s - in, y + s - in,
+			                      ok ? 0xFFFFFFFF : GameMakeColor(110, 110, 110, 255));
+		else
+			TheDisplay->drawFillRect(x + in, y + in, s - 2 * in, s - 2 * in,
+			                         ok ? GameMakeColor(60, 90, 60, 255) : GameMakeColor(50, 50, 50, 255));
+		if (!ok)
+			TheDisplay->drawFillRect(x + in, y + in, s - 2 * in, s - 2 * in, GameMakeColor(0, 0, 0, 110));
+		if (cost > 0)
+			androidHudCount(s_bdCost[n], s_bdCostLast[n], s_bdCostH[n], cost, x, y, s, !ok);
+		++n;
+	}
+}
+
+static Int androidHudBuildHit(Int x, Int y, const CommandSet *set)
+{
+	Int n = 0;
+	for (Int i = 0; i < MAX_COMMANDS_PER_SET; ++i)
+	{
+		const CommandButton *cb = set->getCommandButton(i);
+		if (!androidHudBuildIsMenuCmd(cb))
+			continue;
+		Int bx, by, s;
+		if (!androidHudBuildGeometry(n, bx, by, s))
+			break;
+		const Int pad = s / 16;
+		if (x >= bx - pad && x <= bx + s + pad && y >= by - pad && y <= by + s + pad)
+			return i;
+		++n;
+	}
+	return -1;
+}
+
+static Bool androidHudOnBuild(Int x, Int y)
+{
+	const CommandSet *set = nullptr;
+	if (androidHudBuildSource(nullptr, &set) == nullptr)
+		return FALSE;
+	return androidHudBuildHit(x, y, set) >= 0;
+}
+
+static Bool androidHudTapBuild(Int x, Int y)
+{
+	if (TheMessageStream == nullptr)
+		return FALSE;
+	Drawable *draw = nullptr;
+	const CommandSet *set = nullptr;
+	Object *obj = androidHudBuildSource(&draw, &set);
+	if (obj == nullptr)
+		return FALSE;
+	const Int i = androidHudBuildHit(x, y, set);
+	if (i < 0)
+		return FALSE;
+	const CommandButton *cb = set->getCommandButton(i);
+	Player *pl = ThePlayerList->getLocalPlayer();
+	const GUICommandType t = cb->getCommandType();
+	if (t == GUI_COMMAND_DOZER_CONSTRUCT || t == GUI_COMMAND_UNIT_BUILD)
+	{
+		const ThingTemplate *tt = cb->getThingTemplate();
+		if (t == GUI_COMMAND_DOZER_CONSTRUCT && TheInGameUI->getPendingPlaceType() == tt)
+		{
+			TheInGameUI->placeBuildAvailable(nullptr, nullptr); // second tap = cancel placing
+			return TRUE;
+		}
+		const CanMakeType cmt = TheBuildAssistant->canMakeUnit(obj, tt);
+		if (cmt == CANMAKE_NO_MONEY) { TheInGameUI->message("GUI:NotEnoughMoneyToBuild"); return TRUE; }
+		if (cmt == CANMAKE_QUEUE_FULL) { TheInGameUI->message("GUI:ProductionQueueFull"); return TRUE; }
+		if (cmt == CANMAKE_MAXED_OUT_FOR_PLAYER) { TheInGameUI->message("GUI:UnitMaxedOut"); return TRUE; }
+		if (cmt != CANMAKE_OK) { TheInGameUI->message("GUI:CantBuildThat"); return TRUE; }
+		if (t == GUI_COMMAND_DOZER_CONSTRUCT)
+		{
+			// ghost building follows the finger; next tap on the ground places it,
+			// the builder drives there and builds
+			TheInGameUI->placeBuildAvailable(tt, draw);
+			return TRUE;
+		}
+		ProductionUpdateInterface *pu = obj->getProductionUpdateInterface();
+		if (pu == nullptr)
+			return TRUE;
+		ProductionID pid = pu->requestUniqueUnitID();
+		GameMessage *msg = TheMessageStream->appendMessage(GameMessage::MSG_QUEUE_UNIT_CREATE);
+		msg->appendIntegerArgument(tt->getTemplateID());
+		msg->appendIntegerArgument(pid);
+		return TRUE;
+	}
+	const UpgradeTemplate *ut = cb->getUpgradeTemplate();
+	if (!TheUpgradeCenter->canAffordUpgrade(pl, ut, TRUE))
+		return TRUE;
+	if (t == GUI_COMMAND_OBJECT_UPGRADE)
+	{
+		ProductionUpdateInterface *pu = obj->getProductionUpdateInterface();
+		if (pu && pu->canQueueUpgrade(ut) == CANMAKE_QUEUE_FULL) { TheInGameUI->message("GUI:ProductionQueueFull"); return TRUE; }
+		if (obj->hasUpgrade(ut) || !obj->affectedByUpgrade(ut))
+			return TRUE;
+		GameMessage *msg = TheMessageStream->appendMessage(GameMessage::MSG_QUEUE_UPGRADE);
+		msg->appendObjectIDArgument(obj->getID());
+		msg->appendIntegerArgument(ut->getUpgradeNameKey());
+		return TRUE;
+	}
+	// player upgrade is researched in the selected building
+	if (pl->hasUpgradeComplete(ut) || pl->hasUpgradeInProduction(ut))
+		return TRUE;
+	GameMessage *msg = TheMessageStream->appendMessage(GameMessage::MSG_QUEUE_UPGRADE);
+	msg->appendObjectIDArgument(obj->getID());
+	msg->appendIntegerArgument(ut->getUpgradeNameKey());
+	return TRUE;
+}
+
 // Returns TRUE if the tap hit a HUD button (and was handled).
 static Int s_gxTapSnd = 0; // r032: which UI sound the tap makes
 static Bool androidHudHandleTapImpl(Int x, Int y)
@@ -5985,6 +6214,8 @@ static Bool androidHudHandleTapImpl(Int x, Int y)
 		return TRUE;
 	if (TheInGameUI->getSelectCount() <= 0)
 		return FALSE;
+	if (androidHudTapBuild(x, y))   // r040 build / production menu
+		return TRUE;
 	Int sx, sy, ss, cx, cy, cs;
 	androidHudGeometry(sx, sy, ss, cx, cy, cs);
 	const Int pad = cs / 4;
@@ -6039,6 +6270,7 @@ void InGameUI::postDraw()
 {
 #if defined(__ANDROID__)
 	AndroidHud_Draw();
+	androidHudDrawBuild();  // r040
 #endif
 
 	// render our display strings for the messages if on
