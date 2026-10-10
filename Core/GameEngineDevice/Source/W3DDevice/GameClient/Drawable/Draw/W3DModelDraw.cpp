@@ -40,6 +40,7 @@
 #include "Common/CRCDebug.h"
 #include "Common/GameState.h"
 #include "Common/GlobalData.h"
+#include "Common/FileSystem.h"
 #include "Common/PerfTimer.h"
 #include "Common/RandomValue.h"
 #include "Common/ThingTemplate.h"
@@ -1414,6 +1415,117 @@ static Bool doesStateExist(const ModelConditionVector& v, const ModelConditionFl
 	return false;
 }
 
+
+//-------------------------------------------------------------------------------------------------
+// SandboxRTS MVP: our own models for the MVP factions. Active only when the file
+// Art/W3D/<model>.w3d exists on the device, otherwise nothing changes.
+struct GxMvpMap { const char* tmpl; const char* model; };
+static const GxMvpMap s_gxMvpMap[] =
+{
+	{"ChinaVehicleDozer","mvprorab"},{"ChinaVehicleSupplyTruck","mvmusson"},
+	{"ChinaInfantryRedguard","mvizmoroz"},{"ChinaInfantryTankHunter","mvgrad"},
+	{"ChinaTankGattling","mvshkval"},{"ChinaTankBattleMaster","mvburan"},{"ChinaTankOverlord","mvtsunami"},
+	{"ChinaVehicleInfernoCannon","mvtaifun"},{"ChinaVehicleHelix","mvbriz"},
+	{"ChinaCommandCenter","mvepicentr"},{"ChinaPowerPlant","mvzarnitsa"},{"ChinaSupplyCenter","mvrezervuar"},
+	{"ChinaBarracks","mvmeteo"},{"ChinaWarFactory","mvkuznya"},{"ChinaAirfield","mvvysota"},
+	{"ChinaBunker","mvmerzlota"},{"ChinaGattlingCannon","mvgroza"},
+	{"AmericaVehicleDozer","mvbobr"},{"AmericaVehicleChinook","mvpelikan"},
+	{"AmericaInfantryRanger","mvshakal"},{"AmericaInfantryMissileDefender","mvvolk"},
+	{"AmericaVehicleHumvee","mvhorek"},{"AmericaTankCrusader","mvrosomaha"},{"AmericaTankPaladin","mvmedoed"},
+	{"AmericaVehicleTomahawk","mvdikobraz"},{"AmericaVehicleComanche","mvstrekoza"},
+	{"AmericaCommandCenter","mvlogovo"},{"AmericaPowerPlant","mvmuraveinik"},{"AmericaSupplyCenter","mvzapasnik"},
+	{"AmericaBarracks","mvstoibishe"},{"AmericaWarFactory","mvberloga"},{"AmericaAirfield","mvgnezdo"},
+	{"AmericaFireBase","mvulei"},{"AmericaPatriotBattery","mvkapkan"},
+	{"TechOilDerrick","mvvyshka"},
+};
+
+static Bool gxMvpFileExists(const char* base)
+{
+	if (TheFileSystem == nullptr || base == nullptr || *base == 0)
+		return false;
+	char path[160];
+	snprintf(path, sizeof(path), "%s%s.w3d", W3D_DIR_PATH, base);
+	return TheFileSystem->doesFileExist(path);
+}
+
+static const char* gxMvpModelFor(const AsciiString& tmplName)
+{
+	const char* t = tmplName.str();
+	if (t == nullptr || *t == 0)
+		return nullptr;
+	const char* us = strchr(t, '_');
+	for (size_t i = 0; i < ARRAY_SIZE(s_gxMvpMap); ++i)
+	{
+		if (stricmp(t, s_gxMvpMap[i].tmpl) == 0 || (us != nullptr && stricmp(us + 1, s_gxMvpMap[i].tmpl) == 0))
+			return s_gxMvpMap[i].model;
+	}
+	return nullptr;
+}
+
+static void gxMvpApply(ModelConditionInfo& info, Bool isTransition)
+{
+	const char* model = gxMvpModelFor(TheThingTemplateBeingParsedName);
+	if (model == nullptr || !gxMvpFileExists(model))
+		return;
+	if (info.m_modelName.isEmpty())
+		return;	// state intentionally has no model (Model = None)
+
+	Bool rubble = false, dying = false, moving = false, firing = false;
+	for (size_t i = 0; i < info.m_conditionsYesVec.size(); ++i)
+	{
+		const ModelConditionFlags& f = info.m_conditionsYesVec[i];
+		if (f.test(MODELCONDITION_RUBBLE)) rubble = true;
+		if (f.test(MODELCONDITION_DYING)) dying = true;
+		if (f.test(MODELCONDITION_MOVING)) moving = true;
+		if (f.test(MODELCONDITION_FIRING_A) || f.test(MODELCONDITION_FIRING_B) || f.test(MODELCONDITION_FIRING_C)) firing = true;
+	}
+
+	if (rubble && gxMvpFileExists("mvrubble"))
+		model = "mvrubble";
+	info.m_modelName = model;
+
+	// our pivots: TURRET (yaw), BARREL (pitch), MUZZLE / MUZZLE01 (fire point)
+	for (Int t = 0; t < MAX_TURRETS; ++t)
+	{
+		Bool had = info.m_turrets[t].m_turretAngleNameKey != NAMEKEY_INVALID;
+		Bool hadP = info.m_turrets[t].m_turretPitchNameKey != NAMEKEY_INVALID;
+		info.m_turrets[t].m_turretAngleNameKey = (t == 0 && had) ? NAMEKEY("TURRET") : NAMEKEY_INVALID;
+		info.m_turrets[t].m_turretPitchNameKey = (t == 0 && hadP) ? NAMEKEY("BARREL") : NAMEKEY_INVALID;
+		info.m_turrets[t].m_turretArtAngle = 0.0f;
+		info.m_turrets[t].m_turretArtPitch = 0.0f;
+	}
+	for (Int w = 0; w < WEAPONSLOT_COUNT; ++w)
+	{
+		if (info.m_weaponFireFXBoneName[w].isNotEmpty()) info.m_weaponFireFXBoneName[w] = "MUZZLE";
+		if (info.m_weaponProjectileLaunchBoneName[w].isNotEmpty()) info.m_weaponProjectileLaunchBoneName[w] = "MUZZLE";
+		info.m_weaponRecoilBoneName[w].clear();
+		info.m_weaponMuzzleFlashName[w].clear();
+		info.m_weaponProjectileHideShowName[w].clear();
+	}
+	info.m_hideShowVec.clear();
+	info.m_particleSysBones.clear();
+
+	// animations: <model>_walk / _fire / _die / _idle, each file optional
+	info.m_animations.clear();
+	if (isTransition || rubble)
+		return;
+	const char* key = dying ? "die" : (moving ? "walk" : (firing ? "fire" : "idle"));
+	char file[64];
+	snprintf(file, sizeof(file), "%s_%s", model, key);
+	if (!gxMvpFileExists(file))
+	{
+		key = "idle";
+		snprintf(file, sizeof(file), "%s_%s", model, key);
+		if (!gxMvpFileExists(file))
+			return;
+	}
+	char animName[96];
+	snprintf(animName, sizeof(animName), "%s.%s", model, file);
+	W3DAnimationInfo animInfo(AsciiString(animName), false, 0.0f);
+	info.m_animations.push_back(animInfo);
+	info.m_mode = (key[0] == 'd') ? RenderObjClass::ANIM_MODE_ONCE : RenderObjClass::ANIM_MODE_LOOP;
+}
+
 //-------------------------------------------------------------------------------------------------
 void W3DModelDrawModuleData::parseConditionState(INI* ini, void *instance, void * /*store*/, const void* userData)
 {
@@ -1644,6 +1756,14 @@ void W3DModelDrawModuleData::parseConditionState(INI* ini, void *instance, void 
 	else if (info.m_modelName.isNone())
 	{
 		info.m_modelName.clear();
+	}
+
+	gxMvpApply(info, cst == PARSE_TRANSITION);
+	if (info.m_modelName.startsWithNoCase("mv"))
+	{
+		info.m_iniReadFlags &= ~((1<<GOT_IDLE_ANIMS) | (1<<GOT_NONIDLE_ANIMS));
+		if (!info.m_animations.empty())
+			info.m_iniReadFlags |= (1<<GOT_NONIDLE_ANIMS);
 	}
 
 	if ((info.m_iniReadFlags & (1<<GOT_IDLE_ANIMS)) && (info.m_iniReadFlags & (1<<GOT_NONIDLE_ANIMS)))
@@ -3026,7 +3146,16 @@ void W3DModelDraw::setModelState(const ModelConditionInfo* newState)
 		}
 		else
 		{
-			m_renderObject = W3DDisplay::m_assetManager->Create_Render_Obj(newState->m_modelName.str(), draw->getScale(), m_hexColor);
+			Real gxScale = draw->getScale();
+			// MVP models are authored with a half-footprint of 1.0: fit them to the object geometry
+			if (newState->m_modelName.startsWithNoCase("mv") && draw->getTemplate() != nullptr)
+			{
+				const GeometryInfo& gi = draw->getTemplate()->getTemplateGeometryInfo();
+				Real r = gi.getMajorRadius() > gi.getMinorRadius() ? gi.getMajorRadius() : gi.getMinorRadius();
+				if (r > 0.5f && r < 400.0f)
+					gxScale *= r;
+			}
+			m_renderObject = W3DDisplay::m_assetManager->Create_Render_Obj(newState->m_modelName.str(), gxScale, m_hexColor);
 			DEBUG_ASSERTCRASH(m_renderObject, ("*** ASSET ERROR: Model %s not found!",newState->m_modelName.str()));
 		}
 

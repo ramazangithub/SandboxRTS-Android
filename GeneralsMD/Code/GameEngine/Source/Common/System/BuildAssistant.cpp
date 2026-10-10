@@ -45,6 +45,7 @@
 #include "GameClient/InGameUI.h"
 #include "GameClient/TerrainVisual.h"
 #include "GameLogic/AI.h"
+#include "GameLogic/Object.h"
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/TerrainLogic.h"
 #include "GameLogic/AIPathfind.h"
@@ -1305,6 +1306,19 @@ Bool BuildAssistant::isPossibleToMakeUnit( Object *builder, const ThingTemplate 
 /** This method will check to make sure it is possible to build the requested unit. and
   * that the player has enough money for 'whatToBuild' */
 //-------------------------------------------------------------------------------------------------
+// SandboxRTS MVP economy: army cap = 20 + 20 per command center (max 80)
+struct GxArmyCount { Int units; Int hqs; };
+static void gxArmyCountFunc(Object* obj, void* ud)
+{
+	GxArmyCount* c = (GxArmyCount*)ud;
+	if (obj == nullptr || obj->isEffectivelyDead())
+		return;
+	if (obj->isKindOf(KINDOF_COMMANDCENTER) && !obj->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION))
+		++c->hqs;
+	else if (obj->isKindOf(KINDOF_INFANTRY) || obj->isKindOf(KINDOF_VEHICLE) || obj->isKindOf(KINDOF_AIRCRAFT))
+		++c->units;
+}
+
 CanMakeType BuildAssistant::canMakeUnit( Object *builder, const ThingTemplate *whatToBuild ) const
 {
 
@@ -1332,6 +1346,16 @@ CanMakeType BuildAssistant::canMakeUnit( Object *builder, const ThingTemplate *w
   // canBuildMoreOfType(), so do this check first
   if ( player && !player->canBuildMoreOfType( whatToBuild ) )
     return CANMAKE_MAXED_OUT_FOR_PLAYER;
+
+	if (player && (whatToBuild->isKindOf(KINDOF_INFANTRY) || whatToBuild->isKindOf(KINDOF_VEHICLE) || whatToBuild->isKindOf(KINDOF_AIRCRAFT)))
+	{
+		GxArmyCount c; c.units = 0; c.hqs = 0;
+		player->iterateObjects(gxArmyCountFunc, &c);
+		Int cap = 20 + 20 * c.hqs;
+		if (cap > 80) cap = 80;
+		if (c.units >= cap)
+			return CANMAKE_MAXED_OUT_FOR_PLAYER;
+	}
 
 	if (!isPossibleToMakeUnit(builder, whatToBuild))
 		return CANMAKE_NO_PREREQ;
