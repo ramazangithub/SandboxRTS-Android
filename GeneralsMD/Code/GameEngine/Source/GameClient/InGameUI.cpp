@@ -6218,6 +6218,7 @@ struct GxBuildDef { const char *tmpl; const char *icon; Int cat; };
 static const GxBuildDef s_gxDefs[] = {
 	{"SBConstructionYard", "SBI_Yard", 0}, {"SBPowerPlant", "SBI_Power", 0}, {"SBSupplyCenter", "SBI_Supply", 0},
 	{"SBBarracks", "SBI_Barracks", 1}, {"SBFactory", "SBI_Factory", 1},
+	{"SBAirfield", "SBI_Airfield", 1}, {"SBAirFactory", "SBI_AirFactory", 1},   // r046
 	{"SBTower", "SBI_Tower", 2}, {"SBWall", "SBI_Wall", 2}
 };
 static const Int GX_NDEFS = (Int)(sizeof(s_gxDefs) / sizeof(s_gxDefs[0]));
@@ -6307,7 +6308,7 @@ static const ThingTemplate *gxTmpl(Int d)
 
 // ---- r043: building levels ----
 struct GxUpDef { const char *base; Int maxLv; };
-static const GxUpDef s_gxUp[] = { {"SBHeadquarters", 5}, {"SBBarracks", 3}, {"SBFactory", 3} };
+static const GxUpDef s_gxUp[] = { {"SBHeadquarters", 5}, {"SBBarracks", 3}, {"SBFactory", 3}, {"SBAirfield", 3}, {"SBAirFactory", 3} };
 static const Int GX_NUP = (Int)(sizeof(s_gxUp) / sizeof(s_gxUp[0]));
 struct GxUpg { ObjectID id; Int frames; Int done; AsciiString next; };
 static std::vector<GxUpg> s_gxUpg;
@@ -6354,7 +6355,8 @@ static Int gxUpBlock(Player *pl, Object *o, Int &needLv)
 	if (i == 0) { if (gxFindOwn(pl, "SBConstructionYard") == nullptr) return 3; }
 	else
 	{
-		needLv = (i == 1) ? nextLv : nextLv + 1;   // barracks Lv n needs HQ n, factory Lv n needs HQ n+1
+		needLv = nextLv + (i - 1);   // barracks n: HQ n, factory n: HQ n+1, airfield n: HQ n+2, air factory n: HQ n+3
+		if (needLv > 5) needLv = 5;
 		if (gxHqLevel(pl) < needLv) return 2;
 	}
 	if (pl->getMoney()->countMoney() < (UnsignedInt)nt->calcCostToBuild(pl)) return 4;
@@ -6362,7 +6364,11 @@ static Int gxUpBlock(Player *pl, Object *o, Int &needLv)
 }
 static Int gxDefNeedHq(Int d)
 {
-	return (d >= 0 && d < GX_NDEFS && strcmp(s_gxDefs[d].tmpl, "SBFactory") == 0) ? 2 : 1;
+	if (d < 0 || d >= GX_NDEFS) return 1;
+	if (strcmp(s_gxDefs[d].tmpl, "SBFactory") == 0) return 2;
+	if (strcmp(s_gxDefs[d].tmpl, "SBAirfield") == 0) return 3;      // r046
+	if (strcmp(s_gxDefs[d].tmpl, "SBAirFactory") == 0) return 4;    // r046
+	return 1;
 }
 
 // logic: start requested upgrades, tick running ones, swap the building when done
@@ -6469,6 +6475,7 @@ static Bool gxDefEnabled(Player *pl, Int d, Bool hasYard)
 	if (d == 0) { if (hasYard) return FALSE; }
 	else if (!hasYard || !pl->canBuild(tt)) return FALSE;
 	if (gxDefNeedHq(d) > gxHqLevel(pl)) return FALSE;   // r043: vehicle factory opens at HQ level 2
+	if (strcmp(s_gxDefs[d].tmpl, "SBAirFactory") == 0 && gxFindOwn(pl, "SBAirfield") == nullptr) return FALSE;   // r046
 	return pl->getMoney()->countMoney() >= (UnsignedInt)tt->calcCostToBuild(pl);
 }
 
