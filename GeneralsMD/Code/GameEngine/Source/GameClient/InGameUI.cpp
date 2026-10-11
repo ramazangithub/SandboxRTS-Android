@@ -6254,7 +6254,21 @@ static void gxAnchorOf(const Coord3D *p, Int w, Int h, Int &ax, Int &ay)
 }
 static Bool gxIsTmpl(const Object *o, const char *n)
 {
-	return o && o->getTemplate() && o->getTemplate()->getName() == AsciiString(n);
+	// r043: "SBBarracks" also matches its levels "SBBarracks2", "SBBarracks3"...
+	if (o == nullptr || o->getTemplate() == nullptr || n == nullptr) return FALSE;
+	const char *nm = o->getTemplate()->getName().str();
+	const size_t ln = strlen(n), lm = strlen(nm);
+	if (lm == ln) return strcmp(nm, n) == 0;
+	if (lm == ln + 1 && strncmp(nm, n, ln) == 0) return nm[ln] >= '2' && nm[ln] <= '5';
+	return FALSE;
+}
+static Int gxLevel(const Object *o)
+{
+	if (o == nullptr || o->getTemplate() == nullptr) return 0;
+	const char *nm = o->getTemplate()->getName().str();
+	const size_t lm = strlen(nm);
+	const char c = lm ? nm[lm - 1] : 0;
+	return (c >= '2' && c <= '5') ? (Int)(c - '0') : 1;
 }
 static Object *gxFindOwn(Player *pl, const char *n)
 {
@@ -6268,6 +6282,113 @@ static const ThingTemplate *gxTmpl(Int d)
 {
 	if (d < 0 || d >= GX_NDEFS || TheThingFactory == nullptr) return nullptr;
 	return TheThingFactory->findTemplate(AsciiString(s_gxDefs[d].tmpl), FALSE);
+}
+
+// ---- r043: building levels ----
+struct GxUpDef { const char *base; Int maxLv; };
+static const GxUpDef s_gxUp[] = { {"SBHeadquarters", 5}, {"SBBarracks", 3}, {"SBFactory", 3} };
+static const Int GX_NUP = (Int)(sizeof(s_gxUp) / sizeof(s_gxUp[0]));
+struct GxUpg { ObjectID id; Int frames; Int done; AsciiString next; };
+static std::vector<GxUpg> s_gxUpg;
+static ObjectID s_gxUpReq = INVALID_ID;
+
+static Int gxUpIndex(const Object *o)
+{
+	for (Int i = 0; i < GX_NUP; ++i) if (gxIsTmpl(o, s_gxUp[i].base)) return i;
+	return -1;
+}
+static const ThingTemplate *gxUpNext(const Object *o)
+{
+	const Int i = gxUpIndex(o);
+	if (i < 0 || TheThingFactory == nullptr) return nullptr;
+	const Int lv = gxLevel(o);
+	if (lv >= s_gxUp[i].maxLv) return nullptr;
+	char nm[64];
+	snprintf(nm, sizeof(nm), "%s%d", s_gxUp[i].base, lv + 1);
+	return TheThingFactory->findTemplate(AsciiString(nm), FALSE);
+}
+static Int gxHqLevel(Player *pl)
+{
+	Object *hq = gxFindOwn(pl, "SBHeadquarters");
+	return hq ? gxLevel(hq) : 0;
+}
+static Int gxUpProgress(ObjectID id)
+{
+	for (size_t k = 0; k < s_gxUpg.size(); ++k)
+		if (s_gxUpg[k].id == id)
+			return s_gxUpg[k].frames > 0 ? s_gxUpg[k].done * 100 / s_gxUpg[k].frames : 0;
+	return -1;
+}
+// 0 ok, 1 max level, 2 needs HQ level (needLv), 3 needs construction yard, 4 no money, 5 already upgrading, 6 busy
+static Int gxUpBlock(Player *pl, Object *o, Int &needLv)
+{
+	needLv = 0;
+	if (pl == nullptr || o == nullptr) return 6;
+	if (o->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) return 6;
+	if (gxUpProgress(o->getID()) >= 0) return 5;
+	const ThingTemplate *nt = gxUpNext(o);
+	if (nt == nullptr) return 1;
+	const Int nextLv = gxLevel(o) + 1;
+	const Int i = gxUpIndex(o);
+	if (i == 0) { if (gxFindOwn(pl, "SBConstructionYard") == nullptr) return 3; }
+	else
+	{
+		needLv = (i == 1) ? nextLv : nextLv + 1;   // barracks Lv n needs HQ n, factory Lv n needs HQ n+1
+		if (gxHqLevel(pl) < needLv) return 2;
+	}
+	if (pl->getMoney()->countMoney() < (UnsignedInt)nt->calcCostToBuild(pl)) return 4;
+	return 0;
+}
+static Int gxDefNeedHq(Int d)
+{
+	return (d >= 0 && d < GX_NDEFS && strcmp(s_gxDefs[d].tmpl, "SBFactory") == 0) ? 2 : 1;
+}
+
+// logic: start requested upgrades, tick running ones, swap the building when done
+static void gxUpgradeTick(Player *pl)
+{
+	if (s_gxUpReq != INVALID_ID)
+	{
+		Object *o = TheGameLogic->findObjectByID(s_gxUpReq);
+		s_gxUpReq = INVALID_ID;
+		Int needLv = 0;
+		if (o && !o->isEffectivelyDead() && o->getControllingPlayer() == pl && gxUpBlock(pl, o, needLv) == 0)
+		{
+			const ThingTemplate *nt = gxUpNext(o);
+			GxUpg u;
+			u.id = o->getID();
+			u.frames = nt->calcTimeToBuild(pl);
+			if (u.frames < 1) u.frames = 1;
+			u.done = 0;
+			u.next = nt->getName();
+			pl->getMoney()->withdraw(nt->calcCostToBuild(pl));
+			s_gxUpg.push_back(u);
+		}
+	}
+	for (size_t k = 0; k < s_gxUpg.size(); )
+	{
+		Object *o = TheGameLogic->findObjectByID(s_gxUpg[k].id);
+		if (o == nullptr || o->isEffectivelyDead()) { s_gxUpg.erase(s_gxUpg.begin() + k); continue; }
+		if (++s_gxUpg[k].done < s_gxUpg[k].frames) { ++k; continue; }
+		const ThingTemplate *nt = TheThingFactory->findTemplate(s_gxUpg[k].next, FALSE);
+		Player *op = o->getControllingPlayer();
+		s_gxUpg.erase(s_gxUpg.begin() + k);
+		if (nt == nullptr || op == nullptr) continue;
+		Coord3D pos = *o->getPosition();
+		const Real ang = o->getOrientation();
+		Real ratio = 1.0f;
+		if (BodyModuleInterface *ob = o->getBodyModule())
+			if (ob->getMaxHealth() > 0.0f) ratio = ob->getHealth() / ob->getMaxHealth();
+		TheAI->pathfinder()->removeObjectFromPathfindMap(o);
+		TheGameLogic->destroyObject(o);
+		Object *n = TheThingFactory->newObject(nt, op->getDefaultTeam());
+		if (n == nullptr) continue;
+		n->setPosition(&pos);
+		n->setOrientation(ang);
+		TheAI->pathfinder()->addObjectToPathfindMap(n);
+		if (BodyModuleInterface *nb = n->getBodyModule())
+			nb->internalChangeHealth(nb->getMaxHealth() * ratio - nb->getHealth());
+	}
 }
 
 static Bool gxBuildGrid(Player *pl, Bool &hasYard)
@@ -6326,6 +6447,7 @@ static Bool gxDefEnabled(Player *pl, Int d, Bool hasYard)
 	if (tt == nullptr || pl == nullptr) return FALSE;
 	if (d == 0) { if (hasYard) return FALSE; }
 	else if (!hasYard || !pl->canBuild(tt)) return FALSE;
+	if (gxDefNeedHq(d) > gxHqLevel(pl)) return FALSE;   // r043: vehicle factory opens at HQ level 2
 	return pl->getMoney()->countMoney() >= (UnsignedInt)tt->calcCostToBuild(pl);
 }
 
@@ -6337,7 +6459,7 @@ void GX_SandboxBaseLogicTick()
 	const UnsignedInt fr = TheGameLogic->getFrame();
 	if (fr < s_gxLastFrame)
 	{
-		s_gxInit = FALSE; s_gxReqs.clear(); s_gxBuilding.clear();
+		s_gxInit = FALSE; s_gxReqs.clear(); s_gxBuilding.clear(); s_gxUpg.clear(); s_gxUpReq = INVALID_ID;
 		s_bmOpen = FALSE; s_bmSel = -1; s_bmPrev = FALSE; s_bmCentered = FALSE;
 	}
 	s_gxLastFrame = fr;
@@ -6419,6 +6541,7 @@ void GX_SandboxBaseLogicTick()
 		s_gxBuilding.push_back(obj->getID());
 	}
 	s_gxReqs.clear();
+	gxUpgradeTick(pl);   // r043
 
 	for (size_t k = 0; k < s_gxBuilding.size(); )
 	{
@@ -6500,9 +6623,15 @@ static void gxText(DisplayString *&ds, Int &lastH, Int size, const char *txt, In
 		if (font) ds->setFont(font);
 		lastH = size;
 	}
-	wchar_t wb[48];
+	wchar_t wb[64];
 	Int i = 0;
-	for (; txt[i] && i < 47; ++i) wb[i] = (wchar_t)(unsigned char)txt[i];
+	for (const unsigned char *u = (const unsigned char *)txt; *u && i < 63; )
+	{
+		unsigned int cp = *u++;
+		if (cp >= 0xE0 && u[0] && u[1]) { cp = ((cp & 0x0F) << 12) | ((u[0] & 0x3F) << 6) | (u[1] & 0x3F); u += 2; }
+		else if (cp >= 0xC0 && u[0]) { cp = ((cp & 0x1F) << 6) | (u[0] & 0x3F); u += 1; }
+		wb[i++] = (wchar_t)cp;
+	}
 	wb[i] = 0;
 	UnicodeString str;
 	str.set((const WideChar *)wb);
@@ -6607,6 +6736,109 @@ static void gxDrawSpinners(Player *pl)
 	}
 }
 
+// ---- r043: upgrade button (bottom, right of the build button) + level labels ----
+static void gxUpGeometry(Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	Int bx, by, bs;
+	gxBtnGeometry(bx, by, bs);
+	s = bs;
+	x = bx + bs + h / 35;
+	y = by;
+}
+static Object *gxSelUpgradable(Player *pl)
+{
+	if (TheInGameUI == nullptr || TheInGameUI->getSelectCount() != 1) return nullptr;
+	Drawable *d = TheInGameUI->getFirstSelectedDrawable();
+	Object *o = d ? d->getObject() : nullptr;
+	if (o == nullptr || o->isEffectivelyDead() || o->getControllingPlayer() != pl) return nullptr;
+	if (o->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) return nullptr;
+	return gxUpIndex(o) >= 0 ? o : nullptr;
+}
+static DisplayString *s_gxUpDs[2] = {nullptr, nullptr};
+static Int s_gxUpDsH[2] = {-1, -1};
+static DisplayString *s_gxLvDs[10] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+static Int s_gxLvDsH[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+static DisplayString *s_gxUpPcDs[3] = {nullptr, nullptr, nullptr};
+static Int s_gxUpPcDsH[3] = {-1, -1, -1};
+
+static void gxDrawUpgrades(Player *pl)
+{
+	const Int h = (Int)TheDisplay->getHeight();
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	// level labels over own buildings + spinner over upgrading ones
+	Int nl = 0, np = 0;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead() || o->getControllingPlayer() != pl || gxUpIndex(o) < 0) continue;
+		if (o->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) continue;
+		Coord3D p = *o->getPosition();
+		p.z += 45.0f;
+		ICoord2D sc;
+		if (!TheTacticalView->worldToScreen(&p, &sc)) continue;
+		char buf[32];
+		const Int pc = gxUpProgress(o->getID());
+		if (pc >= 0)
+		{
+			const Int r = h / 28;
+			for (Int k = 0; k < 12; ++k)
+			{
+				const Real an = k * 6.2831853f / 12.0f;
+				const Int px = sc.x + (Int)(cosf(an) * r), py = sc.y + h / 20 + (Int)(sinf(an) * r);
+				const Int age = ((Int)(fr / 2) - k + 1200) % 12;
+				const Int al = 255 - age * 18;
+				TheDisplay->drawFillRect(px - 3, py - 3, 6, 6, GameMakeColor(120, 200, 232, al < 40 ? 40 : al));
+			}
+			snprintf(buf, sizeof(buf), "%d%%", pc > 100 ? 100 : pc);
+			if (np < 3) gxText(s_gxUpPcDs[np], s_gxUpPcDsH[np], h / 34, buf, sc.x, sc.y + h / 20, GameMakeColor(245, 247, 250, 255), 1);
+			++np;
+		}
+		snprintf(buf, sizeof(buf), "Ур. %d", gxLevel(o));
+		if (nl < 10) gxText(s_gxLvDs[nl], s_gxLvDsH[nl], h / 32, buf, sc.x, sc.y, GameMakeColor(230, 190, 70, 255), 1);
+		++nl;
+	}
+	if (s_bmOpen) return;
+	Object *o = gxSelUpgradable(pl);
+	if (o == nullptr) return;
+	Int x, y, s;
+	gxUpGeometry(x, y, s);
+	Int needLv = 0;
+	const Int blk = gxUpBlock(pl, o, needLv);
+	androidHudPlate(x, y, s, blk == 0);
+	gxImage("SBI_Upgrade", x, y, s, blk != 0);
+	char l1[48], l2[48];
+	const Int lv = gxLevel(o);
+	const ThingTemplate *nt = gxUpNext(o);
+	UnsignedInt c2 = GameMakeColor(245, 247, 250, 255);
+	if (blk == 1) { snprintf(l1, sizeof(l1), "Ур. %d", lv); snprintf(l2, sizeof(l2), "Макс. уровень"); }
+	else
+	{
+		snprintf(l1, sizeof(l1), "Ур. %d -> %d", lv, lv + 1);
+		switch (blk)
+		{
+			case 2: snprintf(l2, sizeof(l2), "Нужен штаб ур. %d", needLv); c2 = GameMakeColor(255, 90, 70, 255); break;
+			case 3: snprintf(l2, sizeof(l2), "Нужен строй двор"); c2 = GameMakeColor(255, 90, 70, 255); break;
+			case 4: snprintf(l2, sizeof(l2), "Мало денег: %d", nt ? nt->calcCostToBuild(pl) : 0); c2 = GameMakeColor(255, 90, 70, 255); break;
+			case 5: snprintf(l2, sizeof(l2), "Улучшается %d%%", gxUpProgress(o->getID())); c2 = GameMakeColor(120, 200, 232, 255); break;
+			case 6: snprintf(l2, sizeof(l2), "Недоступно"); break;
+			default: snprintf(l2, sizeof(l2), "%d  /  %d сек", nt ? nt->calcCostToBuild(pl) : 0, nt ? nt->calcTimeToBuild(pl) / LOGICFRAMES_PER_SECOND : 0); c2 = GameMakeColor(120, 230, 100, 255); break;
+		}
+	}
+	gxText(s_gxUpDs[0], s_gxUpDsH[0], h / 28, l1, x + s + h / 50, y + s / 3, GameMakeColor(230, 190, 70, 255), 0);
+	gxText(s_gxUpDs[1], s_gxUpDsH[1], h / 32, l2, x + s + h / 50, y + s * 2 / 3, c2, 0);
+}
+static Bool gxUpgradeTap(Player *pl, Int px, Int py)
+{
+	Object *o = gxSelUpgradable(pl);
+	if (o == nullptr) return FALSE;
+	Int x, y, s;
+	gxUpGeometry(x, y, s);
+	if (!gxIn(px, py, x, y, s)) return FALSE;
+	Int needLv = 0;
+	if (gxUpBlock(pl, o, needLv) == 0) s_gxUpReq = o->getID();
+	return TRUE;   // consume the tap either way
+}
+
 static void gxDrawBase()
 {
 	if (TheDisplay == nullptr || TheGameLogic == nullptr || ThePlayerList == nullptr || TheTacticalView == nullptr || TheTerrainLogic == nullptr)
@@ -6649,6 +6881,7 @@ static void gxDrawBase()
 	}
 
 	gxDrawSpinners(pl);
+	gxDrawUpgrades(pl);   // r043
 	gxDrawTopBar(pl);
 
 	// build button + menu
@@ -6701,7 +6934,7 @@ static Bool gxTap(Int px, Int py)
 		if (s_bmOpen && TheInGameUI) TheInGameUI->deselectAllDrawables();
 		return TRUE;
 	}
-	if (!s_bmOpen) return FALSE;
+	if (!s_bmOpen) return gxUpgradeTap(pl, px, py);   // r043
 	for (Int c = 0; c < 3; ++c)
 	{
 		Int x, y, s;
