@@ -6219,11 +6219,12 @@ static const GxBuildDef s_gxDefs[] = {
 	{"SBConstructionYard", "SBI_Yard", 0}, {"SBPowerPlant", "SBI_Power", 0}, {"SBSupplyCenter", "SBI_Supply", 0},
 	{"SBBarracks", "SBI_Barracks", 1}, {"SBFactory", "SBI_Factory", 1},
 	{"SBAirfield", "SBI_Airfield", 1}, {"SBAirFactory", "SBI_AirFactory", 1},   // r046
-	{"SBTower", "SBI_Tower", 2}, {"SBWall", "SBI_Wall", 2}
+	{"SBGunTower", "SBI_GunTower", 2}, {"SBCannonTower", "SBI_CannonTower", 2}, {"SBAATower", "SBI_AATower", 2},   // r047
+	{"SBWall", "SBI_Wall", 2}
 };
 static const Int GX_NDEFS = (Int)(sizeof(s_gxDefs) / sizeof(s_gxDefs[0]));
 static const char *s_gxCatIcon[3] = {"SBI_CatEco", "SBI_CatArmy", "SBI_CatDef"};
-enum { GX_R = 14, GX_R_YARD = 3, GX_N = GX_R * 2 + 1 };
+enum { GX_R = 44, GX_ZONE = 14, GX_R_YARD = 3, GX_N = GX_R * 2 + 1 };   // r047: grid covers HQ + expansion yards
 
 static Bool s_bmOpen = FALSE;
 static Int s_bmCat = 0;
@@ -6300,6 +6301,15 @@ static Object *gxFindOwn(Player *pl, const char *n)
 			return o;
 	return nullptr;
 }
+static Int gxCountOwn(Player *pl, const char *n)   // r047
+{
+	Int c = 0;
+	if (pl == nullptr || TheGameLogic == nullptr) return 0;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+		if (!o->isEffectivelyDead() && o->getControllingPlayer() == pl && gxIsTmpl(o, n))
+			++c;
+	return c;
+}
 static const ThingTemplate *gxTmpl(Int d)
 {
 	if (d < 0 || d >= GX_NDEFS || TheThingFactory == nullptr) return nullptr;
@@ -6308,7 +6318,8 @@ static const ThingTemplate *gxTmpl(Int d)
 
 // ---- r043: building levels ----
 struct GxUpDef { const char *base; Int maxLv; };
-static const GxUpDef s_gxUp[] = { {"SBHeadquarters", 5}, {"SBBarracks", 3}, {"SBFactory", 3}, {"SBAirfield", 3}, {"SBAirFactory", 3} };
+static const GxUpDef s_gxUp[] = { {"SBHeadquarters", 5}, {"SBBarracks", 3}, {"SBFactory", 3}, {"SBAirfield", 3}, {"SBAirFactory", 3},
+	{"SBGunTower", 3}, {"SBCannonTower", 3}, {"SBAATower", 3} };   // r047
 static const Int GX_NUP = (Int)(sizeof(s_gxUp) / sizeof(s_gxUp[0]));
 struct GxUpg { ObjectID id; Int frames; Int done; AsciiString next; };
 static std::vector<GxUpg> s_gxUpg;
@@ -6355,7 +6366,9 @@ static Int gxUpBlock(Player *pl, Object *o, Int &needLv)
 	if (i == 0) { if (gxFindOwn(pl, "SBConstructionYard") == nullptr) return 3; }
 	else
 	{
-		needLv = nextLv + (i - 1);   // barracks n: HQ n, factory n: HQ n+1, airfield n: HQ n+2, air factory n: HQ n+3
+		// HQ level needed per s_gxUp entry: barracks n, factory n+1, airfield n+2, air factory n+3, MG n, cannon n+1, AA n+2
+		static const Int kOff[8] = {0, 0, 1, 2, 3, 0, 1, 2};
+		needLv = nextLv + ((i >= 0 && i < 8) ? kOff[i] : 0);
 		if (needLv > 5) needLv = 5;
 		if (gxHqLevel(pl) < needLv) return 2;
 	}
@@ -6368,6 +6381,8 @@ static Int gxDefNeedHq(Int d)
 	if (strcmp(s_gxDefs[d].tmpl, "SBFactory") == 0) return 2;
 	if (strcmp(s_gxDefs[d].tmpl, "SBAirfield") == 0) return 3;      // r046
 	if (strcmp(s_gxDefs[d].tmpl, "SBAirFactory") == 0) return 4;    // r046
+	if (strcmp(s_gxDefs[d].tmpl, "SBCannonTower") == 0) return 2;   // r047
+	if (strcmp(s_gxDefs[d].tmpl, "SBAATower") == 0) return 3;       // r047
 	return 1;
 }
 
@@ -6430,12 +6445,28 @@ static Bool gxBuildGrid(Player *pl, Bool &hasYard)
 	s_gxOX = ax + w / 2 - GX_R;
 	s_gxOY = ay + h / 2 - GX_R;
 	const Real cx = ax + w * 0.5f, cy = ay + h * 0.5f;
-	const Real rad = hasYard ? (Real)GX_R : (Real)GX_R_YARD + w * 0.5f + 1.0f;
+	const Real rad = hasYard ? (Real)GX_ZONE : (Real)GX_R_YARD + w * 0.5f + 1.0f;
 	for (Int i = 0; i < GX_N; ++i)
 		for (Int j = 0; j < GX_N; ++j)
 		{
 			const Real dx = (s_gxOX + i + 0.5f) - cx, dy = (s_gxOY + j + 0.5f) - cy;
 			s_gxGrid[i][j] = (dx * dx + dy * dy <= rad * rad) ? 1 : 0;
+		}
+	// r047: every own construction yard adds its own build circle
+	if (hasYard)
+		for (Object *y = TheGameLogic->getFirstObject(); y; y = y->getNextObject())
+		{
+			if (y->isEffectivelyDead() || y->getControllingPlayer() != pl || !gxIsTmpl(y, "SBConstructionYard")) continue;
+			Int yw, yh, yx, yy;
+			gxFootprint(y->getGeometryInfo(), yw, yh);
+			gxAnchorOf(y->getPosition(), yw, yh, yx, yy);
+			const Real ycx = yx + yw * 0.5f, ycy = yy + yh * 0.5f;
+			for (Int i = 0; i < GX_N; ++i)
+				for (Int j = 0; j < GX_N; ++j)
+				{
+					const Real dx = (s_gxOX + i + 0.5f) - ycx, dy = (s_gxOY + j + 0.5f) - ycy;
+					if (dx * dx + dy * dy <= (Real)(GX_ZONE * GX_ZONE)) s_gxGrid[i][j] = 1;
+				}
 		}
 	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
 	{
@@ -6472,7 +6503,12 @@ static Bool gxDefEnabled(Player *pl, Int d, Bool hasYard)
 {
 	const ThingTemplate *tt = gxTmpl(d);
 	if (tt == nullptr || pl == nullptr) return FALSE;
-	if (d == 0) { if (hasYard) return FALSE; }
+	if (d == 0)
+	{
+		// r047: max yards = HQ level (1, 2, 3+ -> 3); the first one goes next to the HQ, the rest anywhere in the zone
+		Int mx = gxHqLevel(pl); if (mx < 1) mx = 1; if (mx > 3) mx = 3;
+		if (gxCountOwn(pl, "SBConstructionYard") >= mx) return FALSE;
+	}
 	else if (!hasYard || !pl->canBuild(tt)) return FALSE;
 	if (gxDefNeedHq(d) > gxHqLevel(pl)) return FALSE;   // r043: vehicle factory opens at HQ level 2
 	if (strcmp(s_gxDefs[d].tmpl, "SBAirFactory") == 0 && gxFindOwn(pl, "SBAirfield") == nullptr) return FALSE;   // r046
@@ -6990,9 +7026,9 @@ static void gxDrawBase()
 		{
 			char buf[16];
 			snprintf(buf, sizeof(buf), "%d", tt->calcCostToBuild(pl));
-			static DisplayString *cds[8] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-			static Int cdh[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-			if (d < 8) gxText(cds[d], cdh[d], (Int)TheDisplay->getHeight() / 40, buf, x + s - 6, y + s - s / 7, en ? GameMakeColor(245, 247, 250, 255) : GameMakeColor(150, 156, 164, 255), 2);
+			static DisplayString *cds[16] = {};   // r047: room for all build entries
+			static Int cdh[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+			if (d < 16) gxText(cds[d], cdh[d], (Int)TheDisplay->getHeight() / 40, buf, x + s - 6, y + s - s / 7, en ? GameMakeColor(245, 247, 250, 255) : GameMakeColor(150, 156, 164, 255), 2);
 		}
 	}
 }
