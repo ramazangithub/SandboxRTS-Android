@@ -60,6 +60,7 @@
 #include "Common/AsciiString.h"
 #include "Common/FileSystem.h"
 #include "Common/RAMFile.h"
+#include <cstring>
 #include "Common/PerfTimer.h"
 
 
@@ -567,4 +568,27 @@ char* RAMFile::readEntireAndClose()
 	close();
 
 	return tmp;
+}
+
+
+//============================================================================
+// RAMFile::openFromBuffer  (r042: game data read straight from the APK)
+//============================================================================
+Bool RAMFile::openFromBuffer(const Char *filename, const Char *data, Int size)
+{
+	if (data == nullptr || size < 0) {
+		return FALSE;
+	}
+	if (File::open(filename, File::READ | File::BINARY) == FALSE) {
+		return FALSE;
+	}
+	delete[] m_data;
+	m_data = MSGNEW("RAMFILE") Char [size > 0 ? size : 1];	// pool[]ify
+	if (size > 0) {
+		memcpy(m_data, data, size);
+	}
+	m_size = size;
+	m_pos = 0;
+	m_nameStr = filename;
+	return TRUE;
 }

@@ -541,20 +541,39 @@ int main(int argc, char* argv[])
 	// HOME must exist because GlobalData's user-data path and the registry
 	// shim derive from it on the POSIX branch; Android doesn't set it.
 	{
-		static const char *GX_ANDROID_ASSET_DIR = "/sdcard/GeneralsZH";
+		// r042: game data is read straight from the APK (assets/GeneralsZH).
+		// Working dir = app internal storage (writable: options, saves, fonts cache).
+		extern bool (*g_gxApkRead)(const char *path, char **data, size_t *size);
+		void GX_ApkExtractPrefix(const char *prefix);
+		g_gxApkRead = [](const char *path, char **data, size_t *size) -> bool {
+			SDL_IOStream *io = SDL_IOFromFile(path, "rb");
+			if (io == nullptr) return false;
+			size_t sz = 0;
+			void *buf = SDL_LoadFile_IO(io, &sz, true);
+			if (buf == nullptr) return false;
+			char *out = (char *)malloc(sz > 0 ? sz : 1);
+			if (out == nullptr) { SDL_free(buf); return false; }
+			if (sz > 0) memcpy(out, buf, sz);
+			SDL_free(buf);
+			*data = out;
+			*size = sz;
+			return true;
+		};
 		const char *internal = SDL_GetAndroidInternalStoragePath();
-		if (internal != nullptr) {
-			setenv("HOME", internal, 0);
-			setenv("XDG_DATA_HOME", internal, 0);
-		}
-		if (chdir(GX_ANDROID_ASSET_DIR) != 0) {
-			fprintf(stderr, "FATAL: chdir(%s) failed: %s — push assets first "
-			        "(scripts/build/android/push-assets-android.sh)\n",
-			        GX_ANDROID_ASSET_DIR, strerror(errno));
+		if (internal == nullptr) {
+			fprintf(stderr, "FATAL: no Android internal storage path\n");
 			return 1;
 		}
-		fprintf(stderr, "INFO: Android working directory: %s, HOME=%s\n",
-		        GX_ANDROID_ASSET_DIR, internal ? internal : "<unset>");
+		setenv("HOME", internal, 0);
+		setenv("XDG_DATA_HOME", internal, 0);
+		mkdir(internal, 0755);
+		if (chdir(internal) != 0) {
+			fprintf(stderr, "FATAL: chdir(%s) failed: %s\n", internal, strerror(errno));
+			return 1;
+		}
+		// FreeType opens fonts by path -> cache just the fonts folder (a few files).
+		GX_ApkExtractPrefix("fonts/");
+		fprintf(stderr, "INFO: Android data from APK, working directory/HOME: %s\n", internal);
 	}
 
 	// GeneralsX @feature FadiLabib 07/07/2026 Stage Turnip + set the adrenotools env

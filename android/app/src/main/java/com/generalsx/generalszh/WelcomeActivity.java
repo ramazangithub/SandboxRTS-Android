@@ -45,44 +45,12 @@ public class WelcomeActivity extends Activity {
         finish();
     }
 
-    // resources are inside the APK; copy them to /sdcard/GeneralsZH once per APK version
+    // r042: resources are inside the APK and read directly by the engine - nothing to unpack
     private void startWithAssets() {
         if (busy) return;
-        if (!hasStorage()) {
-            status.setText("Разреши доступ к памяти — туда распакуются ресурсы игры");
-            requestPermissions(new String[]{
-                android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-            }, 7);
-            return;
-        }
-        if (AssetInstaller.isInstalled(this)) { launchGame(); return; }
-        busy = true;
-        playBtn.setEnabled(false);
-        status.setText("Распаковка ресурсов… (только первый запуск)");
-        new Thread(new Runnable() {
-            @Override public void run() {
-                final String err = AssetInstaller.install(WelcomeActivity.this);
-                runOnUiThread(new Runnable() {
-                    @Override public void run() {
-                        busy = false;
-                        playBtn.setEnabled(true);
-                        if (err == null) launchGame();
-                        else status.setText("Ошибка распаковки: " + err);
-                    }
-                });
-            }
-        }).start();
+        launchGame();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
-        super.onRequestPermissionsResult(code, perms, res);
-        if (code == 7) {
-            if (hasStorage()) startWithAssets();
-            else status.setText("Без доступа к памяти игра не запустится");
-        }
-    }
     private Button stihiyaBtn;
     private Button stayaBtn;
 

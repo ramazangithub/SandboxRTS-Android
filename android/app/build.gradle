@@ -29,5 +29,25 @@ android {
     sourceSets.main {
         jniLibs.srcDirs = ['jniLibs']       // populated by package-android-zh.sh
         java.srcDirs = ['src/main/java', 'sdl-java']  // sdl-java copied from SDL3 source
+        assets.srcDirs += ["$buildDir/generated/gxindex"]  // r042: _apkindex.txt
     }
 }
+
+
+// r042: list of every game file packed into the APK (read directly by the engine, no unpacking)
+task gxAssetIndex {
+    def root = file('src/main/assets/GeneralsZH')
+    def outFile = file("$buildDir/generated/gxindex/GeneralsZH/_apkindex.txt")
+    inputs.dir root
+    outputs.file outFile
+    doLast {
+        outFile.parentFile.mkdirs()
+        def sb = new StringBuilder()
+        root.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+            def rel = root.toPath().relativize(f.toPath()).toString().replace('\\', '/')
+            sb.append(rel).append('\t').append(f.length()).append('\n')
+        }
+        outFile.text = sb.toString()
+    }
+}
+preBuild.dependsOn gxAssetIndex

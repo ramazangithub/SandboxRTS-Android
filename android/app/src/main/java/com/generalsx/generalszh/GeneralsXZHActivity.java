@@ -27,14 +27,7 @@ public class GeneralsXZHActivity extends SDLActivity {
         if (getIntent() != null && getIntent().hasExtra(WelcomeActivity.EXTRA_FACTION)) {
             DeployOverlay.attach(this);
         }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                }, 1);
-            }
-        }
+        // r042: game data is read from the APK itself - no storage permission needed
     }
 
     @SuppressWarnings("deprecation")
