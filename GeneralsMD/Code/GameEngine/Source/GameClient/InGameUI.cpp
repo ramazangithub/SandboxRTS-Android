@@ -52,6 +52,21 @@
 #include "Common/ThingTemplate.h"
 #include "Common/BuildAssistant.h"
 #include "Common/Upgrade.h"
+#if defined(__ANDROID__)
+#include <vector>
+#include <stdio.h>
+#include "Common/ThingFactory.h"
+#include "Common/Energy.h"
+#include "Common/Money.h"
+#include "Common/Player.h"
+#include "Common/PlayerList.h"
+#include "GameLogic/AI.h"
+#include "GameLogic/AIPathfind.h"
+#include "GameLogic/TerrainLogic.h"
+#include "GameLogic/Module/BodyModule.h"
+#include "GameLogic/Module/CreateModule.h"
+#include "GameClient/Image.h"
+#endif
 #include "Common/Recorder.h"
 #include "Common/SpecialPower.h"
 
@@ -4303,7 +4318,7 @@ static void androidHudAllGeometry(Int &x, Int &y, Int &s)
 	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
 	s = h / 9;
 	x = w - s - h / 30;
-	y = h / 2 - s / 2;
+	y = h * 60 / 100;   // r041: moved below the vertical groups
 }
 
 // r011: double tap -> only own units that are on screen
@@ -5108,10 +5123,10 @@ static void androidHudGroupGeometry(Int i, Int &x, Int &y, Int &s)
 {
 	const Int w = TheDisplay ? (Int)TheDisplay->getWidth() : 1280;
 	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
-	s = h / 11;
-	const Int gap = h / 60;
-	y = h / 30;
-	x = w - h / 30 - (5 - i) * s - (4 - i) * gap;
+	s = h / 13;
+	const Int gap = h / 90;
+	x = w - s - h / 40;
+	y = h / 11 + i * (s + gap);   // r041: vertical stack, top-right corner under the match timer
 }
 
 static Int androidHudGroupPrune(Int i)
@@ -6025,7 +6040,7 @@ static Bool androidHudBuildGeometry(Int n, Int &x, Int &y, Int &s)
 	const Int row = n / cols, col = n % cols;
 	x = mx + col * (s + gap);
 	y = top + row * (s + gap);
-	return y + s <= h - h / 60;
+	return y + s <= h - h / 7 - h / 30 - h / 60;   // r041: keep clear of the build button
 }
 
 static Bool androidHudBuildEnabled(Object *obj, const CommandButton *cb, Int &cost)
@@ -6193,8 +6208,549 @@ static Bool androidHudTapBuild(Int x, Int y)
 
 // Returns TRUE if the tap hit a HUD button (and was handled).
 static Int s_gxTapSnd = 0; // r032: which UI sound the tap makes
+
+// ===================== r041 SandboxRTS: base building WITHOUT dozer =====================
+// Bottom-left square button opens the build menu (categories). Picking a building shows
+// the base grid: green = free cell, red = 1-cell gap around buildings. Tap = preview,
+// tap the same spot again = build. First building must be the construction yard near HQ.
+static const Real GX_CELL = 20.0f;
+struct GxBuildDef { const char *tmpl; const char *icon; Int cat; };
+static const GxBuildDef s_gxDefs[] = {
+	{"SBConstructionYard", "SBI_Yard", 0}, {"SBPowerPlant", "SBI_Power", 0}, {"SBSupplyCenter", "SBI_Supply", 0},
+	{"SBBarracks", "SBI_Barracks", 1}, {"SBFactory", "SBI_Factory", 1},
+	{"SBTower", "SBI_Tower", 2}, {"SBWall", "SBI_Wall", 2}
+};
+static const Int GX_NDEFS = (Int)(sizeof(s_gxDefs) / sizeof(s_gxDefs[0]));
+static const char *s_gxCatIcon[3] = {"SBI_CatEco", "SBI_CatArmy", "SBI_CatDef"};
+enum { GX_R = 14, GX_R_YARD = 3, GX_N = GX_R * 2 + 1 };
+
+static Bool s_bmOpen = FALSE;
+static Int s_bmCat = 0;
+static Int s_bmSel = -1;
+static Bool s_bmPrev = FALSE;
+static Int s_bmPX = 0, s_bmPY = 0;
+static Bool s_bmCentered = FALSE;
+
+struct GxReq { Int def; Int ax; Int ay; };
+static std::vector<GxReq> s_gxReqs;
+static std::vector<ObjectID> s_gxBuilding;
+static UnsignedInt s_gxLastFrame = 0;
+static Bool s_gxInit = FALSE;
+
+static UnsignedByte s_gxGrid[GX_N][GX_N];   // 0 out of zone, 1 free, 2 gap (red), 3 occupied
+static Int s_gxOX = 0, s_gxOY = 0;
+
+static void gxFootprint(const GeometryInfo &g, Int &w, Int &h)
+{
+	w = (Int)floorf(2.0f * g.getMajorRadius() / GX_CELL + 0.5f);
+	h = (g.getGeomType() == GEOMETRY_BOX) ? (Int)floorf(2.0f * g.getMinorRadius() / GX_CELL + 0.5f) : w;
+	if (w < 1) w = 1;
+	if (h < 1) h = 1;
+}
+static void gxAnchorOf(const Coord3D *p, Int w, Int h, Int &ax, Int &ay)
+{
+	ax = (Int)floorf(p->x / GX_CELL - w * 0.5f + 0.5f);
+	ay = (Int)floorf(p->y / GX_CELL - h * 0.5f + 0.5f);
+}
+static Bool gxIsTmpl(const Object *o, const char *n)
+{
+	return o && o->getTemplate() && o->getTemplate()->getName() == AsciiString(n);
+}
+static Object *gxFindOwn(Player *pl, const char *n)
+{
+	if (pl == nullptr || TheGameLogic == nullptr) return nullptr;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+		if (!o->isEffectivelyDead() && o->getControllingPlayer() == pl && gxIsTmpl(o, n))
+			return o;
+	return nullptr;
+}
+static const ThingTemplate *gxTmpl(Int d)
+{
+	if (d < 0 || d >= GX_NDEFS || TheThingFactory == nullptr) return nullptr;
+	return TheThingFactory->findTemplate(AsciiString(s_gxDefs[d].tmpl), FALSE);
+}
+
+static Bool gxBuildGrid(Player *pl, Bool &hasYard)
+{
+	hasYard = FALSE;
+	Object *hq = gxFindOwn(pl, "SBHeadquarters");
+	if (hq == nullptr) return FALSE;
+	hasYard = gxFindOwn(pl, "SBConstructionYard") != nullptr;
+	Int w, h, ax, ay;
+	gxFootprint(hq->getGeometryInfo(), w, h);
+	gxAnchorOf(hq->getPosition(), w, h, ax, ay);
+	s_gxOX = ax + w / 2 - GX_R;
+	s_gxOY = ay + h / 2 - GX_R;
+	const Real cx = ax + w * 0.5f, cy = ay + h * 0.5f;
+	const Real rad = hasYard ? (Real)GX_R : (Real)GX_R_YARD + w * 0.5f + 1.0f;
+	for (Int i = 0; i < GX_N; ++i)
+		for (Int j = 0; j < GX_N; ++j)
+		{
+			const Real dx = (s_gxOX + i + 0.5f) - cx, dy = (s_gxOY + j + 0.5f) - cy;
+			s_gxGrid[i][j] = (dx * dx + dy * dy <= rad * rad) ? 1 : 0;
+		}
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead()) continue;
+		const Bool st = o->isKindOf(KINDOF_STRUCTURE);
+		if (!st && !o->isKindOf(KINDOF_IMMOBILE)) continue;
+		gxFootprint(o->getGeometryInfo(), w, h);
+		gxAnchorOf(o->getPosition(), w, h, ax, ay);
+		const Int m = st ? 1 : 0;
+		for (Int x = ax - m; x < ax + w + m; ++x)
+			for (Int y = ay - m; y < ay + h + m; ++y)
+			{
+				const Int gi = x - s_gxOX, gj = y - s_gxOY;
+				if (gi < 0 || gj < 0 || gi >= GX_N || gj >= GX_N) continue;
+				const Bool inside = x >= ax && x < ax + w && y >= ay && y < ay + h;
+				if (inside) s_gxGrid[gi][gj] = 3;
+				else if (s_gxGrid[gi][gj] == 1) s_gxGrid[gi][gj] = 2;
+			}
+	}
+	return TRUE;
+}
+static Bool gxCanPlace(Int ax, Int ay, Int w, Int h)
+{
+	for (Int x = ax; x < ax + w; ++x)
+		for (Int y = ay; y < ay + h; ++y)
+		{
+			const Int gi = x - s_gxOX, gj = y - s_gxOY;
+			if (gi < 0 || gj < 0 || gi >= GX_N || gj >= GX_N) return FALSE;
+			if (s_gxGrid[gi][gj] != 1) return FALSE;
+		}
+	return TRUE;
+}
+static Bool gxDefEnabled(Player *pl, Int d, Bool hasYard)
+{
+	const ThingTemplate *tt = gxTmpl(d);
+	if (tt == nullptr || pl == nullptr) return FALSE;
+	if (d == 0) { if (hasYard) return FALSE; }
+	else if (!hasYard || !pl->canBuild(tt)) return FALSE;
+	return pl->getMoney()->countMoney() >= (UnsignedInt)tt->calcCostToBuild(pl);
+}
+
+// ---- logic side (called every logic frame from GameLogic::update) ----
+void GX_SandboxBaseLogicTick()
+{
+	if (TheGameLogic == nullptr || ThePlayerList == nullptr || TheThingFactory == nullptr || TheTerrainLogic == nullptr || TheAI == nullptr)
+		return;
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	if (fr < s_gxLastFrame)
+	{
+		s_gxInit = FALSE; s_gxReqs.clear(); s_gxBuilding.clear();
+		s_bmOpen = FALSE; s_bmSel = -1; s_bmPrev = FALSE; s_bmCentered = FALSE;
+	}
+	s_gxLastFrame = fr;
+	Player *pl = ThePlayerList->getLocalPlayer();
+	if (pl == nullptr) return;
+
+	if (!s_gxInit && fr >= 1)
+	{
+		s_gxInit = TRUE;
+		// clean test units / old dozer from the map
+		for (Object *o = TheGameLogic->getFirstObject(); o; )
+		{
+			Object *n = o->getNextObject();
+			if (gxIsTmpl(o, "CubeTank") || gxIsTmpl(o, "EnemyPanther") || gxIsTmpl(o, "PantherFactory") || gxIsTmpl(o, "SBBuilder"))
+				TheGameLogic->destroyObject(o);
+			o = n;
+		}
+		// HQ stands on the map from the start
+		if (gxFindOwn(pl, "SBHeadquarters") == nullptr)
+		{
+			const ThingTemplate *tt = TheThingFactory->findTemplate(AsciiString("SBHeadquarters"), FALSE);
+			if (tt)
+			{
+				Coord3D pos; pos.x = 700.0f; pos.y = 700.0f; pos.z = 0.0f;
+				Waypoint *wp = TheTerrainLogic->getWaypointByName(AsciiString("Player_1_Start"));
+				if (wp == nullptr) wp = TheTerrainLogic->getWaypointByName(AsciiString("InitialCameraPosition"));
+				if (wp) pos = *wp->getLocation();
+				Int w, h, ax, ay;
+				gxFootprint(tt->getTemplateGeometryInfo(), w, h);
+				gxAnchorOf(&pos, w, h, ax, ay);
+				pos.x = (ax + w * 0.5f) * GX_CELL;
+				pos.y = (ay + h * 0.5f) * GX_CELL;
+				Object *hq = TheThingFactory->newObject(tt, pl->getDefaultTeam());
+				if (hq)
+				{
+					hq->setPosition(&pos);
+					hq->setOrientation(0.0f);
+					TheTerrainLogic->flattenTerrain(hq);
+					pos.z = TheTerrainLogic->getGroundHeight(pos.x, pos.y);
+					hq->setPosition(&pos);
+					TheAI->pathfinder()->addObjectToPathfindMap(hq);
+				}
+			}
+		}
+	}
+
+	Object *hq = gxFindOwn(pl, "SBHeadquarters");
+	for (size_t r = 0; r < s_gxReqs.size(); ++r)
+	{
+		const GxReq q = s_gxReqs[r];
+		const ThingTemplate *tt = gxTmpl(q.def);
+		Bool hasYard = FALSE;
+		if (tt == nullptr || hq == nullptr || !gxBuildGrid(pl, hasYard) || !gxDefEnabled(pl, q.def, hasYard))
+			continue;
+		Int w, h;
+		gxFootprint(tt->getTemplateGeometryInfo(), w, h);
+		if (!gxCanPlace(q.ax, q.ay, w, h)) continue;
+		Coord3D pos;
+		pos.x = (q.ax + w * 0.5f) * GX_CELL;
+		pos.y = (q.ay + h * 0.5f) * GX_CELL;
+		pos.z = 0.0f;
+		Object *obj = TheThingFactory->newObject(tt, pl->getDefaultTeam(), MAKE_OBJECT_STATUS_MASK(OBJECT_STATUS_UNDER_CONSTRUCTION));
+		if (obj == nullptr) continue;
+		obj->setProducer(hq);
+		obj->setBuilder(hq);
+		pl->getMoney()->withdraw(tt->calcCostToBuild(pl));
+		obj->setPosition(&pos);
+		obj->setOrientation(0.0f);
+		TheTerrainLogic->flattenTerrain(obj);
+		pos.z = TheTerrainLogic->getGroundHeight(pos.x, pos.y);
+		obj->setPosition(&pos);
+		TheAI->pathfinder()->addObjectToPathfindMap(obj);
+		pl->onStructureCreated(hq, obj);
+		obj->setConstructionPercent(0.0f);
+		BodyModuleInterface *body = obj->getBodyModule();
+		if (body) body->internalChangeHealth(-body->getHealth() + 1.0f);
+		obj->clearAndSetModelConditionFlags(MAKE_MODELCONDITION_MASK(MODELCONDITION_AWAITING_CONSTRUCTION),
+			MAKE_MODELCONDITION_MASK2(MODELCONDITION_PARTIALLY_CONSTRUCTED, MODELCONDITION_ACTIVELY_BEING_CONSTRUCTED));
+		s_gxBuilding.push_back(obj->getID());
+	}
+	s_gxReqs.clear();
+
+	for (size_t k = 0; k < s_gxBuilding.size(); )
+	{
+		Object *o = TheGameLogic->findObjectByID(s_gxBuilding[k]);
+		if (o == nullptr || o->isEffectivelyDead()) { s_gxBuilding.erase(s_gxBuilding.begin() + k); continue; }
+		Player *op = o->getControllingPlayer();
+		Int frames = o->getTemplate()->calcTimeToBuild(op);
+		if (frames < 1) frames = 1;
+		o->setConstructionPercent(o->getConstructionPercent() + 100.0f / frames);
+		BodyModuleInterface *body = o->getBodyModule();
+		if (body) body->internalChangeHealth(body->getMaxHealth() / INT_TO_REAL(frames));
+		if (o->getConstructionPercent() < 100.0f) { ++k; continue; }
+
+		o->clearStatus(MAKE_OBJECT_STATUS_MASK(OBJECT_STATUS_UNDER_CONSTRUCTION));
+		o->clearStatus(MAKE_OBJECT_STATUS_MASK(OBJECT_STATUS_RECONSTRUCTING));
+		o->clearModelConditionFlags(MAKE_MODELCONDITION_MASK3(MODELCONDITION_AWAITING_CONSTRUCTION,
+			MODELCONDITION_PARTIALLY_CONSTRUCTED, MODELCONDITION_ACTIVELY_BEING_CONSTRUCTED));
+		o->setConstructionPercent(CONSTRUCTION_COMPLETE);
+		if (body) body->evaluateVisualCondition();
+		if (op)
+		{
+			op->onStructureConstructionComplete(hq ? hq : o, o, FALSE);
+			for (BehaviorModule **m = o->getBehaviorModules(); *m; ++m)
+			{
+				CreateModuleInterface *c = (*m)->getCreate();
+				if (c) c->onBuildComplete();
+			}
+		}
+		o->handlePartitionCellMaintenance();
+		o->updateUpgradeModules();
+		s_gxBuilding.erase(s_gxBuilding.begin() + k);
+	}
+}
+
+// ---- client side: HUD ----
+static void gxBtnGeometry(Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	s = h / 7;
+	x = h / 40;
+	y = h - s - h / 30;
+}
+static void gxCatGeometry(Int c, Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	Int bx, by, bs;
+	gxBtnGeometry(bx, by, bs);
+	s = h / 9;
+	const Int gap = h / 70;
+	x = bx + (bs - s) / 2;
+	y = by - (c + 1) * (s + gap);
+}
+static void gxItemGeometry(Int k, Int &x, Int &y, Int &s)
+{
+	const Int h = TheDisplay ? (Int)TheDisplay->getHeight() : 720;
+	Int bx, by, bs;
+	gxBtnGeometry(bx, by, bs);
+	s = h / 8;
+	const Int gap = h / 70;
+	x = bx + bs + gap * 2 + k * (s + gap);
+	y = h - s - h / 30;
+}
+static Bool gxIn(Int px, Int py, Int x, Int y, Int s) { return px >= x && px < x + s && py >= y && py < y + s; }
+static void gxImage(const char *n, Int x, Int y, Int s, Bool dim)
+{
+	const Image *im = TheMappedImageCollection ? TheMappedImageCollection->findImageByName(n) : nullptr;
+	if (im)
+		TheDisplay->drawImage(im, x + 4, y + 4, x + s - 4, y + s - 4,
+			dim ? GameMakeColor(110, 110, 110, 255) : GameMakeColor(255, 255, 255, 255));
+}
+static void gxText(DisplayString *&ds, Int &lastH, Int size, const char *txt, Int x, Int y, UnsignedInt col, Int align, Int *outW = nullptr)
+{
+	if (TheDisplayStringManager == nullptr || TheWindowManager == nullptr) return;
+	if (ds == nullptr) ds = TheDisplayStringManager->newDisplayString();
+	if (ds == nullptr) return;
+	if (lastH != size)
+	{
+		GameFont *font = TheWindowManager->winFindFont(AsciiString("Arial"), size, TRUE);
+		if (font) ds->setFont(font);
+		lastH = size;
+	}
+	wchar_t wb[48];
+	Int i = 0;
+	for (; txt[i] && i < 47; ++i) wb[i] = (wchar_t)(unsigned char)txt[i];
+	wb[i] = 0;
+	UnicodeString str;
+	str.set((const WideChar *)wb);
+	ds->setText(str);
+	Int tw = 0, th = 0;
+	ds->getSize(&tw, &th);
+	if (outW) *outW = tw;
+	const Int dx = align == 0 ? x : (align == 1 ? x - tw / 2 : x - tw);
+	ds->draw(dx, y - th / 2, col, GameMakeColor(0, 0, 0, 255));
+}
+
+static Int s_gxKO = 0;
+static UnsignedInt s_gxKOFrame = 0xFFFFFFFF;
+static DisplayString *s_gxDs[6] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+static Int s_gxDsH[6] = {-1, -1, -1, -1, -1, -1};
+
+static void gxDrawTopBar(Player *pl)
+{
+	const Int w = (Int)TheDisplay->getWidth(), h = (Int)TheDisplay->getHeight();
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	if (s_gxKOFrame == 0xFFFFFFFF || fr < s_gxKOFrame || fr - s_gxKOFrame >= 15)
+	{
+		s_gxKOFrame = fr; s_gxKO = 0;
+		for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+			if (!o->isEffectivelyDead() && o->getControllingPlayer() == pl && !o->isKindOf(KINDOF_STRUCTURE) && o->isKindOf(KINDOF_SELECTABLE))
+				++s_gxKO;
+	}
+	const Int ib = h / 16, ts = h / 30, segW = h * 30 / 100, pad = h / 120;
+	const Int x0 = w / 2 - segW * 3 / 2, y0 = h / 80;
+	TheDisplay->drawFillRect(x0 - pad, y0 - pad, segW * 3 + pad * 2, ib + pad * 2, GameMakeColor(14, 18, 24, 190));
+	TheDisplay->drawOpenRect(x0 - pad, y0 - pad, segW * 3 + pad * 2, ib + pad * 2, 1.0f, GameMakeColor(118, 128, 140, 255));
+	char buf[48];
+	const Energy *en = pl->getEnergy();
+	const Int prod = en ? en->getProduction() : 0, cons = en ? en->getConsumption() : 0;
+	snprintf(buf, sizeof(buf), "%d/%d", cons, prod);
+	gxImage("SBI_Energy", x0, y0, ib, FALSE);
+	gxText(s_gxDs[0], s_gxDsH[0], ts, buf, x0 + ib + pad, y0 + ib / 2, cons > prod ? GameMakeColor(255, 80, 60, 255) : GameMakeColor(255, 220, 60, 255), 0);
+	snprintf(buf, sizeof(buf), "%u", (unsigned)pl->getMoney()->countMoney());
+	gxImage("SBI_Money", x0 + segW, y0, ib, FALSE);
+	gxText(s_gxDs[1], s_gxDsH[1], ts, buf, x0 + segW + ib + pad, y0 + ib / 2, GameMakeColor(120, 230, 100, 255), 0);
+	snprintf(buf, sizeof(buf), "%d/100", s_gxKO);
+	gxImage("SBI_KO", x0 + segW * 2, y0, ib, FALSE);
+	gxText(s_gxDs[2], s_gxDsH[2], ts, buf, x0 + segW * 2 + ib + pad, y0 + ib / 2, s_gxKO >= 100 ? GameMakeColor(255, 80, 60, 255) : GameMakeColor(241, 240, 236, 255), 0);
+	// match time, right edge
+	const UnsignedInt sec = fr / LOGICFRAMES_PER_SECOND;
+	snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(sec / 60), (unsigned)(sec % 60));
+	gxText(s_gxDs[3], s_gxDsH[3], h / 24, buf, w - h / 40, y0 + ib / 2, GameMakeColor(241, 240, 236, 255), 2);
+}
+
+static Bool gxProj(Real wx, Real wy, ICoord2D &o)
+{
+	Coord3D p; p.x = wx; p.y = wy; p.z = TheTerrainLogic->getGroundHeight(wx, wy) + 0.5f;
+	return TheTacticalView->worldToScreen(&p, &o);
+}
+static void gxCell(Int cx, Int cy, UnsignedInt col, Bool cross, Real width)
+{
+	ICoord2D a, b, c, d;
+	if (!gxProj(cx * GX_CELL, cy * GX_CELL, a) || !gxProj((cx + 1) * GX_CELL, cy * GX_CELL, b) ||
+		!gxProj((cx + 1) * GX_CELL, (cy + 1) * GX_CELL, c) || !gxProj(cx * GX_CELL, (cy + 1) * GX_CELL, d))
+		return;
+	TheDisplay->drawLine(a.x, a.y, b.x, b.y, width, col);
+	TheDisplay->drawLine(b.x, b.y, c.x, c.y, width, col);
+	TheDisplay->drawLine(c.x, c.y, d.x, d.y, width, col);
+	TheDisplay->drawLine(d.x, d.y, a.x, a.y, width, col);
+	if (cross)
+	{
+		TheDisplay->drawLine(a.x, a.y, c.x, c.y, width, col);
+		TheDisplay->drawLine(b.x, b.y, d.x, d.y, width, col);
+	}
+}
+
+static void gxDrawSpinners(Player *pl)
+{
+	const Int h = (Int)TheDisplay->getHeight();
+	const Int r = h / 28;
+	const UnsignedInt fr = TheGameLogic->getFrame();
+	Int n = 0;
+	for (Object *o = TheGameLogic->getFirstObject(); o; o = o->getNextObject())
+	{
+		if (o->isEffectivelyDead() || o->getControllingPlayer() != pl) continue;
+		if (!o->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) continue;
+		Coord3D p = *o->getPosition();
+		p.z += 35.0f;
+		ICoord2D sc;
+		if (!TheTacticalView->worldToScreen(&p, &sc)) continue;
+		// loading-style spinner: 12 dots, a bright one runs around
+		for (Int k = 0; k < 12; ++k)
+		{
+			const Real an = k * 6.2831853f / 12.0f;
+			const Int px = sc.x + (Int)(cosf(an) * r), py = sc.y + (Int)(sinf(an) * r);
+			const Int age = ((Int)(fr / 2) - k + 1200) % 12;
+			const Int al = 255 - age * 18;
+			TheDisplay->drawFillRect(px - 3, py - 3, 6, 6, GameMakeColor(230, 190, 70, al < 40 ? 40 : al));
+		}
+		char buf[16];
+		Real pc = o->getConstructionPercent();
+		if (pc < 0.0f) pc = 0.0f;
+		if (pc > 100.0f) pc = 100.0f;
+		snprintf(buf, sizeof(buf), "%d%%", (Int)pc);
+		if (n < 2) gxText(s_gxDs[4 + n], s_gxDsH[4 + n], h / 34, buf, sc.x, sc.y, GameMakeColor(245, 247, 250, 255), 1);
+		++n;
+	}
+}
+
+static void gxDrawBase()
+{
+	if (TheDisplay == nullptr || TheGameLogic == nullptr || ThePlayerList == nullptr || TheTacticalView == nullptr || TheTerrainLogic == nullptr)
+		return;
+	if (!TheGameLogic->isInGame() || TheGameLogic->isInShellGame()) return;
+	Player *pl = ThePlayerList->getLocalPlayer();
+	if (pl == nullptr) return;
+
+	Object *hq = gxFindOwn(pl, "SBHeadquarters");
+	if (hq && !s_bmCentered) { TheTacticalView->lookAt(hq->getPosition()); s_bmCentered = TRUE; }
+	if (s_bmOpen && s_bmSel < 0 && TheInGameUI && TheInGameUI->getSelectCount() > 0) s_bmOpen = FALSE;
+
+	Bool hasYard = FALSE;
+	const Bool grid = gxBuildGrid(pl, hasYard);
+
+	// grid on the ground while placing
+	if (grid && s_bmOpen && s_bmSel >= 0)
+	{
+		const UnsignedInt green = GameMakeColor(90, 230, 110, 110), red = GameMakeColor(255, 50, 40, 210);
+		for (Int i = 0; i < GX_N; ++i)
+			for (Int j = 0; j < GX_N; ++j)
+				if (s_gxGrid[i][j] == 1) gxCell(s_gxOX + i, s_gxOY + j, green, FALSE, 1.0f);
+		for (Int i = 0; i < GX_N; ++i)
+			for (Int j = 0; j < GX_N; ++j)
+				if (s_gxGrid[i][j] == 2) gxCell(s_gxOX + i, s_gxOY + j, red, TRUE, 1.5f);
+		if (s_bmPrev)
+		{
+			const ThingTemplate *tt = gxTmpl(s_bmSel);
+			if (tt)
+			{
+				Int w, h;
+				gxFootprint(tt->getTemplateGeometryInfo(), w, h);
+				const Bool ok = gxCanPlace(s_bmPX, s_bmPY, w, h);
+				const UnsignedInt c = ok ? GameMakeColor(60, 255, 90, 255) : GameMakeColor(255, 40, 30, 255);
+				for (Int x = s_bmPX; x < s_bmPX + w; ++x)
+					for (Int y = s_bmPY; y < s_bmPY + h; ++y)
+						gxCell(x, y, c, TRUE, 2.5f);
+			}
+		}
+	}
+
+	gxDrawSpinners(pl);
+	gxDrawTopBar(pl);
+
+	// build button + menu
+	Int bx, by, bs;
+	gxBtnGeometry(bx, by, bs);
+	androidHudPlate(bx, by, bs, s_bmOpen);
+	gxImage("SBI_BuildBtn", bx, by, bs, FALSE);
+	if (!s_bmOpen) return;
+	for (Int c = 0; c < 3; ++c)
+	{
+		Int x, y, s;
+		gxCatGeometry(c, x, y, s);
+		androidHudPlate(x, y, s, c == s_bmCat);
+		gxImage(s_gxCatIcon[c], x, y, s, c != s_bmCat);
+	}
+	Int k = 0;
+	for (Int d = 0; d < GX_NDEFS; ++d)
+	{
+		if (s_gxDefs[d].cat != s_bmCat) continue;
+		Int x, y, s;
+		gxItemGeometry(k++, x, y, s);
+		const Bool en = gxDefEnabled(pl, d, hasYard);
+		androidHudPlate(x, y, s, d == s_bmSel);
+		gxImage(s_gxDefs[d].icon, x, y, s, !en);
+		const ThingTemplate *tt = gxTmpl(d);
+		if (tt)
+		{
+			char buf[16];
+			snprintf(buf, sizeof(buf), "%d", tt->calcCostToBuild(pl));
+			static DisplayString *cds[8] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+			static Int cdh[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+			if (d < 8) gxText(cds[d], cdh[d], (Int)TheDisplay->getHeight() / 40, buf, x + s - 6, y + s - s / 7, en ? GameMakeColor(245, 247, 250, 255) : GameMakeColor(150, 156, 164, 255), 2);
+		}
+	}
+}
+
+static Bool gxTap(Int px, Int py)
+{
+	if (TheDisplay == nullptr || TheGameLogic == nullptr || ThePlayerList == nullptr || TheTacticalView == nullptr)
+		return FALSE;
+	if (!TheGameLogic->isInGame() || TheGameLogic->isInShellGame()) return FALSE;
+	Player *pl = ThePlayerList->getLocalPlayer();
+	if (pl == nullptr) return FALSE;
+	Int bx, by, bs;
+	gxBtnGeometry(bx, by, bs);
+	if (gxIn(px, py, bx, by, bs))
+	{
+		s_bmOpen = !s_bmOpen;
+		s_bmSel = -1; s_bmPrev = FALSE;
+		if (s_bmOpen && TheInGameUI) TheInGameUI->deselectAllDrawables();
+		return TRUE;
+	}
+	if (!s_bmOpen) return FALSE;
+	for (Int c = 0; c < 3; ++c)
+	{
+		Int x, y, s;
+		gxCatGeometry(c, x, y, s);
+		if (gxIn(px, py, x, y, s)) { s_bmCat = c; s_bmSel = -1; s_bmPrev = FALSE; return TRUE; }
+	}
+	Bool hasYard = FALSE;
+	const Bool grid = gxBuildGrid(pl, hasYard);
+	Int k = 0;
+	for (Int d = 0; d < GX_NDEFS; ++d)
+	{
+		if (s_gxDefs[d].cat != s_bmCat) continue;
+		Int x, y, s;
+		gxItemGeometry(k++, x, y, s);
+		if (gxIn(px, py, x, y, s))
+		{
+			if (gxDefEnabled(pl, d, hasYard)) s_bmSel = (s_bmSel == d) ? -1 : d;
+			s_bmPrev = FALSE;
+			return TRUE;
+		}
+	}
+	if (s_bmSel < 0 || !grid) return FALSE;
+	const ThingTemplate *tt = gxTmpl(s_bmSel);
+	if (tt == nullptr) return FALSE;
+	ICoord2D sp; sp.x = px; sp.y = py;
+	Coord3D wpos;
+	TheTacticalView->screenToTerrain(&sp, &wpos);
+	Int w, h, ax, ay;
+	gxFootprint(tt->getTemplateGeometryInfo(), w, h);
+	gxAnchorOf(&wpos, w, h, ax, ay);
+	if (s_bmPrev && ax == s_bmPX && ay == s_bmPY)
+	{
+		if (gxCanPlace(ax, ay, w, h))
+		{
+			GxReq q; q.def = s_bmSel; q.ax = ax; q.ay = ay;
+			s_gxReqs.push_back(q);
+			s_bmSel = -1;
+			s_bmPrev = FALSE;
+		}
+		return TRUE;
+	}
+	s_bmPrev = TRUE; s_bmPX = ax; s_bmPY = ay;
+	return TRUE;
+}
+// =================== end r041 ===================
+
 static Bool androidHudHandleTapImpl(Int x, Int y)
 {
+	if (gxTap(x, y)) return TRUE;   // r041 build menu / placement
 	if (TheInGameUI == nullptr || TheGameLogic == nullptr || !TheGameLogic->isInGame() || TheGameLogic->isLoadingMap() || TheGameLogic->getFrame() == 0)
 		return FALSE;
 	{
@@ -6271,6 +6827,7 @@ void InGameUI::postDraw()
 #if defined(__ANDROID__)
 	AndroidHud_Draw();
 	androidHudDrawBuild();  // r040
+	gxDrawBase();           // r041
 #endif
 
 	// render our display strings for the messages if on

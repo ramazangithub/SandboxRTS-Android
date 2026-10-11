@@ -3986,6 +3986,9 @@ void GameLogic::update()
 	if (!m_startNewGame)
 	{
 		m_frame++;
+		#if defined(__ANDROID__)
+		{ extern void GX_SandboxBaseLogicTick(); GX_SandboxBaseLogicTick(); }   // r041
+		#endif
 		m_hasUpdated = TRUE;
 	}
 }
