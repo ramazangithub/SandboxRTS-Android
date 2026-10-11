@@ -29,6 +29,60 @@ public class WelcomeActivity extends Activity {
     private static final int WHITE = Color.rgb(241, 240, 236);
 
     private int faction = FACTION_STIHIYA;
+    private Button playBtn;
+    private TextView status;
+    private boolean busy = false;
+
+    private boolean hasStorage() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) return true;
+        return checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void launchGame() {
+        Intent i = new Intent(WelcomeActivity.this, GeneralsXZHActivity.class);
+        i.putExtra(EXTRA_FACTION, faction);
+        startActivity(i);
+        finish();
+    }
+
+    // resources are inside the APK; copy them to /sdcard/GeneralsZH once per APK version
+    private void startWithAssets() {
+        if (busy) return;
+        if (!hasStorage()) {
+            status.setText("Разреши доступ к памяти — туда распакуются ресурсы игры");
+            requestPermissions(new String[]{
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, 7);
+            return;
+        }
+        if (AssetInstaller.isInstalled(this)) { launchGame(); return; }
+        busy = true;
+        playBtn.setEnabled(false);
+        status.setText("Распаковка ресурсов… (только первый запуск)");
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final String err = AssetInstaller.install(WelcomeActivity.this);
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        busy = false;
+                        playBtn.setEnabled(true);
+                        if (err == null) launchGame();
+                        else status.setText("Ошибка распаковки: " + err);
+                    }
+                });
+            }
+        }).start();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
+        super.onRequestPermissionsResult(code, perms, res);
+        if (code == 7) {
+            if (hasStorage()) startWithAssets();
+            else status.setText("Без доступа к памяти игра не запустится");
+        }
+    }
     private Button stihiyaBtn;
     private Button stayaBtn;
 
@@ -117,13 +171,18 @@ public class WelcomeActivity extends Activity {
         play.setLayoutParams(pl);
         play.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
-                Intent i = new Intent(WelcomeActivity.this, GeneralsXZHActivity.class);
-                i.putExtra(EXTRA_FACTION, faction);
-                startActivity(i);
-                finish();
+                startWithAssets();
             }
         });
         root.addView(play);
+        playBtn = play;
+
+        status = new TextView(this);
+        status.setTextSize(13);
+        status.setTextColor(WHITE);
+        status.setGravity(Gravity.CENTER_HORIZONTAL);
+        status.setPadding(0, dp(14), 0, 0);
+        root.addView(status);
 
         setContentView(root);
     }

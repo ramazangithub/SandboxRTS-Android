@@ -1,0 +1,4 @@
+Tree art for SandboxRTS (r035)
+gxcypress.tga: composited from ambientCG Foliage001 (CC0 1.0, https://ambientcg.com/a/Foliage001)
+gxbark.tga: Poly Haven japanese_cedar_bark (CC0 1.0, https://polyhaven.com/a/japanese_cedar_bark)
+vtreea/b/c.w3d: procedurally generated slim cypress/poplar meshes (this repo)

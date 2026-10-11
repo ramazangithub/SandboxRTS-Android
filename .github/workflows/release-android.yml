@@ -4,7 +4,7 @@ name: Release Android APK
 # scripts a dev uses locally (docs/BUILD/ANDROID.md), then:
 #   - on any run: uploads the APK as a workflow artifact
 #   - on an android-v* tag: publishes it as a GitHub Release
-# The APK contains NO game assets — players supply their own Zero Hour data.
+# SandboxRTS: the APK ships its own game resources (android/app/src/main/assets/GeneralsZH).
 
 on:
   workflow_dispatch:
