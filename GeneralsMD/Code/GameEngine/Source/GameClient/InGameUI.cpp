@@ -6252,11 +6252,32 @@ static void gxAnchorOf(const Coord3D *p, Int w, Int h, Int &ax, Int &ay)
 	ax = (Int)floorf(p->x / GX_CELL - w * 0.5f + 0.5f);
 	ay = (Int)floorf(p->y / GX_CELL - h * 0.5f + 0.5f);
 }
+// ---- r044: factions ----
+static Int s_gxFac = -1;   // -1 not chosen, 0 Stihiya, 1 Staya, 2 Podpolye
+static const char s_gxFacL[3] = {'A', 'B', 'C'};
+static AsciiString gxFacName(const char *base)
+{
+	if (s_gxFac < 0 || s_gxFac > 2 || strncmp(base, "SB", 2) != 0) return AsciiString(base);
+	char b[80];
+	snprintf(b, sizeof(b), "SB%c_%s", s_gxFacL[s_gxFac], base + 2);
+	return AsciiString(b);
+}
+static const ThingTemplate *gxFindFac(const char *base)
+{
+	if (TheThingFactory == nullptr) return nullptr;
+	const ThingTemplate *tt = TheThingFactory->findTemplate(gxFacName(base), FALSE);
+	if (tt == nullptr) tt = TheThingFactory->findTemplate(AsciiString(base), FALSE);
+	return tt;
+}
+
 static Bool gxIsTmpl(const Object *o, const char *n)
 {
 	// r043: "SBBarracks" also matches its levels "SBBarracks2", "SBBarracks3"...
 	if (o == nullptr || o->getTemplate() == nullptr || n == nullptr) return FALSE;
 	const char *nm = o->getTemplate()->getName().str();
+	char cb[80];
+	// r044: "SBA_Barracks2" -> "SBBarracks2" (faction prefix is ignored)
+	if (nm[0] == 'S' && nm[1] == 'B' && nm[2] >= 'A' && nm[2] <= 'C' && nm[3] == '_') { snprintf(cb, sizeof(cb), "SB%s", nm + 4); nm = cb; }
 	const size_t ln = strlen(n), lm = strlen(nm);
 	if (lm == ln) return strcmp(nm, n) == 0;
 	if (lm == ln + 1 && strncmp(nm, n, ln) == 0) return nm[ln] >= '2' && nm[ln] <= '5';
@@ -6281,7 +6302,7 @@ static Object *gxFindOwn(Player *pl, const char *n)
 static const ThingTemplate *gxTmpl(Int d)
 {
 	if (d < 0 || d >= GX_NDEFS || TheThingFactory == nullptr) return nullptr;
-	return TheThingFactory->findTemplate(AsciiString(s_gxDefs[d].tmpl), FALSE);
+	return gxFindFac(s_gxDefs[d].tmpl);
 }
 
 // ---- r043: building levels ----
@@ -6305,7 +6326,7 @@ static const ThingTemplate *gxUpNext(const Object *o)
 	if (lv >= s_gxUp[i].maxLv) return nullptr;
 	char nm[64];
 	snprintf(nm, sizeof(nm), "%s%d", s_gxUp[i].base, lv + 1);
-	return TheThingFactory->findTemplate(AsciiString(nm), FALSE);
+	return gxFindFac(nm);
 }
 static Int gxHqLevel(Player *pl)
 {
@@ -6459,16 +6480,17 @@ void GX_SandboxBaseLogicTick()
 	const UnsignedInt fr = TheGameLogic->getFrame();
 	if (fr < s_gxLastFrame)
 	{
-		s_gxInit = FALSE; s_gxReqs.clear(); s_gxBuilding.clear(); s_gxUpg.clear(); s_gxUpReq = INVALID_ID;
+		s_gxInit = FALSE; s_gxReqs.clear(); s_gxBuilding.clear(); s_gxUpg.clear(); s_gxUpReq = INVALID_ID; s_gxFac = -1;
 		s_bmOpen = FALSE; s_bmSel = -1; s_bmPrev = FALSE; s_bmCentered = FALSE;
 	}
 	s_gxLastFrame = fr;
 	Player *pl = ThePlayerList->getLocalPlayer();
 	if (pl == nullptr) return;
 
-	if (!s_gxInit && fr >= 1)
+	if (!s_gxInit && fr >= 1 && s_gxFac >= 0)   // r044: wait for faction choice
 	{
 		s_gxInit = TRUE;
+		if (s_gxFac == 2) pl->getMoney()->deposit(500, FALSE);   // Podpolye start bonus
 		// clean test units / old dozer from the map
 		for (Object *o = TheGameLogic->getFirstObject(); o; )
 		{
@@ -6480,7 +6502,7 @@ void GX_SandboxBaseLogicTick()
 		// HQ stands on the map from the start
 		if (gxFindOwn(pl, "SBHeadquarters") == nullptr)
 		{
-			const ThingTemplate *tt = TheThingFactory->findTemplate(AsciiString("SBHeadquarters"), FALSE);
+			const ThingTemplate *tt = gxFindFac("SBHeadquarters");
 			if (tt)
 			{
 				Coord3D pos; pos.x = 700.0f; pos.y = 700.0f; pos.z = 0.0f;
@@ -6839,6 +6861,55 @@ static Bool gxUpgradeTap(Player *pl, Int px, Int py)
 	return TRUE;   // consume the tap either way
 }
 
+// ---- r044: faction pick screen ----
+struct GxFacInfo { const char *name; const char *l1; const char *l2; const char *l3; Int r, g, b; };
+static const GxFacInfo s_gxFacInfo[3] = {
+	{"СТИХИЯ", "Здания +25% прочности", "Энергия +50%", "Сила природы", 120, 200, 232},
+	{"СТАЯ", "Стройка на 20% дешевле", "Строит на 25% быстрее", "Звериная орда", 255, 90, 31},
+	{"ПОДПОЛЬЕ", "Склад +50% дохода", "+500 денег на старте", "Тайная сеть", 230, 190, 70},
+};
+static DisplayString *s_gxFpDs[13] = {nullptr};
+static Int s_gxFpDsH[13] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+static void gxFacCard(Int i, Int &x, Int &y, Int &cw, Int &ch)
+{
+	const Int W = (Int)TheDisplay->getWidth(), H = (Int)TheDisplay->getHeight();
+	cw = W * 27 / 100;
+	const Int gap = W * 3 / 100;
+	x = (W - (3 * cw + 2 * gap)) / 2 + i * (cw + gap);
+	y = H * 24 / 100;
+	ch = H * 56 / 100;
+}
+static void gxDrawFactionPick()
+{
+	const Int W = (Int)TheDisplay->getWidth(), H = (Int)TheDisplay->getHeight();
+	TheDisplay->drawFillRect(0, 0, W, H, GameMakeColor(10, 12, 16, 200));
+	gxText(s_gxFpDs[0], s_gxFpDsH[0], H / 14, "ВЫБЕРИ ФРАКЦИЮ", W / 2, H * 12 / 100, GameMakeColor(241, 240, 236, 255), 1);
+	for (Int i = 0; i < 3; ++i)
+	{
+		const GxFacInfo &f = s_gxFacInfo[i];
+		Int x, y, cw, ch;
+		gxFacCard(i, x, y, cw, ch);
+		TheDisplay->drawFillRect(x, y, cw, ch, GameMakeColor(74, 76, 80, 235));
+		TheDisplay->drawFillRect(x, y, cw, ch / 7, GameMakeColor(f.r, f.g, f.b, 255));
+		TheDisplay->drawOpenRect(x, y, cw, ch, 3.0f, GameMakeColor(f.r, f.g, f.b, 255));
+		const Int cx = x + cw / 2;
+		gxText(s_gxFpDs[1 + i * 4], s_gxFpDsH[1 + i * 4], H / 16, f.name, cx, y + ch / 14, GameMakeColor(20, 20, 24, 255), 1);
+		gxText(s_gxFpDs[2 + i * 4], s_gxFpDsH[2 + i * 4], H / 26, f.l1, cx, y + ch * 38 / 100, GameMakeColor(241, 240, 236, 255), 1);
+		gxText(s_gxFpDs[3 + i * 4], s_gxFpDsH[3 + i * 4], H / 26, f.l2, cx, y + ch * 54 / 100, GameMakeColor(241, 240, 236, 255), 1);
+		gxText(s_gxFpDs[4 + i * 4], s_gxFpDsH[4 + i * 4], H / 28, f.l3, cx, y + ch * 82 / 100, GameMakeColor(f.r, f.g, f.b, 255), 1);
+	}
+}
+static Bool gxFactionTap(Int px, Int py)
+{
+	for (Int i = 0; i < 3; ++i)
+	{
+		Int x, y, cw, ch;
+		gxFacCard(i, x, y, cw, ch);
+		if (px >= x && px < x + cw && py >= y && py < y + ch) { s_gxFac = i; s_bmCentered = FALSE; break; }
+	}
+	return TRUE;   // the pick screen eats every tap
+}
+
 static void gxDrawBase()
 {
 	if (TheDisplay == nullptr || TheGameLogic == nullptr || ThePlayerList == nullptr || TheTacticalView == nullptr || TheTerrainLogic == nullptr)
@@ -6846,6 +6917,7 @@ static void gxDrawBase()
 	if (!TheGameLogic->isInGame() || TheGameLogic->isInShellGame()) return;
 	Player *pl = ThePlayerList->getLocalPlayer();
 	if (pl == nullptr) return;
+	if (s_gxFac < 0) { gxDrawFactionPick(); return; }   // r044
 
 	Object *hq = gxFindOwn(pl, "SBHeadquarters");
 	if (hq && !s_bmCentered) { TheTacticalView->lookAt(hq->getPosition()); s_bmCentered = TRUE; }
@@ -6925,6 +6997,7 @@ static Bool gxTap(Int px, Int py)
 	if (!TheGameLogic->isInGame() || TheGameLogic->isInShellGame()) return FALSE;
 	Player *pl = ThePlayerList->getLocalPlayer();
 	if (pl == nullptr) return FALSE;
+	if (s_gxFac < 0) return gxFactionTap(px, py);   // r044
 	Int bx, by, bs;
 	gxBtnGeometry(bx, by, bs);
 	if (gxIn(px, py, bx, by, bs))
